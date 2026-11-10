@@ -40,6 +40,8 @@ public interface NicknameAuditRepository {
 
     boolean existsByNickname(String nickname);
 
+    List<NicknameAudit> findAllByNicknameIn(Collection<String> nicknames);
+
     boolean existsByNicknameAndStatus(String nickname, NicknameAuditStatus status);
 
     /**

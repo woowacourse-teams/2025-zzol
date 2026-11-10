@@ -24,6 +24,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Service
@@ -74,6 +76,20 @@ public class ProfanityAuditService {
     public void onNicknameSubmitted(NicknameSubmittedEvent event) {
         log.debug("닉네임 검열 등록 요청 수신: {}", event.nickname());
         register(event.nickname());
+    }
+
+    /**
+     * 랭킹에 노출된 미등록 닉네임을 검열 큐에 넣는다(#1906).
+     *
+     * <p>랭킹 조회는 읽기 전용 트랜잭션이라 그 안에서 INSERT하면 MySQL이 거부한다. 조회 트랜잭션이 끝난 뒤
+     * 별도 트랜잭션에서 등록한다. 여기서 실패해도 Spring이 로그만 남기고 랭킹 응답은 나간다. 닉네임은 가려진 채로
+     * 남고 다음 조회가 다시 알리므로, 아웃박스가 필요한 {@link #onNicknameSubmitted}와 달리 유실을 감수한다.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION, fallbackExecution = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onUnregisteredNicknamesExposed(UnregisteredNicknamesExposedEvent event) {
+        log.debug("랭킹 노출 닉네임 검열 등록 요청 수신: {}건", event.nicknames().size());
+        event.nicknames().forEach(this::register);
     }
 
     public Page<NicknameAudit> listByStatus(NicknameAuditStatus status, Pageable pageable) {

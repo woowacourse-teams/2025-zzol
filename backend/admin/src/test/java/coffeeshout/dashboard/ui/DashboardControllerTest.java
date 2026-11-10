@@ -104,7 +104,7 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
                 .getContentAsString(StandardCharsets.UTF_8);
 
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(body).doesNotContain(ORIGINAL).contains("가려진 닉네임").contains("\"masked\":true");
+            softly.assertThat(body).doesNotContain(ORIGINAL).contains("처리 중인 닉네임").contains("\"masked\":true");
             softly.assertThat(nicknameAuditJpaRepository.findNicknamesByStatus(NicknameAuditStatus.UNAUDITED))
                     .containsOnly(ORIGINAL);
         });

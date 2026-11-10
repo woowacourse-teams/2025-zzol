@@ -774,7 +774,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
     @Nested
     class 랭킹_닉네임_가림 {
 
-        private static final String MASKED = "가려진 닉네임";
+        private static final String MASKED = "처리 중인 닉네임";
 
         @Test
         void TOP5_당첨자에서_검열_전_닉네임을_가리고_당첨_횟수는_그대로_둔다() {

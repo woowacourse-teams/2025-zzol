@@ -7,7 +7,7 @@ package coffeeshout.dashboard.domain;
  */
 public final class MaskedNickname {
 
-    public static final String TEXT = "가려진 닉네임";
+    public static final String TEXT = "처리 중인 닉네임";
 
     private MaskedNickname() {}
 }

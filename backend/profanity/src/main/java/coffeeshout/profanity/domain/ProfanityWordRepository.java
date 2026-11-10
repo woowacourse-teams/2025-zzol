@@ -1,5 +1,6 @@
 package coffeeshout.profanity.domain;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,8 @@ public interface ProfanityWordRepository {
     void operatorAllow(String word, Language language);
 
     Optional<ProfanityWord> findByWord(String word);
+
+    List<ProfanityWord> findAllByWordIn(Collection<String> words);
 
     List<ProfanityWord> findAll();
 

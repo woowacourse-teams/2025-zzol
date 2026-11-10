@@ -56,20 +56,19 @@ public class NicknameExposureService {
         final Set<String> unregistered = new HashSet<>();
         for (final String nickname : targets) {
             final List<NicknameAuditStatus> statuses = statusesByKey.get(collationKey(nickname));
-            if (statuses != null) {
-                if (statuses.stream().allMatch(NicknameAuditStatus::isRevealable)) {
-                    revealable.add(nickname);
-                }
-                continue;
-            }
-            // register()가 운영자 허용 닉네임은 큐에 넣지 않는다. 가리면 행이 생기지 않아 영영 풀리지 않는다.
-            if (profanityWordManagementService.isOperatorAllowed(nickname)) {
+            if (statuses == null) {
+                unregistered.add(nickname);
+            } else if (statuses.stream().allMatch(NicknameAuditStatus::isRevealable)) {
                 revealable.add(nickname);
-                continue;
             }
-            unregistered.add(nickname);
         }
 
+        if (!unregistered.isEmpty()) {
+            // register()가 운영자 허용 닉네임은 큐에 넣지 않는다. 가리면 행이 생기지 않아 영영 풀리지 않는다.
+            final Set<String> operatorAllowed = profanityWordManagementService.findOperatorAllowed(unregistered);
+            revealable.addAll(operatorAllowed);
+            unregistered.removeAll(operatorAllowed);
+        }
         if (!unregistered.isEmpty()) {
             eventPublisher.publishEvent(new UnregisteredNicknamesExposedEvent(Set.copyOf(unregistered)));
         }

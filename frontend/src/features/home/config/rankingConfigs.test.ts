@@ -3,7 +3,7 @@ import { RANKING_CATEGORIES } from './rankingConfigs';
 const RECORD_FIELDS = ['maxFloor', 'bestTime', 'bestErrorMillis', 'bestSurvivalMillis'];
 
 const rawRow = (masked: boolean) => ({
-  playerName: masked ? '가려진 닉네임' : '철수',
+  playerName: masked ? '처리 중인 닉네임' : '철수',
   masked,
   ...Object.fromEntries(RECORD_FIELDS.map((field) => [field, 1000])),
 });
@@ -15,7 +15,7 @@ describe('RANKING_CATEGORIES', () => {
       const items = category.transformData([rawRow(true), rawRow(false)]);
 
       expect(items.map((item) => [item.name, item.masked])).toEqual([
-        ['가려진 닉네임', true],
+        ['처리 중인 닉네임', true],
         ['철수', false],
       ]);
     }

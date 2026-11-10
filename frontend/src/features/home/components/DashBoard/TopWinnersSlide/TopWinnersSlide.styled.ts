@@ -77,9 +77,9 @@ export const NameWrapper = styled.div`
   min-width: 0;
 `;
 
-export const Name = styled.span<{ $masked: boolean }>`
+export const Name = styled.span`
   ${({ theme }) => theme.typography.h4}
-  color: ${({ $masked, theme }) => ($masked ? theme.color.gray[400] : theme.color.gray[800])};
+  color: ${({ theme }) => theme.color.gray[800]};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

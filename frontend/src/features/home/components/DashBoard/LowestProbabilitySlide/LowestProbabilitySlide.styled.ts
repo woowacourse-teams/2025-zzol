@@ -121,10 +121,10 @@ export const WinnerRow = styled.div`
   min-width: 0;
 `;
 
-export const WinnerName = styled.span<{ $masked: boolean }>`
+export const WinnerName = styled.span`
   font-size: 20px;
   font-weight: 800;
-  color: ${({ $masked, theme }) => ($masked ? `${theme.color.white}99` : theme.color.white)};
+  color: ${({ theme }) => theme.color.white};
   letter-spacing: -0.03em;
   line-height: 1.2;
   white-space: nowrap;

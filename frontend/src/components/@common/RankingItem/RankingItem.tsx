@@ -1,4 +1,5 @@
 import Headline4 from '@/components/@common/Headline4/Headline4';
+import RankingNickname from '@/components/@common/RankingNickname/RankingNickname';
 import { ColorKey } from '@/constants/color';
 import * as S from './RankingItem.styled';
 
@@ -19,7 +20,9 @@ const RankingItem = ({ rank, name, count, unit = '회', masked = false }: Props)
         <Headline4 color={getRankTextColor(rank)}>{rank}</Headline4>
       </S.RankNumber>
       <S.Content>
-        <Headline4 color={masked ? 'gray-400' : undefined}>{name}</Headline4>
+        <Headline4>
+          <RankingNickname masked={masked}>{name}</RankingNickname>
+        </Headline4>
         <Headline4>
           {count}
           {unit}

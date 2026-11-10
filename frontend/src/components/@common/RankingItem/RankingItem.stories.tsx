@@ -54,7 +54,7 @@ export const Default: Story = {};
 
 export const Masked: Story = {
   args: {
-    name: '가려진 닉네임',
+    name: '처리 중인 닉네임',
     masked: true,
   },
 };

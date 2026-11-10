@@ -1,3 +1,4 @@
+import RankingNickname from '@/components/@common/RankingNickname/RankingNickname';
 import type { TopWinner } from '@/types/dashBoard';
 import * as S from './TopWinnersSlide.styled';
 
@@ -17,7 +18,9 @@ const TopWinnersSlide = ({ winners, displayCount = 5 }: Props) => (
           <S.Item key={winner.userCode} $index={index}>
             <S.Rank $rank={index + 1}>{index + 1}</S.Rank>
             <S.NameWrapper>
-              <S.Name $masked={winner.masked ?? false}>{winner.nickname}</S.Name>
+              <S.Name>
+                <RankingNickname masked={winner.masked}>{winner.nickname}</RankingNickname>
+              </S.Name>
               <S.UserCode>#{winner.userCode}</S.UserCode>
             </S.NameWrapper>
             <S.Count>{winner.winCount}회</S.Count>

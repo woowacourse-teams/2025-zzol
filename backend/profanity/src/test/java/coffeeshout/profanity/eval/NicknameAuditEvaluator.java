@@ -51,8 +51,9 @@ public class NicknameAuditEvaluator {
                                 LinkedHashMap::new,
                                 Collectors.collectingAndThen(Collectors.toList(), this::scores))),
                 confusion(judged),
-                rate(filter(judged, j -> j.item().expected() == Expected.CLEAN), j -> j.predicted()
-                        .isPositive()),
+                rate(
+                        filter(judged, j -> j.item().expected() == Expected.CLEAN),
+                        j -> j.predicted().isPositive()),
                 rate(positives, j -> !j.predicted().isPositive()),
                 rate(
                         filter(judged, j -> j.item().expected() == Expected.AMBIGUOUS),

@@ -24,8 +24,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Service
@@ -78,24 +76,6 @@ public class ProfanityAuditService {
         register(event.nickname());
     }
 
-    /**
-     * 랭킹에 노출된 미등록 닉네임을 검열 큐에 넣는다(#1906).
-     *
-     * <p>랭킹 조회는 읽기 전용 트랜잭션이라 그 안에서 INSERT하면 MySQL이 거부한다. 조회 트랜잭션이 끝난 뒤
-     * 별도 트랜잭션에서 등록한다. 여기서 실패해도 Spring이 로그만 남기고 랭킹 응답은 나간다. 닉네임은 가려진 채로
-     * 남고 다음 조회가 다시 알리므로, 아웃박스가 필요한 {@link #onNicknameSubmitted}와 달리 유실을 감수한다.
-     */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION, fallbackExecution = true)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onUnregisteredNicknamesExposed(UnregisteredNicknamesExposedEvent event) {
-        log.debug("랭킹 노출 닉네임 검열 등록 요청 수신: {}건", event.nicknames().size());
-        // 홈은 랭킹 여러 개를 한꺼번에 부른다. 겹치는 닉네임을 트랜잭션마다 다른 순서로 넣으면 중복 키 잠금이 엇갈려
-        // 데드락이 날 수 있어 순서를 고정한다.
-        // register()와 달리 운영자 허용 여부를 묻지 않는다. 허용한 닉네임 자신은 ALLOWED 행이 있어 여기 오지 않고,
-        // 오는 건 정규화하면 허용 단어와 같아지는 변형뿐이다. 변형은 검열을 받아야 원문이 공개된다.
-        event.nicknames().stream().sorted().forEach(this::enqueueIfAbsent);
-    }
-
     public Page<NicknameAudit> listByStatus(NicknameAuditStatus status, Pageable pageable) {
         return auditRepository.findByStatus(status, pageable);
     }
@@ -112,10 +92,6 @@ public class ProfanityAuditService {
             log.debug("운영자 허용 닉네임 — 검열 등록 생략: {}", nickname);
             return;
         }
-        enqueueIfAbsent(nickname);
-    }
-
-    private void enqueueIfAbsent(String nickname) {
         if (auditRepository.existsByNickname(nickname)) {
             // 상태 무관으로 검사한다. 유니크 제약이 (player_name, status)라 이미 검열된(CLEAN 등)
             // 닉네임에 대해 UNAUDITED만 검사하면 새 UNAUDITED 중복이 생기고, 다음 검열 시

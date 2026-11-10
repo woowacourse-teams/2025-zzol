@@ -1,9 +1,6 @@
 package coffeeshout.profanity.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
@@ -11,7 +8,6 @@ import coffeeshout.profanity.infra.persistence.audit.NicknameAuditJpaRepository;
 import coffeeshout.support.ServiceTest;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,14 +68,13 @@ class NicknameExposureServiceTest extends ServiceTest {
         }
 
         @Test
-        void 끝_공백만_다른_CLEAN_행은_공개되고_이벤트를_내지_않는다() {
+        void 끝_공백만_다른_CLEAN_행도_같은_닉네임의_판정으로_본다() {
             // player_name 콜레이션(utf8mb4_unicode_ci)은 PAD SPACE라 끝 공백을 무시한다. IN 쿼리가 "철수 "로 "철수" 행을
-            // 돌려주는데 Java 쪽이 공백까지 비교하면 행 없음으로 분류된다. 그러면 register()의 existsByNickname은 행이
-            // 있다고 보고 INSERT를 건너뛰어, 닉네임이 영영 가려지고 조회마다 이벤트가 다시 나간다.
+            // 돌려주는데 Java 쪽이 공백까지 비교하면 행 없음으로 분류된다. register()의 existsByNickname은 행이 있다고
+            // 보고 INSERT를 건너뛰므로, "철수 "는 자기 행을 갖지 못해 영영 가려진다.
             검열_행(NicknameAuditStatus.CLEAN, "철수");
 
             assertThat(exposureService.findRevealable(List.of("철수 "))).containsExactly("철수 ");
-            then(eventPublisher).should(never()).publishEvent(any(Object.class));
         }
 
         @Test
@@ -101,31 +96,12 @@ class NicknameExposureServiceTest extends ServiceTest {
         }
 
         @Test
-        void 검열_큐_등록을_요청한다() {
-            검열_행(NicknameAuditStatus.CLEAN, "있는닉");
-
-            exposureService.findRevealable(List.of("있는닉", "새닉네임"));
-
-            then(eventPublisher).should().publishEvent(new UnregisteredNicknamesExposedEvent(Set.of("새닉네임")));
-        }
-
-        @Test
-        void 모두_행이_있으면_등록을_요청하지_않는다() {
-            검열_행(NicknameAuditStatus.PENDING, "있는닉");
-
-            exposureService.findRevealable(List.of("있는닉"));
-
-            then(eventPublisher).should(never()).publishEvent(any(Object.class));
-        }
-
-        @Test
-        void 정규화하면_운영자_허용_단어와_같아도_가리고_등록을_요청한다() {
-            // 운영자가 허용한 닉네임 자신은 ALLOWED 행이 있다. 행 없이 여기 오는 건 "ZZ0L"처럼 정규화하면 허용 단어와
+        void 정규화하면_운영자_허용_단어와_같아도_가린다() {
+            // 운영자가 허용한 닉네임 자신은 ALLOWED 행이 있다. 행이 없는 건 "ZZ0L"처럼 정규화하면 허용 단어와
             // 같아지는 변형뿐이고, 변형은 검열을 한 번도 받지 않았으므로 판정을 받을 때까지 가린다.
             wordManagementService.operatorAllow("zzol");
 
             assertThat(exposureService.findRevealable(List.of("ZZ0L"))).isEmpty();
-            then(eventPublisher).should().publishEvent(new UnregisteredNicknamesExposedEvent(Set.of("ZZ0L")));
         }
     }
 
@@ -133,7 +109,6 @@ class NicknameExposureServiceTest extends ServiceTest {
     void 빈_목록이나_null_닉네임은_공개하지_않는다() {
         assertThat(exposureService.findRevealable(List.of())).isEmpty();
         assertThat(exposureService.findRevealable(Arrays.asList(null, null))).isEmpty();
-        then(eventPublisher).should(never()).publishEvent(any(Object.class));
     }
 
     private void 검열_행(NicknameAuditStatus status, String nickname) {

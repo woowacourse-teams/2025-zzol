@@ -34,8 +34,8 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * 검열 전 닉네임의 원문이 응답 본문에 실리지 않는지 HTTP 경계에서 본다(#1906).
  *
- * <p>서비스 테스트는 DTO를 보므로 직렬화가 원문을 다시 끌어오는 경로를 못 잡는다. 등록 리스너도 실제 이벤트
- * 퍼블리셔와 읽기 전용 트랜잭션 경계를 거쳐야 돌므로, 목 퍼블리셔를 쓰는 서비스 테스트에서는 보이지 않는다.
+ * <p>서비스 테스트는 DTO를 보므로 직렬화가 원문을 다시 끌어오는 경로를 못 잡는다. 조회가 검열 테이블에 쓰지
+ * 않는다는 것도 실제 이벤트 퍼블리셔가 도는 여기서만 보인다.
  */
 class DashboardControllerTest extends AdminModuleIntegrationTest {
 
@@ -96,7 +96,7 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
                 "/dashboard/speed-touch-top-players",
                 "/dashboard/blind-timer-top-players"
             })
-    void 닉네임을_내보내는_엔드포인트는_검열_전_닉네임의_원문을_싣지_않고_검열_큐에_넣는다(String endpoint) throws Exception {
+    void 닉네임을_내보내는_엔드포인트는_검열_전_닉네임의_원문을_싣지_않는다(String endpoint) throws Exception {
         final String body = mockMvc.perform(get(endpoint))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -108,18 +108,16 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
                     .doesNotContain(ORIGINAL)
                     .contains("처리 중인 닉네임")
                     .contains("\"masked\":true");
-            softly.assertThat(nicknameAuditJpaRepository.findNicknamesByStatus(NicknameAuditStatus.UNAUDITED))
-                    .containsOnly(ORIGINAL);
+            // 등록은 닉네임을 저장할 때 한다. 공개 GET은 검열 테이블에 쓰지 않는다.
+            softly.assertThat(nicknameAuditJpaRepository.findAllByNicknameIn(List.of(ORIGINAL)))
+                    .isEmpty();
         });
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"/dashboard/top-winners", "/dashboard/racing-game-top-players"})
     void 판정이_CLEAN으로_바뀌면_다음_조회부터_원문이_보인다(String endpoint) throws Exception {
-        mockMvc.perform(get(endpoint)).andExpect(status().isOk());
-        final NicknameAudit audit = nicknameAuditJpaRepository
-                .findAllByNicknameIn(List.of(ORIGINAL))
-                .getFirst();
+        final NicknameAudit audit = new NicknameAudit(ORIGINAL);
         audit.updateStatus(NicknameAuditStatus.CLEAN);
         nicknameAuditJpaRepository.save(audit);
 

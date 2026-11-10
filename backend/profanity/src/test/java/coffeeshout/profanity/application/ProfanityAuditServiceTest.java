@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,7 +22,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -87,33 +85,6 @@ class ProfanityAuditServiceTest {
             service.register("허용닉네임");
 
             then(auditRepository).should(never()).insertUnaudited(any(), any());
-        }
-    }
-
-    @Nested
-    class onUnregisteredNicknamesExposed_랭킹_노출_닉네임_등록 {
-
-        @Test
-        void 닉네임을_정렬한_순서로_등록한다() {
-            // 겹치는 닉네임을 트랜잭션마다 다른 순서로 넣으면 중복 키 잠금이 엇갈려 데드락이 날 수 있다.
-            final List<String> inserted = new ArrayList<>();
-            willAnswer(invocation -> inserted.add(invocation.getArgument(0)))
-                    .given(auditRepository)
-                    .insertUnaudited(any(), any());
-
-            service.onUnregisteredNicknamesExposed(
-                    new UnregisteredNicknamesExposedEvent(Set.of("다", "가", "마", "나", "라")));
-
-            assertThat(inserted).containsExactly("가", "나", "다", "라", "마");
-        }
-
-        @Test
-        void 운영자_허용_여부를_묻지_않고_등록한다() {
-            // 여기 오는 건 정규화하면 허용 단어와 같아지는 변형뿐이다. 변형도 검열을 받아야 원문이 공개된다.
-            service.onUnregisteredNicknamesExposed(new UnregisteredNicknamesExposedEvent(Set.of("새닉네임")));
-
-            then(profanityWordManagementService).should(never()).isOperatorAllowed(any());
-            then(auditRepository).should().insertUnaudited(eq("새닉네임"), any(Instant.class));
         }
     }
 

@@ -210,19 +210,6 @@ class ProfanityWordManagementServiceTest {
     }
 
     @Nested
-    class findOperatorAllowed_운영자_허용_일괄_조회 {
-
-        @Test
-        void OPERATOR_ALLOWED_source_단어만_입력_그대로_돌려준다() {
-            given(wordRepository.findAllByWordIn(any()))
-                    .willReturn(List.of(ProfanityWordFixture.운영자_허용_단어(), ProfanityWordFixture.한국어_수동_욕설()));
-
-            assertThat(service.findOperatorAllowed(List.of("허용닉네임", "욕설", "없는단어")))
-                    .containsExactly("허용닉네임");
-        }
-    }
-
-    @Nested
     class activate_단어_활성화 {
 
         @Test

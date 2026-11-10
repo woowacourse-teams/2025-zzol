@@ -6,7 +6,6 @@ import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.WordSource;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -102,13 +101,6 @@ public class ProfanityWordRepositoryImpl implements ProfanityWordRepository {
     @Override
     public Optional<ProfanityWord> findByWord(String word) {
         return jpaRepository.findByWord(word).map(ProfanityWordEntity::toDomain);
-    }
-
-    @Override
-    public List<ProfanityWord> findAllByWordIn(Collection<String> words) {
-        return jpaRepository.findAllByWordIn(words).stream()
-                .map(ProfanityWordEntity::toDomain)
-                .toList();
     }
 
     @Override

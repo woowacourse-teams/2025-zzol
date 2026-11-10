@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class NicknameExposureService {
 
     private final NicknameAuditRepository auditRepository;
-    private final ProfanityWordManagementService profanityWordManagementService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -65,12 +64,6 @@ public class NicknameExposureService {
             }
         }
 
-        if (!unregistered.isEmpty()) {
-            // register()가 운영자 허용 닉네임은 큐에 넣지 않는다. 가리면 행이 생기지 않아 영영 풀리지 않는다.
-            final Set<String> operatorAllowed = profanityWordManagementService.findOperatorAllowed(unregistered);
-            revealable.addAll(operatorAllowed);
-            unregistered.removeAll(operatorAllowed);
-        }
         if (!unregistered.isEmpty()) {
             eventPublisher.publishEvent(new UnregisteredNicknamesExposedEvent(Set.copyOf(unregistered)));
         }

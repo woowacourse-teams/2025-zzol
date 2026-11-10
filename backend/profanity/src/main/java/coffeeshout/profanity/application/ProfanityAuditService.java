@@ -90,7 +90,9 @@ public class ProfanityAuditService {
     public void onUnregisteredNicknamesExposed(UnregisteredNicknamesExposedEvent event) {
         log.debug("랭킹 노출 닉네임 검열 등록 요청 수신: {}건", event.nicknames().size());
         // 홈은 랭킹 여러 개를 한꺼번에 부른다. 겹치는 닉네임을 트랜잭션마다 다른 순서로 넣으면 중복 키 잠금이 엇갈려
-        // 데드락이 날 수 있어 순서를 고정한다. 운영자 허용 여부는 발행 쪽이 이미 걸렀으므로 다시 묻지 않는다.
+        // 데드락이 날 수 있어 순서를 고정한다.
+        // register()와 달리 운영자 허용 여부를 묻지 않는다. 허용한 닉네임 자신은 ALLOWED 행이 있어 여기 오지 않고,
+        // 오는 건 정규화하면 허용 단어와 같아지는 변형뿐이다. 변형은 검열을 받아야 원문이 공개된다.
         event.nicknames().stream().sorted().forEach(this::enqueueIfAbsent);
     }
 

@@ -108,8 +108,8 @@ class ProfanityAuditServiceTest {
         }
 
         @Test
-        void 운영자_허용_여부를_다시_묻지_않는다() {
-            // 발행 쪽 NicknameExposureService가 이미 걸러서 보낸다.
+        void 운영자_허용_여부를_묻지_않고_등록한다() {
+            // 여기 오는 건 정규화하면 허용 단어와 같아지는 변형뿐이다. 변형도 검열을 받아야 원문이 공개된다.
             service.onUnregisteredNicknamesExposed(new UnregisteredNicknamesExposedEvent(Set.of("새닉네임")));
 
             then(profanityWordManagementService).should(never()).isOperatorAllowed(any());

@@ -119,12 +119,13 @@ class NicknameExposureServiceTest extends ServiceTest {
         }
 
         @Test
-        void 운영자가_허용한_단어와_같으면_공개하고_등록을_요청하지_않는다() {
-            // register()가 운영자 허용 닉네임은 큐에 넣지 않는다. 가리면 판정받을 길이 없어 영영 풀리지 않는다.
-            wordManagementService.operatorAllow("허용닉");
+        void 정규화하면_운영자_허용_단어와_같아도_가리고_등록을_요청한다() {
+            // 운영자가 허용한 닉네임 자신은 ALLOWED 행이 있다. 행 없이 여기 오는 건 "ZZ0L"처럼 정규화하면 허용 단어와
+            // 같아지는 변형뿐이고, 변형은 검열을 한 번도 받지 않았으므로 판정을 받을 때까지 가린다.
+            wordManagementService.operatorAllow("zzol");
 
-            assertThat(exposureService.findRevealable(List.of("허용닉"))).containsExactly("허용닉");
-            then(eventPublisher).should(never()).publishEvent(any(Object.class));
+            assertThat(exposureService.findRevealable(List.of("ZZ0L"))).isEmpty();
+            then(eventPublisher).should().publishEvent(new UnregisteredNicknamesExposedEvent(Set.of("ZZ0L")));
         }
     }
 

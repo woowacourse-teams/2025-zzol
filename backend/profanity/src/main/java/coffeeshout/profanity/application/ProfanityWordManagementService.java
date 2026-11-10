@@ -8,12 +8,7 @@ import coffeeshout.profanity.domain.ProfanityWordRepository;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.TrieRefreshNotifier;
 import coffeeshout.profanity.domain.WordSource;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -67,19 +62,6 @@ public class ProfanityWordManagementService {
         return findByWord(rawWord)
                 .filter(w -> w.source() == WordSource.OPERATOR_ALLOWED)
                 .isPresent();
-    }
-
-    /**
-     * 운영자가 허용한 단어와 같은 것만 골라 원래 입력 그대로 돌려준다. {@link #isOperatorAllowed}를 여러 번 부르는 대신
-     * IN 쿼리 한 번으로 묻는다.
-     */
-    public Set<String> findOperatorAllowed(Collection<String> rawWords) {
-        final Map<String, List<String>> rawByNormalized =
-                rawWords.stream().collect(Collectors.groupingBy(textNormalizer::normalize));
-        return wordRepository.findAllByWordIn(rawByNormalized.keySet()).stream()
-                .filter(w -> w.source() == WordSource.OPERATOR_ALLOWED)
-                .flatMap(w -> rawByNormalized.getOrDefault(w.word(), List.of()).stream())
-                .collect(Collectors.toSet());
     }
 
     public Optional<ProfanityWord> findByWord(String rawWord) {

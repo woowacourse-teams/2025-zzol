@@ -95,7 +95,7 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
                     {players[0].nickname}
                   </RankingNickname>
                 </S.WinnerName>
-                <S.WinnerCode>#{players[0].userCode}</S.WinnerCode>
+                {!players[0].masked && <S.WinnerCode>#{players[0].userCode}</S.WinnerCode>}
               </S.WinnerRow>
             ) : (
               <S.MultiWinnerList>
@@ -106,7 +106,7 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
                         {p.nickname}
                       </RankingNickname>
                     </S.WinnerName>
-                    <S.WinnerCode>#{p.userCode}</S.WinnerCode>
+                    {!p.masked && <S.WinnerCode>#{p.userCode}</S.WinnerCode>}
                   </S.WinnerRow>
                 ))}
               </S.MultiWinnerList>

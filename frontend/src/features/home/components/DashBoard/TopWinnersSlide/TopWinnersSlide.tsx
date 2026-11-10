@@ -21,7 +21,7 @@ const TopWinnersSlide = ({ winners, displayCount = 5 }: Props) => (
               <S.Name>
                 <RankingNickname masked={winner.masked}>{winner.nickname}</RankingNickname>
               </S.Name>
-              <S.UserCode>#{winner.userCode}</S.UserCode>
+              {!winner.masked && <S.UserCode>#{winner.userCode}</S.UserCode>}
             </S.NameWrapper>
             <S.Count>{winner.winCount}회</S.Count>
           </S.Item>

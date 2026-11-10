@@ -8,7 +8,7 @@ type Props = {
   tone?: S.Tone;
 };
 
-/** 랭킹 닉네임. 검열 처리 중인 닉네임은 색에 기대지 않고 흐르는 배경과 스크린리더 설명으로 구분한다. */
+/** 랭킹 닉네임. 검열 처리 중인 닉네임은 연한 글자로 그리고, 색에 기대지 않게 스크린리더 설명을 붙인다. */
 const RankingNickname = ({ children, masked = false, tone = 'light' }: Props) => {
   if (!masked) return <>{children}</>;
 

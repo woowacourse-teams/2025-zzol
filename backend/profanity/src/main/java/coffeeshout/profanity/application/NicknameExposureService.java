@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 불특정 다수에게 보이는 화면(랭킹)에 닉네임 원문을 내보내도 되는지 정한다(#1906).
  *
- * <p>검열은 12시간 주기 배치라 사전을 우회한 닉네임은 판정 전까지 걸러지지 않는다. 그래서 판정이 끝나
+ * <p>검열은 주기 배치라 사전을 우회한 닉네임은 판정 전까지 걸러지지 않는다. 그래서 판정이 끝나
  * 통과한 닉네임만 보이고, 나머지는 판정이 없는 것으로 보고 가린다.
  */
 @Service
@@ -77,11 +77,11 @@ public class NicknameExposureService {
     }
 
     /**
-     * player_name 콜레이션(utf8mb4_unicode_ci)은 대소문자를 구분하지 않는다. IN 쿼리가 "abc"로 "ABC" 행을
-     * 돌려주므로 짝지을 때도 대소문자를 무시한다. 악센트·전각처럼 Java가 같은 기준으로 못 맞추는 차이는
-     * 행 없음으로 떨어져 가려진다.
+     * player_name 콜레이션(utf8mb4_unicode_ci)은 대소문자를 구분하지 않고, PAD SPACE라 끝 공백도 무시한다. IN 쿼리가
+     * "abc "로 "ABC" 행을 돌려주므로 짝지을 때도 같은 두 차이를 무시한다. 악센트·전각처럼 Java가 같은 기준으로 못
+     * 맞추는 차이는 행 없음으로 떨어져 가려지고, 조회마다 등록 이벤트가 다시 나간다.
      */
     private String collationKey(String nickname) {
-        return nickname.toLowerCase(Locale.ROOT);
+        return nickname.toLowerCase(Locale.ROOT).stripTrailing();
     }
 }

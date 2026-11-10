@@ -72,6 +72,17 @@ class NicknameExposureServiceTest extends ServiceTest {
         }
 
         @Test
+        void 끝_공백만_다른_CLEAN_행은_공개되고_이벤트를_내지_않는다() {
+            // player_name 콜레이션(utf8mb4_unicode_ci)은 PAD SPACE라 끝 공백을 무시한다. IN 쿼리가 "철수 "로 "철수" 행을
+            // 돌려주는데 Java 쪽이 공백까지 비교하면 행 없음으로 분류된다. 그러면 register()의 existsByNickname은 행이
+            // 있다고 보고 INSERT를 건너뛰어, 닉네임이 영영 가려지고 조회마다 이벤트가 다시 나간다.
+            검열_행(NicknameAuditStatus.CLEAN, "철수");
+
+            assertThat(exposureService.findRevealable(List.of("철수 "))).containsExactly("철수 ");
+            then(eventPublisher).should(never()).publishEvent(any(Object.class));
+        }
+
+        @Test
         void 공개_여부는_조회한_닉네임마다_따로_정한다() {
             검열_행(NicknameAuditStatus.CLEAN, "보임");
             검열_행(NicknameAuditStatus.PENDING, "가림");

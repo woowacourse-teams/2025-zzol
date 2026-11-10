@@ -58,7 +58,9 @@ public class NicknameExposureService {
             final List<NicknameAuditStatus> statuses = statusesByKey.get(collationKey(nickname));
             if (statuses == null) {
                 unregistered.add(nickname);
-            } else if (statuses.stream().allMatch(NicknameAuditStatus::isRevealable)) {
+                continue;
+            }
+            if (statuses.stream().allMatch(NicknameAuditStatus::isRevealable)) {
                 revealable.add(nickname);
             }
         }

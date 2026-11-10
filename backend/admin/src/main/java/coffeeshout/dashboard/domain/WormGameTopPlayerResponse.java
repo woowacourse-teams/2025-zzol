@@ -1,12 +1,5 @@
 package coffeeshout.dashboard.domain;
 
-public record WormGameTopPlayerResponse(String playerName, Long bestSurvivalMillis, boolean masked) {
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-    public WormGameTopPlayerResponse(String playerName, Long bestSurvivalMillis) {
-        this(playerName, bestSurvivalMillis, false);
-    }
-
-    public WormGameTopPlayerResponse mask() {
-        return new WormGameTopPlayerResponse(MaskedNickname.TEXT, bestSurvivalMillis, true);
-    }
-}
+public record WormGameTopPlayerResponse(@JsonUnwrapped RankedPlayerName player, Long bestSurvivalMillis) {}

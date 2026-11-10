@@ -1,12 +1,5 @@
 package coffeeshout.dashboard.domain;
 
-public record BlockStackingTopPlayerResponse(String playerName, Long maxFloor, boolean masked) {
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-    public BlockStackingTopPlayerResponse(String playerName, Long maxFloor) {
-        this(playerName, maxFloor, false);
-    }
-
-    public BlockStackingTopPlayerResponse mask() {
-        return new BlockStackingTopPlayerResponse(MaskedNickname.TEXT, maxFloor, true);
-    }
-}
+public record BlockStackingTopPlayerResponse(@JsonUnwrapped RankedPlayerName player, Long maxFloor) {}

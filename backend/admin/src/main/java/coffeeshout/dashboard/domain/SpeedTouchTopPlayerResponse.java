@@ -1,12 +1,5 @@
 package coffeeshout.dashboard.domain;
 
-public record SpeedTouchTopPlayerResponse(String playerName, long bestTime, boolean masked) {
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-    public SpeedTouchTopPlayerResponse(String playerName, long bestTime) {
-        this(playerName, bestTime, false);
-    }
-
-    public SpeedTouchTopPlayerResponse mask() {
-        return new SpeedTouchTopPlayerResponse(MaskedNickname.TEXT, bestTime, true);
-    }
-}
+public record SpeedTouchTopPlayerResponse(@JsonUnwrapped RankedPlayerName player, long bestTime) {}

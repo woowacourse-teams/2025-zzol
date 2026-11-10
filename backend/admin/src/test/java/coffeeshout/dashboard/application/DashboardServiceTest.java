@@ -9,6 +9,8 @@ import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.RankedMember;
+import coffeeshout.dashboard.domain.RankedPlayerName;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
@@ -119,11 +121,11 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.getFirst().nickname()).isEqualTo("철수");
+            assertThat(result.getFirst().winner().nickname()).isEqualTo("철수");
             assertThat(result.getFirst().winCount()).isEqualTo(5);
-            assertThat(result.get(1).nickname()).isEqualTo("영희");
+            assertThat(result.get(1).winner().nickname()).isEqualTo("영희");
             assertThat(result.get(1).winCount()).isEqualTo(3);
-            assertThat(result.get(2).nickname()).isEqualTo("민수");
+            assertThat(result.get(2).winner().nickname()).isEqualTo("민수");
             assertThat(result.get(2).winCount()).isEqualTo(2);
         }
 
@@ -154,7 +156,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.getFirst().nickname()).isEqualTo("철수");
+            assertThat(result.getFirst().winner().nickname()).isEqualTo("철수");
         }
 
         @Test
@@ -200,9 +202,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).hasSize(5);
-            assertThat(result.getFirst().nickname()).isEqualTo("플레이어10");
+            assertThat(result.getFirst().winner().nickname()).isEqualTo("플레이어10");
             assertThat(result.getFirst().winCount()).isEqualTo(10);
-            assertThat(result.get(4).nickname()).isEqualTo("플레이어6");
+            assertThat(result.get(4).winner().nickname()).isEqualTo("플레이어6");
             assertThat(result.get(4).winCount()).isEqualTo(6);
         }
     }
@@ -268,9 +270,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.03);
-            assertThat(result.players())
-                    .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
-                    .containsExactlyInAnyOrder("영희", "민수");
+            assertThat(result.players()).extracting(RankedMember::nickname).containsExactlyInAnyOrder("영희", "민수");
         }
 
         @Test
@@ -320,9 +320,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.03);
-            assertThat(result.players())
-                    .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
-                    .containsExactly("민수");
+            assertThat(result.players()).extracting(RankedMember::nickname).containsExactly("민수");
         }
 
         @Test
@@ -345,7 +343,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.probability()).isEqualTo(0.30);
                 softly.assertThat(result.players())
-                        .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
+                        .extracting(RankedMember::nickname)
                         .containsExactly("철수");
             });
         }
@@ -461,10 +459,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(3);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("민수");
                 softly.assertThat(result.get(0).bestSurvivalMillis()).isEqualTo(70_000L);
-                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
-                softly.assertThat(result.get(2).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(1).player().playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(2).player().playerName()).isEqualTo("철수");
             });
         }
 
@@ -503,10 +501,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(3);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("철수");
                 softly.assertThat(result.get(0).maxFloor()).isEqualTo(30L);
-                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
-                softly.assertThat(result.get(2).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(1).player().playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(2).player().playerName()).isEqualTo("민수");
             });
         }
 
@@ -563,7 +561,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("철수");
             });
         }
     }
@@ -593,9 +591,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(3);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("철수");
                 softly.assertThat(result.get(0).bestTime()).isEqualTo(1000L);
-                softly.assertThat(result.get(2).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(2).player().playerName()).isEqualTo("민수");
             });
         }
 
@@ -619,7 +617,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("완주자");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("완주자");
                 softly.assertThat(result.getFirst().bestTime()).isEqualTo(4000L);
             });
         }
@@ -690,7 +688,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("철수");
             });
         }
 
@@ -726,9 +724,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(2);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("철수");
                 softly.assertThat(result.get(0).bestErrorMillis()).isEqualTo(120L);
-                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(1).player().playerName()).isEqualTo("영희");
             });
         }
 
@@ -752,7 +750,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("정상");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("정상");
                 softly.assertThat(result.getFirst().bestErrorMillis()).isEqualTo(3000L);
             });
         }
@@ -777,7 +775,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         private static final String MASKED = "처리 중인 닉네임";
 
         @Test
-        void TOP5_당첨자에서_검열_전_닉네임을_가리고_당첨_횟수는_그대로_둔다() {
+        void TOP5_당첨자에서_검열_전_닉네임과_유저_코드를_가리고_당첨_횟수는_그대로_둔다() {
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK1"));
             final UserEntity 통과 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
             final UserEntity 미검열 = userJpaRepository.save(new UserEntity("XY4ZQ", "검열전닉"));
@@ -793,12 +791,12 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             assertThat(result)
                     .containsExactly(
-                            new TopWinnerResponse(MASKED, "XY4ZQ", 2L, true),
-                            new TopWinnerResponse("철수", "AB3CD", 1L, false));
+                            new TopWinnerResponse(new RankedMember(MASKED, null, true), 2L),
+                            new TopWinnerResponse(new RankedMember("철수", "AB3CD", false), 1L));
         }
 
         @Test
-        void 최저_확률_당첨자에서_판정이_PENDING인_닉네임을_가린다() {
+        void 최저_확률_당첨자에서_판정이_PENDING인_닉네임과_유저_코드를_가린다() {
             검열_행("보류닉", NicknameAuditStatus.PENDING);
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK2"));
             final UserEntity 통과 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
@@ -816,8 +814,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
                 softly.assertThat(result.probability()).isEqualTo(0.05);
                 softly.assertThat(result.players())
                         .containsExactlyInAnyOrder(
-                                new LowestProbabilityWinnerResponse.PlayerInfo("철수", "AB3CD", false),
-                                new LowestProbabilityWinnerResponse.PlayerInfo(MASKED, "XY4ZQ", true));
+                                new RankedMember("철수", "AB3CD", false), new RankedMember(MASKED, null, true));
             });
         }
 
@@ -829,8 +826,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             assertThat(result)
                     .containsExactly(
-                            new RacingGameTopPlayerResponse(MASKED, 1000L, true),
-                            new RacingGameTopPlayerResponse("철수", 2000L, false));
+                            new RacingGameTopPlayerResponse(new RankedPlayerName(MASKED, true), 1000L),
+                            new RacingGameTopPlayerResponse(new RankedPlayerName("철수", false), 2000L));
         }
 
         @Test
@@ -841,8 +838,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             assertThat(result)
                     .containsExactly(
-                            new BlockStackingTopPlayerResponse(MASKED, 30L, true),
-                            new BlockStackingTopPlayerResponse("철수", 20L, false));
+                            new BlockStackingTopPlayerResponse(new RankedPlayerName(MASKED, true), 30L),
+                            new BlockStackingTopPlayerResponse(new RankedPlayerName("철수", false), 20L));
         }
 
         @Test
@@ -853,8 +850,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             assertThat(result)
                     .containsExactly(
-                            new WormGameTopPlayerResponse(MASKED, 60_000L, true),
-                            new WormGameTopPlayerResponse("철수", 30_000L, false));
+                            new WormGameTopPlayerResponse(new RankedPlayerName(MASKED, true), 60_000L),
+                            new WormGameTopPlayerResponse(new RankedPlayerName("철수", false), 30_000L));
         }
 
         @Test
@@ -865,8 +862,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             assertThat(result)
                     .containsExactly(
-                            new SpeedTouchTopPlayerResponse(MASKED, 1000L, true),
-                            new SpeedTouchTopPlayerResponse("철수", 2000L, false));
+                            new SpeedTouchTopPlayerResponse(new RankedPlayerName(MASKED, true), 1000L),
+                            new SpeedTouchTopPlayerResponse(new RankedPlayerName("철수", false), 2000L));
         }
 
         @Test
@@ -877,8 +874,8 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             assertThat(result)
                     .containsExactly(
-                            new BlindTimerTopPlayerResponse(MASKED, 100L, true),
-                            new BlindTimerTopPlayerResponse("철수", 200L, false));
+                            new BlindTimerTopPlayerResponse(new RankedPlayerName(MASKED, true), 100L),
+                            new BlindTimerTopPlayerResponse(new RankedPlayerName("철수", false), 200L));
         }
 
         /** 검열 행이 없는 "검열전닉"이 1등 기록, 검열을 통과한 "철수"가 2등 기록을 낸다. */

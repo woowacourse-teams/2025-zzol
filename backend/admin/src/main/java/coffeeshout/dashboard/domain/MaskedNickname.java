@@ -1,5 +1,7 @@
 package coffeeshout.dashboard.domain;
 
+import java.util.Set;
+
 /**
  * 검열을 통과하지 않은 랭킹 닉네임 자리에 원문 대신 내보내는 문구다(#1906).
  *
@@ -10,4 +12,8 @@ public final class MaskedNickname {
     public static final String TEXT = "처리 중인 닉네임";
 
     private MaskedNickname() {}
+
+    static boolean isRevealable(String nickname, Set<String> revealable) {
+        return nickname != null && revealable.contains(nickname);
+    }
 }

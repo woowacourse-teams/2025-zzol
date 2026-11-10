@@ -96,7 +96,7 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
                 "/dashboard/speed-touch-top-players",
                 "/dashboard/blind-timer-top-players"
             })
-    void 닉네임을_내보내는_엔드포인트는_검열_전_닉네임의_원문을_싣지_않는다(String endpoint) throws Exception {
+    void 닉네임을_내보내는_엔드포인트는_검열_전_닉네임의_원문과_유저_코드를_싣지_않는다(String endpoint) throws Exception {
         final String body = mockMvc.perform(get(endpoint))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -108,6 +108,10 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
                     .doesNotContain(ORIGINAL)
                     .contains("처리 중인 닉네임")
                     .contains("\"masked\":true");
+            // 유저 코드가 남으면 응답만 보고도 가린 닉네임이 누구인지 알 수 있다.
+            softly.assertThat(body).doesNotContain("AB3CD");
+            // 이름 VO는 펼쳐서 내보낸다. 감싼 객체로 나가면 기존 프론트가 닉네임을 못 읽는다.
+            softly.assertThat(body).doesNotContain("\"player\":", "\"winner\":");
             // 등록은 닉네임을 저장할 때 한다. 공개 GET은 검열 테이블에 쓰지 않는다.
             softly.assertThat(nicknameAuditJpaRepository.findAllByNicknameIn(List.of(ORIGINAL)))
                     .isEmpty();

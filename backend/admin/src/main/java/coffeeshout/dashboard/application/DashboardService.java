@@ -4,7 +4,11 @@ import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.MemberScore;
+import coffeeshout.dashboard.domain.PlayerScore;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.RankedMember;
+import coffeeshout.dashboard.domain.RankedPlayerName;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
@@ -15,8 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
+import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,103 +36,81 @@ public class DashboardService {
     private final Clock clock;
 
     public List<TopWinnerResponse> getTop5Winners() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return maskUnaudited(
-                dashboardStatisticsRepository.findTopWinnersBetween(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT),
-                TopWinnerResponse::nickname,
-                TopWinnerResponse::mask);
+        return rankMembers(
+                dashboardStatisticsRepository.findTopWinnersBetween(
+                        getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT),
+                TopWinnerResponse::new);
     }
 
     public LowestProbabilityWinnerResponse getLowestProbabilityWinner() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return dashboardStatisticsRepository
-                .findLowestProbabilityWinner(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT)
-                .map(winner -> new LowestProbabilityWinnerResponse(
-                        winner.probability(),
-                        maskUnaudited(
-                                winner.players(),
-                                LowestProbabilityWinnerResponse.PlayerInfo::nickname,
-                                LowestProbabilityWinnerResponse.PlayerInfo::mask)))
-                .orElse(LowestProbabilityWinnerResponse.empty());
+        final List<MemberScore> winners = dashboardStatisticsRepository.findLowestProbabilityWinners(
+                getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT);
+        if (winners.isEmpty()) {
+            return LowestProbabilityWinnerResponse.empty();
+        }
+        return LowestProbabilityWinnerResponse.of(
+                winners.getFirst().score(), rankMembers(winners, (member, probability) -> member));
     }
 
     public List<GamePlayCountResponse> getGamePlayCounts() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return dashboardStatisticsRepository.findGamePlayCountByMonth(startOfMonth, endOfMonth);
+        return dashboardStatisticsRepository.findGamePlayCountByMonth(getStartOfMonth(), getEndOfMonth());
     }
 
     public List<RacingGameTopPlayerResponse> getRacingGameTopPlayers() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return maskUnaudited(
-                dashboardStatisticsRepository.findRacingGameTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT),
-                RacingGameTopPlayerResponse::playerName,
-                RacingGameTopPlayerResponse::mask);
+        return rankPlayers(
+                dashboardStatisticsRepository.findRacingGameTopPlayers(
+                        getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT),
+                RacingGameTopPlayerResponse::new);
     }
 
     public List<BlockStackingTopPlayerResponse> getBlockStackingTopPlayers() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return maskUnaudited(
-                dashboardStatisticsRepository.findBlockStackingTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT),
-                BlockStackingTopPlayerResponse::playerName,
-                BlockStackingTopPlayerResponse::mask);
+        return rankPlayers(
+                dashboardStatisticsRepository.findBlockStackingTopPlayers(
+                        getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT),
+                BlockStackingTopPlayerResponse::new);
     }
 
     public List<WormGameTopPlayerResponse> getWormGameTopPlayers() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return maskUnaudited(
-                dashboardStatisticsRepository.findWormGameTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT),
-                WormGameTopPlayerResponse::playerName,
-                WormGameTopPlayerResponse::mask);
+        return rankPlayers(
+                dashboardStatisticsRepository.findWormGameTopPlayers(
+                        getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT),
+                WormGameTopPlayerResponse::new);
     }
 
     public List<SpeedTouchTopPlayerResponse> getSpeedTouchTopPlayers() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return maskUnaudited(
-                dashboardStatisticsRepository.findSpeedTouchTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT),
-                SpeedTouchTopPlayerResponse::playerName,
-                SpeedTouchTopPlayerResponse::mask);
+        return rankPlayers(
+                dashboardStatisticsRepository.findSpeedTouchTopPlayers(
+                        getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT),
+                SpeedTouchTopPlayerResponse::new);
     }
 
     public List<BlindTimerTopPlayerResponse> getBlindTimerTopPlayers() {
-        final LocalDateTime startOfMonth = getStartOfMonth();
-        final LocalDateTime endOfMonth = getEndOfMonth();
-
-        return maskUnaudited(
-                dashboardStatisticsRepository.findBlindTimerTopPlayers(startOfMonth, endOfMonth, TOP_PLAYER_LIMIT),
-                BlindTimerTopPlayerResponse::playerName,
-                BlindTimerTopPlayerResponse::mask);
+        return rankPlayers(
+                dashboardStatisticsRepository.findBlindTimerTopPlayers(
+                        getStartOfMonth(), getEndOfMonth(), TOP_PLAYER_LIMIT),
+                BlindTimerTopPlayerResponse::new);
     }
 
     /**
      * 순위와 기록은 바로 보여 주고, 검열을 통과하지 않은 닉네임만 가린다(#1906).
      *
      * <p>랭킹 쿼리에 검열 테이블을 JOIN하지 않는다. 쿼리는 튜닝돼 있고, 검열 상태는 조회된 몇 건의 닉네임만
-     * 따로 읽으면 된다.
+     * 따로 읽으면 된다. 응답은 원문 대신 {@link RankedPlayerName}·{@link RankedMember}를 받으므로 가림을 건너뛸 수 없다.
      */
-    private <T> List<T> maskUnaudited(List<T> rows, Function<T, String> nickname, UnaryOperator<T> mask) {
+    private <T> List<T> rankPlayers(List<PlayerScore> rows, BiFunction<RankedPlayerName, Long, T> toResponse) {
         final Set<String> revealable = nicknameExposureService.findRevealable(
-                rows.stream().map(nickname).toList());
+                rows.stream().map(PlayerScore::playerName).toList());
         return rows.stream()
-                .map(row -> isRevealable(revealable, nickname.apply(row)) ? row : mask.apply(row))
+                .map(row -> toResponse.apply(RankedPlayerName.of(row.playerName(), revealable), row.score()))
                 .toList();
     }
 
-    private boolean isRevealable(Set<String> revealable, String nickname) {
-        return nickname != null && revealable.contains(nickname);
+    private <T> List<T> rankMembers(List<MemberScore> rows, BiFunction<RankedMember, Long, T> toResponse) {
+        final Set<String> revealable = nicknameExposureService.findRevealable(
+                rows.stream().map(MemberScore::nickname).toList());
+        return rows.stream()
+                .map(row -> toResponse.apply(RankedMember.of(row.nickname(), row.userCode(), revealable), row.score()))
+                .toList();
     }
 
     private LocalDateTime getStartOfMonth() {

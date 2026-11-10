@@ -7,9 +7,10 @@ type Props = {
   name: string;
   count: number;
   unit?: string;
+  masked?: boolean;
 };
 
-const RankingItem = ({ rank, name, count, unit = '회' }: Props) => {
+const RankingItem = ({ rank, name, count, unit = '회', masked = false }: Props) => {
   const getRankTextColor = (rank: number): ColorKey => (rank <= 3 ? 'white' : 'gray-900');
 
   return (
@@ -18,7 +19,7 @@ const RankingItem = ({ rank, name, count, unit = '회' }: Props) => {
         <Headline4 color={getRankTextColor(rank)}>{rank}</Headline4>
       </S.RankNumber>
       <S.Content>
-        <Headline4>{name}</Headline4>
+        <Headline4 color={masked ? 'gray-400' : undefined}>{name}</Headline4>
         <Headline4>
           {count}
           {unit}

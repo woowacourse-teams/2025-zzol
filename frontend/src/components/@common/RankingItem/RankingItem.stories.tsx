@@ -35,6 +35,10 @@ const meta: Meta<typeof RankingItem> = {
       control: { type: 'range', min: 1, max: 100, step: 1 },
       description: '횟수',
     },
+    masked: {
+      control: 'boolean',
+      description: '검열 전 닉네임이라 서버가 가린 행',
+    },
   },
   args: {
     rank: 1,
@@ -47,6 +51,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const Masked: Story = {
+  args: {
+    name: '가려진 닉네임',
+    masked: true,
+  },
+};
 
 export const MultipleRanks: Story = {
   render: () => (

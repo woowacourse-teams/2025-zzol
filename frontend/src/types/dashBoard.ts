@@ -2,10 +2,12 @@ export type TopWinner = {
   nickname: string;
   userCode: string;
   winCount: number;
+  /** 검열 전 닉네임이라 서버가 원문 대신 고정 문구를 보냈다(#1906). 배포 순서와 무관하게 읽도록 선택값으로 둔다. */
+  masked?: boolean;
 };
 
 export type LowestProbabilityWinner = {
-  players: { nickname: string; userCode: string }[];
+  players: { nickname: string; userCode: string; masked?: boolean }[];
   probability: number;
 };
 
@@ -16,26 +18,31 @@ export type GamePlayCount = {
 
 export type BlockStackingTopPlayer = {
   playerName: string;
+  masked?: boolean;
   maxFloor: number;
 };
 
 export type RacingGameTopPlayer = {
   playerName: string;
+  masked?: boolean;
   bestTime: number;
 };
 
 export type BlindTimerTopPlayer = {
   playerName: string;
+  masked?: boolean;
   bestErrorMillis: number;
 };
 
 export type SpeedTouchTopPlayer = {
   playerName: string;
+  masked?: boolean;
   bestTime: number;
 };
 
 export type WormGameTopPlayer = {
   playerName: string;
+  masked?: boolean;
   /** 최장 생존 시간(ms) */
   bestSurvivalMillis: number;
 };

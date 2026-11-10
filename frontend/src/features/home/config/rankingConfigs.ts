@@ -27,6 +27,7 @@ export type RankingItem = {
   name: string;
   count: number;
   unit?: string;
+  masked?: boolean;
 };
 
 export type RankingCategory = {
@@ -49,6 +50,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
       (raw as BlockStackingTopPlayer[]).map((p, i) => ({
         rank: i + 1,
         name: p.playerName,
+        masked: p.masked ?? false,
         count: p.maxFloor,
         unit: '층',
       })),
@@ -63,6 +65,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
       (raw as RacingGameTopPlayer[]).map((p, i) => ({
         rank: i + 1,
         name: p.playerName,
+        masked: p.masked ?? false,
         count: millisToSeconds(p.bestTime),
         unit: '초',
       })),
@@ -77,6 +80,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
       (raw as BlindTimerTopPlayer[]).map((p, i) => ({
         rank: i + 1,
         name: p.playerName,
+        masked: p.masked ?? false,
         count: millisToSeconds(p.bestErrorMillis),
         unit: '초',
       })),
@@ -91,6 +95,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
       (raw as SpeedTouchTopPlayer[]).map((p, i) => ({
         rank: i + 1,
         name: p.playerName,
+        masked: p.masked ?? false,
         count: millisToSeconds(p.bestTime),
         unit: '초',
       })),
@@ -105,6 +110,7 @@ export const RANKING_CATEGORIES: RankingCategory[] = [
       (raw as WormGameTopPlayer[]).map((p, i) => ({
         rank: i + 1,
         name: p.playerName,
+        masked: p.masked ?? false,
         count: millisToSeconds(p.bestSurvivalMillis),
         unit: '초',
       })),

@@ -73,10 +73,12 @@ WHERE status = 'DEAD_LETTER';
 
 ## 설정
 
-`app/src/main/resources/config/service.yml`의 `nickname-audit` 블록이 모델 `gemini-3.5-flash`와 `flagged-threshold`, `batch-size`, `feedback-injection-threshold`, `min-term-length`, `max-run-duration`, `max-attempts`, `request-timeout`, `cron`을 든다. `NicknameAuditProperties`가 바인딩한다.
+`app/src/main/resources/config/service.yml`의 `nickname-audit` 블록이 모델 `gemini-3.5-flash-lite`와 `flagged-threshold`, `batch-size`, `feedback-injection-threshold`, `min-term-length`, `max-run-duration`, `max-attempts`, `daily-call-limit`, `request-timeout`, `cron`을 든다. `NicknameAuditProperties`가 바인딩한다.
 
 Gemini 호출의 재시도와 속도 제한은 `config/resilience4j.yml`의 `geminiAudit` 인스턴스가 정한다. retry는 지수 백오프, ratelimiter는 13초에 1회다.
 
+하루 총량은 `daily-call-limit`이 막는다(#1907). `RedisNicknameAuditCallBudget`이 태평양 시간 날짜별 Valkey 카운터로 Gemini 요청을 세고, 상한에 닿으면 `GeminiNicknameAuditor`가 요청을 보내지 않는다. 그 회차는 거기서 끝나고 남은 행은 시도 횟수가 오르지 않은 채 UNAUDITED로 남는다. SDK 내부 재시도는 꺼 두어 호출 한 번이 HTTP 요청 한 번이다.
+
 ## 메트릭
 
-`nickname.audit.*` 메트릭으로 Gemini 호출 시간, 파싱 실패, `status` 태그별 판정 분포, skip된 배치, DEAD_LETTER 전환, UNAUDITED 적체량을 낸다. 이름의 출처는 `ProfanityAuditService`·`ProfanityAuditBatchProcessor`의 등록 코드다.
+`nickname.audit.*` 메트릭으로 Gemini 호출 시간, 파싱 실패, `status` 태그별 판정 분포, skip된 배치, DEAD_LETTER 전환, UNAUDITED 적체량, 하루 호출 상한에 막힌 호출 수를 낸다. 이름의 출처는 `ProfanityAuditService`·`ProfanityAuditBatchProcessor`·`GeminiNicknameAuditor`의 등록 코드다.

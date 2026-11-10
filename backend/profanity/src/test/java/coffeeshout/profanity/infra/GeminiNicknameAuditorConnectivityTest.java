@@ -41,6 +41,7 @@ class GeminiNicknameAuditorConnectivityTest {
                 PROPERTIES,
                 feedbackRepository,
                 new NicknameAuditPromptTemplate(objectMapper),
+                () -> true,
                 new SimpleMeterRegistry());
     }
 

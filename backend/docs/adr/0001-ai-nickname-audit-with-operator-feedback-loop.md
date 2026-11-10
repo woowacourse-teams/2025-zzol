@@ -3,6 +3,7 @@
 - 날짜: 2026-03-21
 - 상태: 적용됨 (2026-04-30 범위 확장)
 - 2026-10-01 갱신: `BadWordFiltering`·`custom_profanity` 는 [ADR-0018](0018-profanity-module-extraction.md)로 제거돼 `profanity_word` 테이블로 일원화됐다. 검열 코드와 테이블은 `backend/profanity/` 에 있다.
+- 2026-11-10 갱신(#1907): 검열 주기를 12시간에서 5분으로 줄이고 모델을 `gemini-3.5-flash-lite`로 바꿨다. 본문의 "Gemini 2.5 Flash", "RPM 5", "12시간"은 결정 당시 기록이다. 주기를 줄이면 분당 속도 제한 안에서도 하루 한도를 넘길 수 있어서, 하루 호출 상한 `nickname-audit.daily-call-limit`(기본 400)을 Valkey 카운터로 두고 SDK 내부 재시도를 껐다. 상한에 닿은 날의 미검열 행은 시도 횟수가 오르지 않은 채 다음 날을 기다린다. 무료 티어 하루 한도 500은 공식 문서가 아니라 포럼의 429 응답과 AI Studio 화면 보고에서 온 값이다. flash와 flash-lite의 판정 품질은 아직 골든셋으로 비교하지 않았다.
 
 ## 컨텍스트
 

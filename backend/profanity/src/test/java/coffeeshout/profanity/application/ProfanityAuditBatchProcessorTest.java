@@ -1,5 +1,6 @@
 package coffeeshout.profanity.application;
 
+import static coffeeshout.support.ExceptionAssertions.assertCoffeeShoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -477,6 +478,35 @@ class ProfanityAuditBatchProcessorTest {
             then(auditRepository).should(never()).incrementAttemptCount(any());
         }
 
+        /**
+         * 하루 호출 상한은 배치 탓도 Gemini 탓도 아니다. 다른 호출 실패처럼 삼키면 드레인 루프가 남은 페이지마다
+         * 같은 거절을 되풀이하고, 시도 횟수를 올리면 멀쩡한 닉네임이 상한 때문에 DEAD_LETTER로 내려간다(#1907).
+         */
+        @Test
+        void 하루_호출_상한에_막히면_시도_횟수를_올리지_않고_회차가_멈추게_그대로_올린다() {
+            final NicknameAudit entity = new NicknameAudit("멀쩡닉네임");
+            given(nicknameAuditor.audit(anyList()))
+                    .willThrow(new InfrastructureException(
+                            NicknameAuditErrorCode.AI_DAILY_CALL_LIMIT_REACHED, "닉네임 검열 AI 하루 호출 상한에 닿았습니다."));
+
+            assertCoffeeShoutException(
+                    () -> processor.process(List.of(entity)), NicknameAuditErrorCode.AI_DAILY_CALL_LIMIT_REACHED);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(entity.getStatus()).isEqualTo(NicknameAuditStatus.UNAUDITED);
+                softly.assertThat(entity.getAttemptCount()).isZero();
+                softly.assertThat(meterRegistry
+                                .get("nickname.audit.batch.skipped")
+                                .counter()
+                                .count())
+                        .as("상한에 막힌 회차는 검열 호출 실패가 아니다. 세면 실패 알림과 섞인다.")
+                        .isZero();
+            });
+            then(auditRepository).should(never()).incrementAttemptCount(any());
+            then(auditRepository).should(never()).markDeadLetterAtAttemptLimit(any(), eq(MAX_ATTEMPTS));
+            then(auditRepository).should(never()).bulkUpdateAuditResults(any());
+        }
+
         @Test
         void 상한에_닿아_DEAD_LETTER로_내려간_행은_처리_건수로_보고한다() {
             // DEAD_LETTER는 UNAUDITED 스캔에서 빠진다. 0을 돌려주면 드레인 루프의 페이지 커서가
@@ -656,9 +686,10 @@ class ProfanityAuditBatchProcessorTest {
             processor.process(List.of(entity));
 
             final SoftAssertions softly = new SoftAssertions();
-            List.of("audit", "settle", "block").forEach(phase -> softly.assertThat(구간_호출수(phase))
-                    .as("%s 구간이 안 잡히면 회차 로그가 그 구간을 0으로 보고한다.", phase)
-                    .isPositive());
+            List.of("audit", "settle", "block")
+                    .forEach(phase -> softly.assertThat(구간_호출수(phase))
+                            .as("%s 구간이 안 잡히면 회차 로그가 그 구간을 0으로 보고한다.", phase)
+                            .isPositive());
             softly.assertAll();
         }
 

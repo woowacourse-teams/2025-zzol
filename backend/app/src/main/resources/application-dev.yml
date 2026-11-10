@@ -28,8 +28,9 @@ room:
     prefix: "https://dev.zzol.site/join/"
 
 nickname-audit:
-  # dev 는 flash-lite 를 쓴다. Gemini 요청 한도는 모델별로 세므로 prod 의 flash 와 쿼터가 갈린다.
-  model: gemini-3.5-flash-lite
+  # prod 와 같은 flash-lite 를 쓴다(#1907). Gemini 요청 한도는 프로젝트의 모델별로 세므로, 두 환경이 같은
+  # 프로젝트 키를 쓰면 하루 한도를 나눠 쓴다. dev 상한을 낮게 잡아 두 환경의 합(400 + 50)이 한도 아래에 있게 한다.
+  daily-call-limit: 50
 
 websocket:
   docs:

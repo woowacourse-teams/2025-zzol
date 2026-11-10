@@ -93,6 +93,11 @@ public class ProfanityAuditBatchProcessor {
         try {
             results = auditPhaseTimer.record(() -> nicknameAuditor.audit(nicknames));
         } catch (RuntimeException e) {
+            if (isDailyCallLimitReached(e)) {
+                // 배치 탓이 아니고 내일까지 풀리지도 않는다. 삼키면 드레인 루프가 남은 페이지마다 같은 거절을
+                // 되풀이하므로, 회차가 여기서 끝나게 그대로 올린다(#1907).
+                throw e;
+            }
             // 파싱 실패·빈 응답은 InfrastructureException이고 resilience4j ignore 목록이라
             // (resilience4j.yml의 geminiAudit.ignore-exceptions) 재시도 없이 여기까지 올라온다.
             // 잡지 않으면 배치 하나가 회차를 끝내고 남은 적체가 통째로 다음 회차까지 밀린다.
@@ -134,6 +139,11 @@ public class ProfanityAuditBatchProcessor {
     private static boolean isDeterministicFailure(RuntimeException e) {
         return e instanceof CoffeeShoutException exception
                 && DETERMINISTIC_AUDIT_FAILURES.contains(exception.getErrorCode());
+    }
+
+    static boolean isDailyCallLimitReached(RuntimeException e) {
+        return e instanceof CoffeeShoutException exception
+                && exception.getErrorCode() == NicknameAuditErrorCode.AI_DAILY_CALL_LIMIT_REACHED;
     }
 
     /**

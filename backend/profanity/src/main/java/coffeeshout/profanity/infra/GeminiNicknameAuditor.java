@@ -1,6 +1,7 @@
 package coffeeshout.profanity.infra;
 
 import coffeeshout.global.exception.custom.InfrastructureException;
+import coffeeshout.profanity.application.port.NicknameAuditCallBudget;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.audit.AiConfidence;
@@ -68,9 +69,11 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     private final NicknameAuditProperties properties;
     private final NicknameFeedbackRepository feedbackRepository;
     private final NicknameAuditPromptTemplate promptTemplate;
+    private final NicknameAuditCallBudget callBudget;
     private final Timer apiCallTimer;
     private final Counter parseFailureCounter;
     private final Counter itemParseFailureCounter;
+    private final Counter dailyLimitRejectedCounter;
 
     public GeminiNicknameAuditor(
             @Qualifier("nicknameAuditClient") Client geminiClient,
@@ -78,12 +81,14 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
             NicknameAuditProperties properties,
             NicknameFeedbackRepository feedbackRepository,
             NicknameAuditPromptTemplate promptTemplate,
+            NicknameAuditCallBudget callBudget,
             MeterRegistry meterRegistry) {
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
         this.properties = properties;
         this.feedbackRepository = feedbackRepository;
         this.promptTemplate = promptTemplate;
+        this.callBudget = callBudget;
         this.apiCallTimer = Timer.builder("nickname.audit.gemini.call.duration")
                 .description("Gemini API 호출 소요 시간")
                 .register(meterRegistry);
@@ -93,6 +98,9 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
         this.itemParseFailureCounter = Counter.builder("nickname.audit.gemini.item.parse.failures")
                 .description("Gemini 응답 항목 단위 파싱 실패 횟수")
                 .register(meterRegistry);
+        this.dailyLimitRejectedCounter = Counter.builder("nickname.audit.gemini.daily.limit.rejected")
+                .description("하루 호출 상한에 막혀 Gemini로 나가지 않은 호출 수")
+                .register(meterRegistry);
     }
 
     @Override
@@ -100,6 +108,9 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
     @RateLimiter(name = "geminiAudit")
     public List<NicknameAuditResult> audit(List<String> nicknames) {
         final String userMessage = buildUserMessage(nicknames);
+        // 재시도 애스펙트 안쪽이라 재시도로 다시 들어온 호출도 센다. 프롬프트 조립 뒤에 두는 이유는
+        // 거기서 실패한 호출은 Gemini까지 가지 않아서다.
+        acquireDailyCall();
 
         final GenerateContentResponse response;
         try {
@@ -120,6 +131,15 @@ public class GeminiNicknameAuditor implements NicknameAuditor {
         }
 
         return parseResults(response.text(), nicknames);
+    }
+
+    private void acquireDailyCall() {
+        if (callBudget.tryAcquire()) {
+            return;
+        }
+        dailyLimitRejectedCounter.increment();
+        throw new InfrastructureException(
+                NicknameAuditErrorCode.AI_DAILY_CALL_LIMIT_REACHED, "닉네임 검열 AI 하루 호출 상한에 닿았습니다.");
     }
 
     private String buildUserMessage(List<String> nicknames) {

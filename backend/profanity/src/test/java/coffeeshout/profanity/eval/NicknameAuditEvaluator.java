@@ -1,13 +1,17 @@
 package coffeeshout.profanity.eval;
 
 import coffeeshout.profanity.domain.TextNormalizer;
+import coffeeshout.profanity.domain.audit.AiConfidence;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import coffeeshout.profanity.eval.GoldenItem.Expected;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,37 +37,44 @@ public class NicknameAuditEvaluator {
 
     public NicknameAuditEvaluation evaluate(
             List<GoldenItem> items, NicknameAuditor auditor, int batchSize, int repeats) {
+        final List<Duration> batchLatencies = new ArrayList<>();
         final List<Map<String, NicknameAuditResult>> runs = IntStream.range(0, repeats)
-                .mapToObj(i -> runOnce(items, auditor, batchSize))
+                .mapToObj(i -> runOnce(items, auditor, batchSize, batchLatencies))
                 .toList();
         final List<Judged> judged = items.stream()
                 .map(item -> new Judged(item, runs.getFirst().get(item.nickname())))
                 .toList();
-        final List<Judged> positives = filter(judged, j -> j.item().expected().isPositive());
+        // 판정을 못 받은 닉네임은 혼동행렬과 회차별 MISSING에만 남기고 비율 지표에서는 뺀다.
+        // 섞으면 호출이 전부 실패한 회차가 "오탐 0%, 미탐 100%"처럼 모델 성능으로 읽힌다
+        final List<Judged> answered = filter(judged, j -> j.predicted() != Predicted.MISSING);
+        final List<Judged> positives = filter(answered, j -> j.item().expected().isPositive());
 
         return new NicknameAuditEvaluation(
                 items.size(),
                 repeats,
-                scores(judged),
-                judged.stream()
+                batchSize,
+                runs.stream().map(run -> missingCount(items, run)).toList(),
+                batchLatencies,
+                scores(answered),
+                answered.stream()
                         .collect(Collectors.groupingBy(
                                 j -> j.item().category(),
                                 LinkedHashMap::new,
                                 Collectors.collectingAndThen(Collectors.toList(), this::scores))),
                 confusion(judged),
-                rate(
-                        filter(judged, j -> j.item().expected() == Expected.CLEAN),
-                        j -> j.predicted().isPositive()),
+                rate(filter(answered, j -> j.item().expected() == Expected.CLEAN), j -> j.predicted()
+                        .isPositive()),
                 rate(positives, j -> !j.predicted().isPositive()),
                 rate(
-                        filter(judged, j -> j.item().expected() == Expected.AMBIGUOUS),
+                        filter(answered, j -> j.item().expected() == Expected.AMBIGUOUS),
                         j -> j.predicted() == Predicted.PENDING),
                 rate(filter(positives, j -> j.predicted() == Predicted.FLAGGED), this::termsMatch),
                 instability(items, runs),
                 mismatches(judged));
     }
 
-    private Map<String, NicknameAuditResult> runOnce(List<GoldenItem> items, NicknameAuditor auditor, int batchSize) {
+    private Map<String, NicknameAuditResult> runOnce(
+            List<GoldenItem> items, NicknameAuditor auditor, int batchSize, List<Duration> batchLatencies) {
         final List<String> nicknames = items.stream().map(GoldenItem::nickname).toList();
         final Map<String, NicknameAuditResult> byNickname = new HashMap<>();
         for (int from = 0; from < nicknames.size(); from += batchSize) {
@@ -71,7 +82,10 @@ public class NicknameAuditEvaluator {
             // 응답에 섞인 다른 배치 닉네임이 뒤 항목의 판정을 가로채지 않게 요청한 닉네임만 받는다
             // HashSet이라 모델이 nickname을 null로 돌려줘도 contains가 터지지 않는다
             final Set<String> requested = new HashSet<>(batch);
-            auditBatch(auditor, batch).stream()
+            final long startedAt = System.nanoTime();
+            final List<NicknameAuditResult> results = auditBatch(auditor, batch);
+            batchLatencies.add(Duration.ofNanos(System.nanoTime() - startedAt));
+            results.stream()
                     .filter(result -> requested.contains(result.nickname()))
                     .forEach(result -> byNickname.putIfAbsent(result.nickname(), result));
         }
@@ -122,18 +136,25 @@ public class NicknameAuditEvaluator {
         return actual.equals(expected);
     }
 
+    private static int missingCount(List<GoldenItem> items, Map<String, NicknameAuditResult> run) {
+        return Math.toIntExact(items.stream()
+                .filter(item -> predict(run.get(item.nickname())) == Predicted.MISSING)
+                .count());
+    }
+
+    /** 판정을 두 회차 이상 받은 닉네임만 잰다. 호출 실패로 빈 회차를 판정 변화로 세지 않는다. */
     private Rate instability(List<GoldenItem> items, List<Map<String, NicknameAuditResult>> runs) {
-        if (runs.size() < 2) {
-            return new Rate(0, 0);
-        }
-        final long changed = items.stream()
-                .filter(item -> runs.stream()
-                                .map(run -> predict(run.get(item.nickname())))
-                                .distinct()
-                                .count()
-                        > 1)
+        final List<List<Predicted>> comparable = items.stream()
+                .map(item -> runs.stream()
+                        .map(run -> predict(run.get(item.nickname())))
+                        .filter(predicted -> predicted != Predicted.MISSING)
+                        .toList())
+                .filter(predictions -> predictions.size() >= 2)
+                .toList();
+        final long changed = comparable.stream()
+                .filter(predictions -> predictions.stream().distinct().count() > 1)
                 .count();
-        return new Rate(Math.toIntExact(changed), items.size());
+        return new Rate(Math.toIntExact(changed), comparable.size());
     }
 
     private List<Mismatch> mismatches(List<Judged> judged) {
@@ -158,6 +179,10 @@ public class NicknameAuditEvaluator {
 
     private static Predicted predict(NicknameAuditResult result) {
         if (result == null) {
+            return Predicted.MISSING;
+        }
+        // 운영 검열기가 응답에서 빠지거나 짝을 못 찾은 닉네임을 메울 때 쓰는 값이다. 모델이 보류한 게 아니다
+        if (result.status() == NicknameAuditStatus.PENDING && AiConfidence.UNKNOWN.equals(result.confidence())) {
             return Predicted.MISSING;
         }
         return switch (result.status()) {

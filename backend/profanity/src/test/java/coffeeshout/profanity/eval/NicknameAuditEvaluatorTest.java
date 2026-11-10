@@ -76,9 +76,9 @@ class NicknameAuditEvaluatorTest {
         private final NicknameAuditEvaluation 결과 = evaluator.evaluate(항목, 검열기, 100, 1);
 
         @Test
-        void 경계를_뺀_정답으로_정밀도와_재현율을_잰다() {
+        void 경계와_MISSING을_뺀_정답으로_정밀도와_재현율을_잰다() {
             assertThat(결과.overall())
-                    .isEqualTo(new Scores(new Rate(3, 5), new Rate(3, 5), new Rate(2, 3), new Rate(2, 5)));
+                    .isEqualTo(new Scores(new Rate(3, 5), new Rate(3, 4), new Rate(2, 3), new Rate(2, 4)));
         }
 
         @Test
@@ -86,7 +86,7 @@ class NicknameAuditEvaluatorTest {
             assertSoftly(softly -> {
                 softly.assertThat(결과.byCategory()).containsOnlyKeys("직접욕설", "초성", "특수문자삽입", "경계", "일반닉네임", "오탐유발정상어");
                 softly.assertThat(결과.byCategory().get("직접욕설"))
-                        .isEqualTo(new Scores(new Rate(2, 2), new Rate(2, 3), new Rate(2, 2), new Rate(2, 3)));
+                        .isEqualTo(new Scores(new Rate(2, 2), new Rate(2, 2), new Rate(2, 2), new Rate(2, 2)));
                 softly.assertThat(결과.byCategory().get("오탐유발정상어"))
                         .isEqualTo(new Scores(new Rate(0, 2), new Rate(0, 0), new Rate(0, 1), new Rate(0, 0)));
             });
@@ -111,10 +111,11 @@ class NicknameAuditEvaluatorTest {
         }
 
         @Test
-        void 오탐률_미탐률_경계_포착률을_잰다() {
+        void 오탐률_미탐률_경계_포착률은_판정을_받은_닉네임으로만_잰다() {
             assertSoftly(softly -> {
                 softly.assertThat(결과.cleanFalsePositive()).isEqualTo(new Rate(2, 3));
-                softly.assertThat(결과.positiveMiss()).isEqualTo(new Rate(2, 5));
+                // 판정을 못 받은 병신같다는 미탐이 아니라 분모에서 빠진다
+                softly.assertThat(결과.positiveMiss()).isEqualTo(new Rate(1, 4));
                 softly.assertThat(결과.ambiguousCapture()).isEqualTo(new Rate(1, 2));
             });
         }
@@ -144,6 +145,7 @@ class NicknameAuditEvaluatorTest {
             assertSoftly(softly -> {
                 softly.assertThat(리포트).contains("| 걸러냄 정밀도 (FLAGGED+PENDING) | 60.0% (3/5) |");
                 softly.assertThat(리포트).contains("| PROFANE | 0 | 2 | 0 | 1 |");
+                softly.assertThat(리포트).contains("| 회차별 MISSING | 1 |");
                 softly.assertThat(리포트).contains("| 시발점 | 오탐유발정상어 | CLEAN | FLAGGED | 사유 |");
             });
         }
@@ -162,6 +164,66 @@ class NicknameAuditEvaluatorTest {
         final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(경계("흔들리는닉"), 정상("고정닉", "일반닉네임")), 검열기, 100, 3);
 
         assertThat(결과.instability()).isEqualTo(new Rate(1, 2));
+    }
+
+    @Test
+    void 판정을_못_받은_회차는_흔들림_계산에서_뺀다() {
+        final AtomicInteger 호출 = new AtomicInteger();
+        // 둘째 회차는 호출이 실패하고, 셋째 회차는 첫 회차와 같은 판정을 준다
+        final NicknameAuditor 검열기 = nicknames -> {
+            if (호출.getAndIncrement() == 1) {
+                throw new IllegalStateException("할당량 초과");
+            }
+            return List.of(판정("고정닉", NicknameAuditStatus.CLEAN));
+        };
+
+        final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("고정닉", "일반닉네임")), 검열기, 100, 3);
+
+        assertSoftly(softly -> {
+            softly.assertThat(결과.instability()).isEqualTo(new Rate(0, 1));
+            softly.assertThat(결과.missingByRun()).containsExactly(0, 1, 0);
+        });
+    }
+
+    @Test
+    void 두_회차_넘게_판정을_받지_못한_닉네임은_흔들림_분모에서_뺀다() {
+        final AtomicInteger 호출 = new AtomicInteger();
+        final NicknameAuditor 검열기 = nicknames -> {
+            if (호출.getAndIncrement() > 0) {
+                throw new IllegalStateException("할당량 초과");
+            }
+            return List.of(판정("고정닉", NicknameAuditStatus.CLEAN));
+        };
+
+        final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("고정닉", "일반닉네임")), 검열기, 100, 3);
+
+        assertThat(결과.instability().toString()).isEqualTo("n/a");
+    }
+
+    @Test
+    void 검열기가_응답_누락을_메운_PENDING은_MISSING으로_센다() {
+        // 운영 검열기는 응답에서 빠진 닉네임을 신뢰도 UNKNOWN의 PENDING으로 메운다. 모델이 내린 판정이 아니다
+        final NicknameAuditor 검열기 = nicknames -> List.of(
+                new NicknameAuditResult("빠진닉", NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 항목 수 불일치"),
+                new NicknameAuditResult("애매닉", NicknameAuditStatus.PENDING, AiConfidence.of(0.6), "애매함"));
+
+        final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(경계("빠진닉"), 경계("애매닉")), 검열기, 100, 1);
+
+        assertThat(결과.confusion().get(Expected.AMBIGUOUS))
+                .containsEntry(Predicted.MISSING, 1)
+                .containsEntry(Predicted.PENDING, 1);
+    }
+
+    @Test
+    void 배치마다_걸린_시간을_남긴다() {
+        final NicknameAuditor 검열기 = nicknames ->
+                nicknames.stream().map(n -> 판정(n, NicknameAuditStatus.CLEAN)).toList();
+        final List<GoldenItem> 항목 = List.of(정상("첫째닉", "일반닉네임"), 정상("둘째닉", "일반닉네임"), 정상("셋째닉", "일반닉네임"));
+
+        final NicknameAuditEvaluation 결과 = evaluator.evaluate(항목, 검열기, 2, 2);
+
+        // 회차마다 배치 2개
+        assertThat(결과.batchLatencies()).hasSize(4);
     }
 
     @Test

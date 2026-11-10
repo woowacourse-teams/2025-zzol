@@ -1,6 +1,7 @@
 package coffeeshout.profanity.eval;
 
 import coffeeshout.profanity.eval.GoldenItem.Expected;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -8,18 +9,24 @@ import java.util.stream.Stream;
 
 /**
  * 골든셋 한 번 평가한 결과. 흔들림을 뺀 지표는 전부 첫 회차 판정으로 센다.
+ * 비율 지표는 판정을 받은 닉네임만 분모에 넣는다. 판정을 못 받은 건수는 {@code missingByRun}과 혼동행렬에서 본다.
  *
+ * @param missingByRun 회차마다 판정을 못 받은(MISSING) 닉네임 수
+ * @param batchLatencies 모든 회차의 배치 호출마다 걸린 시간. 호출 간격 대기와 SDK 재시도가 포함된다
  * @param confusion   정답 4종 × 판정 4종 건수
  * @param cleanFalsePositive 정상 닉네임을 걸러낸(FLAGGED 또는 PENDING) 비율
- * @param positiveMiss 욕설(PROFANE·EVASION)을 CLEAN으로 넘겼거나 판정을 못 받은 비율
+ * @param positiveMiss 욕설(PROFANE·EVASION)을 CLEAN으로 넘긴 비율
  * @param ambiguousCapture 경계 닉네임을 사람 확인(PENDING)으로 보낸 비율
  * @param termAccuracy 욕설을 FLAGGED로 잡은 건 중 채택된 조각이 정답 조각과 정규화 기준으로 같은 비율
- * @param instability  회차마다 판정이 달라진 닉네임 비율. 1회만 돌리면 n/a다
+ * @param instability  회차마다 판정이 달라진 닉네임 비율. 두 회차 이상 판정을 받은 닉네임만 센다
  * @param mismatches   이상적인 판정과 다른 닉네임. 욕설은 FLAGGED, 경계는 PENDING, 정상은 CLEAN이 이상적이다
  */
 public record NicknameAuditEvaluation(
         int itemCount,
         int repeats,
+        int batchSize,
+        List<Integer> missingByRun,
+        List<Duration> batchLatencies,
         Scores overall,
         Map<String, Scores> byCategory,
         Map<Expected, Map<Predicted, Integer>> confusion,
@@ -67,7 +74,8 @@ public record NicknameAuditEvaluation(
                 "# 닉네임 검열 골든셋 평가",
                 "",
                 "- 대상: " + subject,
-                "- 항목 %d건, %d회 반복. 흔들림을 뺀 지표는 첫 회차 기준이다".formatted(itemCount, repeats),
+                "- 항목 %d건, 배치 %d건, %d회 반복. 흔들림을 뺀 지표는 첫 회차 기준이다".formatted(itemCount, batchSize, repeats),
+                "- 비율 지표는 판정을 받은 닉네임만 센다. 판정을 못 받은 건수는 회차별 MISSING에 있다",
                 "",
                 summarySection(),
                 confusionSection(),
@@ -82,6 +90,9 @@ public record NicknameAuditEvaluation(
                 "",
                 "| 지표 | 값 |",
                 "| --- | --- |",
+                "| 회차별 MISSING | " + missingByRun.stream().map(String::valueOf).collect(Collectors.joining(" / "))
+                        + " |",
+                "| 배치 응답 시간 (평균 / 최대) | " + latencySummary() + " |",
                 "| 걸러냄 정밀도 (FLAGGED+PENDING) | " + overall.positivePrecision() + " |",
                 "| 걸러냄 재현율 (FLAGGED+PENDING) | " + overall.positiveRecall() + " |",
                 "| 자동 차단 정밀도 (FLAGGED) | " + overall.blockPrecision() + " |",
@@ -92,6 +103,15 @@ public record NicknameAuditEvaluation(
                 "| 조각 정확도 | " + termAccuracy + " |",
                 "| 판정 흔들림 | " + instability + " |",
                 "");
+    }
+
+    private String latencySummary() {
+        if (batchLatencies.isEmpty()) {
+            return "n/a";
+        }
+        final Duration total = batchLatencies.stream().reduce(Duration.ZERO, Duration::plus);
+        final Duration max = batchLatencies.stream().max(Duration::compareTo).orElseThrow();
+        return "%.1fs / %.1fs".formatted(total.toMillis() / 1000.0 / batchLatencies.size(), max.toMillis() / 1000.0);
     }
 
     private String confusionSection() {

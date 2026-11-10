@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import RankingNickname from '@/components/@common/RankingNickname/RankingNickname';
 import * as S from './LowestProbabilitySlide.styled';
 
-type Player = { nickname: string; userCode: string; masked?: boolean };
+type Player = { nickname: string; userCode: string | null; masked?: boolean };
 
 type Props = {
   players: Player[];
@@ -99,8 +99,8 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
               </S.WinnerRow>
             ) : (
               <S.MultiWinnerList>
-                {players.map((p) => (
-                  <S.WinnerRow key={p.userCode}>
+                {players.map((p, index) => (
+                  <S.WinnerRow key={p.userCode ?? `masked-${index}`}>
                     <S.WinnerName>
                       <RankingNickname masked={p.masked} tone="dark">
                         {p.nickname}

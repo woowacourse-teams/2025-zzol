@@ -1,13 +1,14 @@
 export type TopWinner = {
   nickname: string;
-  userCode: string;
+  /** 서버가 닉네임을 가린 행은 유저 코드도 비운다(#1906). */
+  userCode: string | null;
   winCount: number;
   /** 검열 전 닉네임이라 서버가 원문 대신 고정 문구를 보냈다(#1906). 배포 순서와 무관하게 읽도록 선택값으로 둔다. */
   masked?: boolean;
 };
 
 export type LowestProbabilityWinner = {
-  players: { nickname: string; userCode: string; masked?: boolean }[];
+  players: { nickname: string; userCode: string | null; masked?: boolean }[];
   probability: number;
 };
 

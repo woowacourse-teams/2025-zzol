@@ -28,7 +28,7 @@ room:
     prefix: "https://dev.zzol.site/join/"
 
 nickname-audit:
-  cron: "0 */30 * * * *"  # prod 와 Gemini 하루 한도를 나눠 쓸 수 있다. 둘 다 5분이면 하루 576회차로 한도(약 500)를 넘는다.
+  cron: "0 */30 * * * *"  # prod 와 Gemini 하루 한도(500회)를 나눠 쓴다. 둘 다 5분이면 하루 576회차로 한도를 넘는다.
 
 websocket:
   docs:

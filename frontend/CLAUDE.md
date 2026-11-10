@@ -9,7 +9,16 @@ npm run type-check   # tsc --noEmit
 npm run test:jest    # jest
 npm run storybook    # Storybook :6006
 npm run build-storybook   # @common/@composition 수정 시 PR 전 검증
+npm run generate:ws       # ws-openapi.json → wsOpenApi.d.ts (BE 계약이 바뀐 뒤)
 ```
+
+## WebSocket 계약은 BE 가 생성한 타입이 정한다
+
+`src/apis/websocket/generated/` 의 세 파일(`wsContract.ts`·`ws-openapi.json`·`wsOpenApi.d.ts`)은 손으로 고치지 않는다. destination 과 payload 타입은 BE 애노테이션과 record 에서 생성되고, 카탈로그에 없는 경로나 어긋난 필드는 `tsc` 가 잡는다. 필드가 필요하거나 타입이 틀렸다고 느껴지면 FE 에서 타입을 고치는 게 아니라 **BE PR 을 선행**한다.
+
+- 어떻게 쓰는가: `.claude/skills/ws-contract/`(생성 파일에서 destination 찾기, 훅 시그니처, 없는 경로 요청 절차)
+- 구조와 갱신 명령: `docs/architecture.md` "계약 타입"
+- 왜 이렇게 하는가: `docs/adr/20260915-ws-contract-generated-types.md`
 
 ## 문서
 
@@ -19,15 +28,32 @@ npm run build-storybook   # @common/@composition 수정 시 PR 전 검증
 | --- | --- |
 | `docs/architecture.md` | 라우팅, Provider 계층, 상태관리, WebSocket, REST API, 컴포넌트 계층, 빌드, 배포 |
 | `docs/adr/` | 설계 결정 기록 — 결정 근거·대안·영향 (ADR) |
-| `docs/block-stacking.md` | 블록 쌓기 미니게임 설계 |
-| `docs/seo-optimization.md` | SEO 최적화 작업 기록 |
-| `docs/api-design-menu-tab.md` | 메뉴 탭 API 설계 — 백엔드 협의용 (POST /reports, GET /patch-notes Request/Response 스펙) |
+| `docs/block-stacking.md` | 빌딩 쌓기 미니게임 구조 |
+| `docs/seo-optimization.md` | SEO 구성, 라우트별 정적 HTML·CloudFront 함수·메타태그 |
+| `docs/adr/20260915-ws-contract-generated-types.md` | WebSocket 계약을 BE 생성 타입으로 강제하는 결정이 FE 에 미치는 영향. 결정 본문은 `backend/docs/adr/0037` |
 
 ## .claude 리소스
 
 > 브랜치 전략·git push 안전·공통 스킬(`create-issue`·`create-pr`·`adr`)은 **모노레포 루트**로 통합됐다. 루트 [CLAUDE.md](../CLAUDE.md)·[.claude/rules/git-push-safety.md](../.claude/rules/git-push-safety.md)·[.claude/skills/](../.claude/skills/) 참조. 아래는 프론트 전용 리소스만 정리한다.
 
 `.claude/rules/`는 자동 로드되고(`paths` 범위가 있는 파일은 해당 경로 작업 시에만), `.claude/skills/`는 `paths`에 해당하는 파일 작업 시 proactive하게 적용한다.
+
+### Skills
+
+| 스킬 | 언제 뜨는가 | 설명 |
+| --- | --- | --- |
+| `ws-contract` | `src/apis/websocket/**`, `src/contexts/**`, `use*WebSocket*`·`use*Subscription*` 훅 | 구독·발행 코드를 쓰기 전에 생성 파일에서 destination 과 payload 를 확인한다. 없는 경로는 BE PR 을 선행한다 |
+| `api-conventions` | `src/features/**/hooks/**`, `src/features/**/pages/**`, `src/apis/**` | `useFetch`·`useLazyFetch`·`useMutation` 선택 기준과 `errorDisplayMode` 결정 기준 |
+| `minigame-structure` | `src/features/miniGame/**`, `src/contexts/*Game*/**` | 미니게임 디렉터리 구조, Context 위치, `GAME_CONFIGS` 등록 절차 |
+| `storybook-conventions` | `src/components/@common/**`, `src/components/@composition/**` | Story 파일 Meta 구조, argTypes, variant 커버리지 |
+| `style-check` | `**/*.styled.ts` | 저장 직후 hex 리터럴·z-index 숫자·타이포 하드코딩·인라인 스타일 검증 |
+| `frontend-design` | 컴포넌트를 새로 만들 때 요청으로 | 디자인 방향을 잡고 component + `.styled.ts` + Story 를 함께 만든다 |
+
+### Commands
+
+| 커맨드 | 설명 |
+| --- | --- |
+| `/style-audit [파일 ...] [--fix]` | 변경된 파일 전체를 대상으로 스타일 규칙 위반을 일괄 감사한다. `style-check`는 단일 파일 자동, 이쪽은 프로젝트 범위 |
 
 ### Agents
 
@@ -44,4 +70,4 @@ npm run build-storybook   # @common/@composition 수정 시 PR 전 검증
 | `/code-review` (내장 커맨드) | 범용 버그(정확성)·중복·단순화·효율, 일반 React/TS 정확성. effort·`ultra`(클라우드)·`--comment`·`--fix` 지원 | **사용자가 직접 입력** — Claude는 `Skill("code-review")`로 호출할 수 없다 |
 | `fe-code-reviewer` (에이전트) | zzol FE 고유 규칙·ADR 준수 (`/code-review`가 모르는 영역) | Agent 툴, `run_in_background: true` |
 
-실행 패턴: Claude는 `fe-code-reviewer`를 백그라운드로 띄워 FE 고유 규칙을 보고, 범용 버그 렌즈가 필요하면 `Skill("deep-review")`를 함께 돌린다. `/code-review`는 사용자가 직접 입력했을 때만 도는 커맨드이므로 Claude의 실행 계획에 넣지 않는다(근거: `backend/.claude/rules/agent-dispatch.md`). (자세한 분업은 `.claude/agents/fe-code-reviewer.md` "검토 범위" 참조)
+실행 패턴: Claude는 `fe-code-reviewer`를 백그라운드로 띄워 FE 고유 규칙을 보고, 범용 버그 렌즈가 필요하면 `Skill("deep-review")`를 함께 돌린다. `/code-review`는 사용자가 직접 입력했을 때만 도는 커맨드이므로 Claude의 실행 계획에 넣지 않는다(근거: `backend/.claude/rules/agent-dispatch.md`). (자세한 분업은 루트 `.claude/agents/fe-code-reviewer.md` "검토 범위" 참조)

@@ -40,15 +40,17 @@ hex 리터럴(`'#888'`, `'#fff'`)은 **위치 무관하게 금지**. JSX prop(`f
 
 | 그룹                                      | 키                      | 용도                 |
 | ----------------------------------------- | ----------------------- | -------------------- |
-| `theme.color.point.{50~500}`              | 브랜드 컬러 (레드 계열) | 주요 CTA, 강조       |
+| `theme.color.point.{50~500}`              | 브랜드 컬러, 레드 계열  | 주요 CTA, 강조. `#F53E41`은 `point[500]` |
 | `theme.color.gray.{50~950}`               | 그레이 스케일           | 배경, 텍스트, 구분선 |
 | `theme.color.white` / `theme.color.black` | 단색                    |                      |
 | `theme.color.yellow`                      | 옐로우                  |                      |
+| `theme.color.red` / `theme.color.blue`    | 순색 빨강·파랑          | 확률 증감 표시 등    |
+| `theme.color.status.{online,offline}`     | 접속 상태 점            | 친구 목록            |
 | `theme.color.oauth.{google,kakao,naver}`  | OAuth 버튼 전용         | 로그인 버튼만 사용   |
 
 ```ts
 // ✅
-background: ${({ theme }) => theme.color.point[400]};
+background: ${({ theme }) => theme.color.point[500]};
 color: ${({ theme }) => theme.color.white};
 
 // ❌
@@ -60,7 +62,7 @@ color: 'white';
 
 ```ts
 // ✅
-box-shadow: 0 4px 20px ${({ theme }) => theme.color.point[400]}59;  // 35% opacity
+box-shadow: 0 4px 20px ${({ theme }) => theme.color.point[500]}59;  // 35% opacity
 
 // ❌
 box-shadow: 0 4px 20px rgba(245, 62, 65, 0.35);
@@ -125,6 +127,7 @@ z-index: 1000;
 | `BACKDROP`             | 990  | 백드롭      |
 | `MODAL`                | 999  | 모달        |
 | `TOAST`                | 1000 | 토스트/배너 |
+| `RIPPLE_Effect`        | -1   | 버튼 리플 배경 |
 
 ---
 

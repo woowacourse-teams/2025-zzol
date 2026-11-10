@@ -39,12 +39,12 @@ cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/<bug_report|feature
 
 ## 3. 사용자 확인 (필수 — 이 단계를 건너뛰지 않는다)
 
-`gh issue create`를 실행하기 전에 **반드시** 사용자에게 아래 두 항목을 질문한다.
+`gh issue create`를 실행하기 전에 **반드시** 사용자에게 아래 세 항목을 질문한다.
 `$ARGUMENTS`에서 충분히 추론 가능한 항목이라도 확인 또는 보완을 요청한다.
 
 **질문 형식 (한 번에 같이 묻는다):**
 
-> 이슈를 생성하기 전에 두 가지를 확인할게요.
+> 이슈를 생성하기 전에 세 가지를 확인할게요.
 >
 > 1. **왜 지금 이걸 하는가?**
 >    (비즈니스 이유, ADR 연관, 다른 기능의 사전 조건, 긴급도 등)
@@ -58,7 +58,9 @@ cat "$(git rev-parse --show-toplevel)/.github/ISSUE_TEMPLATE/<bug_report|feature
 >    (`BE` / `FE` / 둘 다면 풀스택). 작업 설명에서 추론해 제안하되 확인받는다.
 >    _현재 파악한 내용: {$ARGUMENTS에서 추론한 영역 또는 "명확하지 않음"}_
 
-사용자 응답이 돌아온 뒤에만 다음 단계로 진행한다. 3번 답이 영역 라벨(`BE`/`FE`/둘 다)을 결정한다.
+응답이 오면 그 내용으로 다음 단계로 간다. 3번 답이 영역 라벨 `BE`·`FE`·둘 다 중 하나를 정한다.
+
+**응답이 없으면 멈추지 않는다.** 추론한 내용을 가정으로 삼아 진행하되, 이슈 본문의 해당 섹션 첫 줄에 `> 가정: …` 인용으로 적는다. 영역 라벨은 변경 경로로 판별한다. `admin-web/`은 `FE`다. 기본값의 근거는 [issue-workflow](../../rules/issue-workflow.md)의 "사용자 확인과 부재 시 기본값" 절이다.
 
 ## 4. 템플릿 채우기
 
@@ -116,7 +118,7 @@ fi
 git -C "$WT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1 && {
   echo "ABORT: upstream 이 남아있다 — 이 상태로 두면 push 가 dev 로 직행한다(#1404)"; exit 1; }
 
-# env 심볼릭 링크 + 워크트리 전용 포트 (#1660). 이게 없으면 워크트리에서 앱을 띄울 수 없고,
+# env 와 frontend/node_modules 심볼릭 링크 (#1660). 이게 없으면 워크트리에서 앱을 띄울 수 없고,
 # 프론트는 API_URL 이 undefined 인 채로 조용히 백엔드에 못 붙는다.
 bash "$MAIN/.claude/skills/create-issue/worktree-setup.sh" "$WT" || {
   echo "경고: 워크트리 준비 실패 — 로컬 실행 시 run-local 스킬의 1단계를 수동으로 돌린다"; }

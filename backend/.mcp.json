@@ -1,19 +1,12 @@
 {
   "mcpServers": {
-    "api": {
-      "command": "node",
-      "args": ["../tools/api-mcp/scripts/launch.mjs"],
-      "env": {
-        "API_MCP_CATALOG_URL": "http://localhost:8080/dev/ws-catalog"
-      }
-    },
     "grafana": {
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
         "-e", "GRAFANA_URL",
         "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
-        "grafana/mcp-grafana:1.4.2",
+        "grafana/mcp-grafana:1.6.1",
         "-t", "stdio",
         "--disable-write",
         "--enabled-tools", "datasource,prometheus,loki"

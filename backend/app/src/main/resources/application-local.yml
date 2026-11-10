@@ -70,6 +70,8 @@ admin:
     emails: ${ADMIN_EMAILS:admin@zzol.site}
     google-client-id: ${ADMIN_GOOGLE_CLIENT_ID:}
     token-validity-seconds: 3600
+    web-origins:
+      - http://localhost:5173
 
 security:
   ip-block:

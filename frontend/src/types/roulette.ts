@@ -1,4 +1,5 @@
 import { ColorList } from '@/constants/color';
+import type { WinnerResponse } from '@/apis/websocket/generated/wsContract';
 
 export type RouletteView = 'roulette' | 'statistics';
 
@@ -20,8 +21,4 @@ export type RouletteSector = {
   playerColor: ColorList;
 };
 
-export type RouletteWinnerResponse = {
-  playerName: string;
-  colorIndex: number;
-  randomAngle: number;
-};
+export type RouletteWinnerResponse = WinnerResponse;

@@ -1,7 +1,7 @@
 # 0019. NicknameAudit / NicknameFeedback — JPA 어노테이션을 가진 도메인 객체
 
 - 날짜: 2026-05-26
-- 상태: 승인
+- 상태: 적용됨
 
 ## 컨텍스트
 

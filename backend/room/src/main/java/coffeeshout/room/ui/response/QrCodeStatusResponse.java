@@ -1,7 +1,7 @@
 package coffeeshout.room.ui.response;
 
 import coffeeshout.room.domain.QrCodeStatus;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public record QrCodeStatusResponse(
         QrCodeStatus status, @Nullable String qrCodeUrl) {

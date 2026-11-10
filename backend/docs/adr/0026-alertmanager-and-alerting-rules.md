@@ -1,7 +1,8 @@
 # 0026. Alertmanager 단일 알림 엔진 채택 — Grafana Alerting 통합과 2단계 롤아웃
 
 - 날짜: 2026-06-11
-- 상태: 적용됨 (Phase A #1399·Phase B #1412 머지)
+- 상태: 적용됨 (Phase A 이슈 #1399·Phase B PR #1412·Phase C 이슈 #1440 완료)
+- 2026-10-01 갱신: 브랜치 통합(#1574) 뒤 edge-cd 트리거는 `dev` 다. 본문의 `be/dev` 는 현재 `dev` 에 해당한다.
 
 ## 컨텍스트
 

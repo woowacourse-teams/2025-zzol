@@ -1,116 +1,60 @@
 package coffeeshout.arch;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import coffeeshout.minigame.domain.MiniGameType;
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * :game 모듈 내 게임 6종 간 직접 참조 금지.
+ * :game 모듈 내 게임 간 직접 참조 금지.
  * 게임은 game-api(:game-api)의 추상화에만 의존해야 하며
  * 다른 게임 도메인을 직접 import하면 안 된다.
  */
 @AnalyzeClasses(packages = "coffeeshout", importOptions = ImportOption.DoNotIncludeTests.class)
 public class GameArchitectureTest {
 
-    // :game 모듈의 프로덕션 패키지 루트 — 도메인 모듈(room/user) 참조 금지 규칙이 공유한다.
-    private static final String[] GAME_PACKAGES = {
-        "coffeeshout.minigame..",
-        "coffeeshout.cardgame..",
-        "coffeeshout.blockstacking..",
-        "coffeeshout.laddergame..",
-        "coffeeshout.racinggame..",
-        "coffeeshout.speedtouch..",
-        "coffeeshout.blindtimer..",
-        "coffeeshout.nunchi..",
-        "coffeeshout.game.."
+    // 개별 게임 패키지명. MiniGameType 상수 하나당 하나 — 개수가 어긋나면 아래 단언이 실패한다.
+    static final String[] GAMES = {
+        "cardgame", "blockstacking", "laddergame", "racinggame", "speedtouch", "blindtimer", "nunchi", "wormgame"
     };
 
-    @ArchTest
-    static final ArchRule cardgame은_다른_게임을_참조할_수_없다 = noClasses()
-            .that()
-            .resideInAPackage("coffeeshout.cardgame..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..")
-            .as("cardgame은 다른 게임 패키지를 직접 참조할 수 없다");
+    private static final String[] GAME_PACKAGE_PATTERNS =
+            Arrays.stream(GAMES).map(game -> "coffeeshout." + game + "..").toArray(String[]::new);
+
+    // :game 모듈의 프로덕션 패키지 루트 — 도메인 모듈(room/user) 참조 금지 규칙이 공유한다.
+    private static final String[] GAME_PACKAGES = Stream.concat(
+                    Arrays.stream(GAME_PACKAGE_PATTERNS), Stream.of("coffeeshout.minigame..", "coffeeshout.game.."))
+            .toArray(String[]::new);
 
     @ArchTest
-    static final ArchRule blockstacking은_다른_게임을_참조할_수_없다 = noClasses()
-            .that()
-            .resideInAPackage("coffeeshout.blockstacking..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..")
-            .as("blockstacking은 다른 게임 패키지를 직접 참조할 수 없다");
+    static void 게임_목록은_MiniGameType과_개수가_같다(JavaClasses classes) {
+        assertThat(GAMES).as("새 게임을 추가했으면 GAMES 에도 패키지명을 넣어야 아키텍처 검사 대상이 된다").hasSameSizeAs(MiniGameType.values());
+    }
 
     @ArchTest
-    static final ArchRule laddergame은_다른_게임을_참조할_수_없다 = noClasses()
-            .that()
-            .resideInAPackage("coffeeshout.laddergame..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..")
-            .as("laddergame은 다른 게임 패키지를 직접 참조할 수 없다");
-
-    @ArchTest
-    static final ArchRule racinggame은_다른_게임을_참조할_수_없다 = noClasses()
-            .that()
-            .resideInAPackage("coffeeshout.racinggame..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..")
-            .as("racinggame은 다른 게임 패키지를 직접 참조할 수 없다");
-
-    @ArchTest
-    static final ArchRule speedtouch는_다른_게임을_참조할_수_없다 = noClasses()
-            .that()
-            .resideInAPackage("coffeeshout.speedtouch..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.blindtimer..")
-            .as("speedtouch는 다른 게임 패키지를 직접 참조할 수 없다");
-
-    @ArchTest
-    static final ArchRule blindtimer는_다른_게임을_참조할_수_없다 = noClasses()
-            .that()
-            .resideInAPackage("coffeeshout.blindtimer..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..")
-            .as("blindtimer는 다른 게임 패키지를 직접 참조할 수 없다");
+    static void 게임은_다른_게임을_참조할_수_없다(JavaClasses classes) {
+        for (final String game : GAMES) {
+            final String self = "coffeeshout." + game + "..";
+            final String[] others = Arrays.stream(GAME_PACKAGE_PATTERNS)
+                    .filter(pkg -> !pkg.equals(self))
+                    .toArray(String[]::new);
+            noClasses()
+                    .that()
+                    .resideInAPackage(self)
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage(others)
+                    .as(game + "은 다른 게임 패키지를 직접 참조할 수 없다")
+                    .check(classes);
+        }
+    }
 
     @ArchTest
     static final ArchRule minigame_orchestration은_개별_게임을_직접_참조할_수_없다 = noClasses()
@@ -118,13 +62,7 @@ public class GameArchitectureTest {
             .resideInAPackage("coffeeshout.minigame..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "coffeeshout.cardgame..",
-                    "coffeeshout.blockstacking..",
-                    "coffeeshout.laddergame..",
-                    "coffeeshout.racinggame..",
-                    "coffeeshout.speedtouch..",
-                    "coffeeshout.blindtimer..")
+            .resideInAnyPackage(GAME_PACKAGE_PATTERNS)
             .as("minigame orchestration은 개별 게임 패키지를 직접 참조할 수 없다 — MiniGameFactory SPI를 통해 디스패치해야 한다");
 
     /**

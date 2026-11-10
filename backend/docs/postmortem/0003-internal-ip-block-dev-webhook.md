@@ -2,7 +2,7 @@
 
 - 날짜: 2026-06-23
 - 심각도: P1
-- 상태: 작성중
+- 상태: 해결 (#1494 머지)
 - 관련 ADR: [0032 zzol-bot을 Alertmanager 웹훅 수신기로 재배치](../adr/0032-zzolbot-as-alertmanager-receiver.md)
 
 ## 요약
@@ -45,9 +45,9 @@ dev 환경의 zzol-bot 웹훅 수신기를 수동 테스트하려 했으나, ngi
 
 | 액션 | 상태 |
 |------|------|
-| `internal.conf`에 dev 전용 리스너(`8890` → `dev-service.inc`) 추가해 dev 웹훅 테스트가 prod로 유입되지 않게 분리 | ☐ |
-| 내부 IP 화이트리스트(#1352)를 현재 `Ip` 값 객체 구조에 재이식 — RFC1918·루프백·링크로컬·CGNAT(100.64/10)·IPv6 ULA(fc00::/7) | ☐ |
-| 어드민 차단 해제 API가 `api.zzol.site`에서 호출되도록 CORS 허용 출처 보강 | ☐ |
+| `internal.conf`에 dev 전용 리스너(`8890` → `dev-service.inc`) 추가해 dev 웹훅 테스트가 prod로 유입되지 않게 분리 | ☑ #1494 |
+| 내부 IP 화이트리스트(#1352)를 현재 `Ip` 값 객체 구조에 재이식 — RFC1918·루프백·링크로컬·CGNAT(100.64/10)·IPv6 ULA(fc00::/7) | ☑ #1494 (`IpBlockFilter.isInternalIp`) |
+| 어드민 차단 해제 API가 `api.zzol.site`에서 호출되도록 CORS 허용 출처 보강 | ☑ #1494 (이후 #1774 로 `admin.zzol.site` SPA 기준으로 바뀜) |
 | 같은 파일을 건드리는 병렬 PR이 서로의 변경을 덮어쓰지 않도록, 머지 전 대상 파일의 양쪽 diff 교차 확인(프로세스) | ☐ |
 
 ## 교훈

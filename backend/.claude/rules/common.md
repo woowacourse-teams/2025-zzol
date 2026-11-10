@@ -22,7 +22,7 @@ HttpMethod.GET
 
 ## final 변수
 
-인스턴스 변수·지역 변수는 `final`로 선언한다. 매개변수는 제외한다.
+인스턴스 변수·지역 변수는 `final`로 선언한다. 매개변수와 JPA 엔티티 필드는 제외한다.
 
 ## Simplicity First
 

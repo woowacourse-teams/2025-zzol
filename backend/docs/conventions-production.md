@@ -9,7 +9,7 @@
 | Application Service | `{Domain}Service`                        | `CardGameService`                |
 | 플로우 오케스트레이터         | `{Domain}FlowOrchestrator`               | `CardGameFlowOrchestrator`       |
 | WebSocket 알림        | `{Domain}Notifier`                       | `CardGameNotifier`               |
-| 도메인 서비스             | `{Domain}CommandService`                 | `CardGameCommandService`         |
+| Application 커맨드 서비스   | `{Domain}CommandService`                 | `CardGameCommandService`         |
 | WebSocket 컨트롤러      | `{Domain}WebSocketController`            | `RoomWebSocketController`        |
 | 커맨드 핸들러             | `{Action}CommandHandler`                 | `SelectCardCommandHandler`       |
 | Redis Consumer      | `{Event}Consumer`                        | `SelectCardCommandEventConsumer` |
@@ -21,7 +21,7 @@
 ### WebSocket 컨트랙트 어노테이션
 
 WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테이션을 붙여야 한다.
-어노테이션이 누락되면 `/dev/ws-catalog` 카탈로그에서 해당 컨트랙트가 노출되지 않는다.
+어노테이션이 누락되면 카탈로그에 빠지고, `/topic/` 발행 상수가 있는데 `@WsTopic` 이 없으면 `WsCatalogContractTest` 가 실패한다. FE 는 그 카탈로그에서 생성한 `wsContract.ts` 와 `ws-openapi.json` 으로 destination 과 payload 를 컴파일 시점에 검사한다(ADR-0037).
 
 | 어노테이션        | 사용 위치                                                  | 설명                             |
 |--------------|--------------------------------------------------------|--------------------------------|
@@ -31,6 +31,8 @@ WebSocket 메시지를 발행하는 메서드에는 반드시 아래 어노테�
 
 `@WsTopic.path` 는 `/topic/` prefix 를 제외한 상대 경로를 적는다 (예: `/room/{joinCode}`).
 `@WsQueue.path` 는 `/queue/` 를 포함한 경로를 적는다 (예: `/queue/friends/requests`).
+
+payload record 에서 null 을 넘기는 컴포넌트에는 `@Nullable`(jspecify)을 단다. 카탈로그가 그 표시로 FE 타입을 `field?: T | null` 로 내고, 표시가 없으면 non-null 로 생성된다. enum 값은 `String` 으로 지우지 않고 enum 타입 그대로 둔다. 지우면 FE 에서 `string` 이 되어 값 검사가 안 된다.
 
 ### 값 객체(Value Object)
 
@@ -76,7 +78,7 @@ CoffeeShoutException (abstract)
 ## 도메인 이벤트 작성
 
 - 이벤트는 record로 정의하고 `BaseEvent`를 구현한다
-- 컴팩트 생성자에서 `eventId`(UUID)와 `timestamp`(Instant.now())를 자동 생성한다
+- UUID인 `eventId`와 `Instant.now()` 값인 `timestamp`는 보조 생성자 또는 `of()` 같은 정적 팩토리가 채운다. 호출자는 도메인 필드만 넘긴다
 - 분산 추적은 인프라 경계(`StreamPublisher`/`RedisStreamListenerStarter`)가 W3C `traceparent` 캐리어로 자동 전파한다. 이벤트에 트레이싱 코드를 넣지 않는다 ([ADR-0021](adr/0021-trace-propagation-traceparent.md))
 
 > **외부 의존성 주입 원칙과의 관계**: `eventId`·`timestamp`는 "이벤트가 생성된 사실 자체"를 기록하는 메타데이터이므로, 비즈니스 로직 테스트의 격리 대상이 아니다. 이벤트 생성 시점이 테스트에 영향을 준다면 이벤트 객체 자체보다 그것을 소비하는 쪽의 설계를 먼저 검토한다.
@@ -85,4 +87,4 @@ CoffeeShoutException (abstract)
 
 ## 설정 관리
 
-타이밍, 스레드풀 크기 등 조정 가능한 값은 `application.yml`에 선언하고 `@ConfigurationProperties`로 바인딩한다. 하드코딩하지 않는다.
+타이밍, 스레드풀 크기 등 조정 가능한 값은 `game.yml`, `service.yml` 같은 `app/src/main/resources/config/<영역>.yml`에 선언하고 `@ConfigurationProperties`로 바인딩한다. `application.yml`은 이 파일들을 import만 한다. 하드코딩하지 않는다.

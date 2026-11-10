@@ -17,7 +17,8 @@ class AdminAuthPropertiesTest {
     private static final AdminEmail ROOT = AdminEmail.of("root@zzol.site");
 
     private static AdminAuthProperties withEmails(List<String> emails) {
-        return new AdminAuthProperties(emails, "client-id", SECRET, 3600);
+        return new AdminAuthProperties(
+                emails, "client-id", SECRET, 3600, 604800, 2592000, List.of("http://localhost:5173"));
     }
 
     @Nested

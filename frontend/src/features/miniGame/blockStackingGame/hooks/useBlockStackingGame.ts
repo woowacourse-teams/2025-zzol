@@ -1,17 +1,18 @@
 import {
   BlockStackingGameState,
+  BlockStackingRanking,
   CurrentBlock,
   FallingPiece,
   StackedBlock,
 } from '@/types/miniGame/blockStackingGame';
-import { MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { MutableRefObject, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import {
-  BLOCK_COLORS,
   BLOCK_GAP,
   BLOCK_HEIGHT,
   CANVAS_WIDTH,
   GRAVITY,
   INITIAL_BLOCK_WIDTH,
+  NIGHT_TOWER,
   OPACITY_DECAY,
 } from '@/features/miniGame/blockStackingGame/constants/blockStackingConstants';
 import {
@@ -19,6 +20,23 @@ import {
   PERFECT_THRESHOLD,
   getBlockSpeed,
 } from '@/features/miniGame/blockStackingGame/constants/blockStackingBalance';
+import {
+  FONT,
+  TowerPlayer,
+  createSkylineAnim,
+  drawClock,
+  drawFarCity,
+  drawFloor,
+  drawGround,
+  drawRivalLines,
+  drawSky,
+  drawSkyline,
+  drawTape,
+  drawToast,
+  easeOut,
+  skyAt,
+  text,
+} from '../core/nightTowerDraw';
 import { BlockStackingProgressPayload } from './useBlockStackingActions';
 import { useBlockStackingSounds } from './useBlockStackingSounds';
 
@@ -28,67 +46,15 @@ type Shake = {
   duration: number;
 };
 
-const lerpInt = (a: number, b: number, t: number) => Math.round(a + (b - a) * t);
-
-// --- Drawing Helpers ---
-
-const drawBackground = (ctx: CanvasRenderingContext2D, W: number, H: number, score: number) => {
-  const darken = Math.min(score / 40, 1);
-  ctx.fillStyle = `rgb(${lerpInt(135, 15, darken)}, ${lerpInt(190, 15, darken)}, ${lerpInt(240, 60, darken)})`;
-  ctx.fillRect(0, 0, W, H);
-};
-
-const drawStackedBlocks = (
-  ctx: CanvasRenderingContext2D,
-  stack: StackedBlock[],
-  movingBlockY: number,
-  H: number
-) => {
-  stack.forEach((block, i) => {
-    const dist = stack.length - i;
-    const y = movingBlockY + dist * BLOCK_HEIGHT;
-    if (y > H + BLOCK_HEIGHT) return;
-
-    ctx.shadowColor = 'rgba(0,0,0,0.25)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetY = 2;
-    ctx.fillStyle = BLOCK_COLORS[i % BLOCK_COLORS.length];
-    ctx.fillRect(block.x, y, block.width, BLOCK_HEIGHT - BLOCK_GAP);
-
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fillRect(block.x, y, block.width, 3);
-  });
-};
-
-const drawCurrentBlock = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  color: string
-) => {
-  ctx.shadowColor = 'rgba(0,0,0,0.4)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 4;
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, width, BLOCK_HEIGHT - BLOCK_GAP);
-
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.fillRect(x, y, width, 3);
-};
-
-const drawFallingPieces = (ctx: CanvasRenderingContext2D, pieces: FallingPiece[]) => {
-  pieces.forEach((p) => {
-    ctx.globalAlpha = p.opacity;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.width, BLOCK_HEIGHT - BLOCK_GAP);
-  });
-  ctx.globalAlpha = 1;
-};
+/** 탈락 뒤 "N층에서 멈춤"을 보여 준 다음 스카이라인으로 넘어가기까지 */
+const STOP_HOLD_MS = 500;
+const SKYLINE_FADE_MS = 700;
+const PLAY_TREES = [
+  [22, 1],
+  [52, 1.25],
+  [268, 1.3],
+  [300, 0.95],
+] as const;
 
 const updateFallingPieces = (pieces: FallingPiece[], H: number, dt60: number) => {
   return pieces
@@ -116,13 +82,13 @@ const updateCurrentBlock = (cur: CurrentBlock, speed: number, dt60: number, W: n
   cur.direction = nd;
 };
 
-const toFallingPiece = (x: number, y: number, width: number, color: string): FallingPiece => ({
+const toFallingPiece = (x: number, y: number, width: number): FallingPiece => ({
   x,
   y,
   width,
   vy: 1,
   opacity: 1,
-  color,
+  color: NIGHT_TOWER.crane,
 });
 
 const createOverhangPieces = ({
@@ -131,21 +97,19 @@ const createOverhangPieces = ({
   leftEdge,
   rightEdge,
   y,
-  color,
 }: {
   blockX: number;
   blockWidth: number;
   leftEdge: number;
   rightEdge: number;
   y: number;
-  color: string;
 }): FallingPiece[] => {
   const pieces: FallingPiece[] = [];
   if (blockX < leftEdge) {
-    pieces.push(toFallingPiece(blockX, y, leftEdge - blockX, color));
+    pieces.push(toFallingPiece(blockX, y, leftEdge - blockX));
   }
   if (blockX + blockWidth > rightEdge) {
-    pieces.push(toFallingPiece(rightEdge, y, blockX + blockWidth - rightEdge, color));
+    pieces.push(toFallingPiece(rightEdge, y, blockX + blockWidth - rightEdge));
   }
   return pieces;
 };
@@ -158,7 +122,7 @@ const createOverhangPieces = ({
  * @param gameState - 현재 게임의 진행 상태 (PREPARE, PLAYING, DONE 등)
  * @param isLocalGameOver - 현재 플레이어의 탈락 여부
  * @param endTimeEpochMs - 서버에서 전송된 게임 종료 시각 (Sync용)
- * @param options - 사운드 재생, 게임 오버 콜백, 진행 상황 보고 등을 포함한 객체
+ * @param options - 사운드 재생, 게임 오버 콜백, 진행 상황 보고, 다른 참가자 정보 등을 포함한 객체
  */
 export const useBlockStackingGame = (
   canvasRef: MutableRefObject<HTMLCanvasElement | null>,
@@ -170,9 +134,14 @@ export const useBlockStackingGame = (
     sounds: ReturnType<typeof useBlockStackingSounds>;
     onBlockPlaced: (payload: BlockStackingProgressPayload) => void;
     onFail: () => void;
+    myName: string;
+    rankings: BlockStackingRanking[];
+    towers: Record<string, StackedBlock[]>;
+    colorOf: (name: string) => string;
   }
 ) => {
-  const { setLocalGameOver, sounds, onBlockPlaced, onFail } = options;
+  const { setLocalGameOver, sounds, onBlockPlaced, onFail, myName, rankings, towers, colorOf } =
+    options;
 
   // --- 1. Game State & Refs (내부 상태 관리) ---
   const stackRef = useRef<StackedBlock[]>([]);
@@ -185,8 +154,16 @@ export const useBlockStackingGame = (
   const shakeRef = useRef<Shake>({ intensity: 0, startTime: 0, duration: 0 });
   const scoreRef = useRef(0);
   const cameraYRef = useRef(0);
-
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const timeLeftRef = useRef(GAME_DURATION);
+  /** 내가 멈춘 시각. 0 이면 아직 쌓는 중 */
+  const stoppedAtRef = useRef(0);
+  const failedRef = useRef(false);
+  const perfectAtRef = useRef(-Infinity);
+  const skylineRef = useRef(createSkylineAnim());
+  /** 추월 알림용: 직전 프레임의 내 순위와 각자의 층 */
+  const myRankRef = useRef(0);
+  const floorsRef = useRef<Record<string, number>>({});
+  const toastRef = useRef({ message: '', at: -Infinity });
 
   // --- 2. Closure Avoidance (클로저 문제 해결) ---
   // 아래 Ref들은 handleTap이나 루프 내부에서 최신 Props/Callbacks에 접근할 수 있게 합니다.
@@ -196,6 +173,10 @@ export const useBlockStackingGame = (
   const onBlockPlacedRef = useRef(onBlockPlaced);
   const onFailRef = useRef(onFail);
   const isLocalGameOverRef = useRef(isLocalGameOver);
+  const myNameRef = useRef(myName);
+  const rankingsRef = useRef(rankings);
+  const towersRef = useRef(towers);
+  const colorOfRef = useRef(colorOf);
   // rAF 그리기 루프가 페인트 전에 최신값을 읽어야 하므로(원래 렌더 중 동기 갱신) useLayoutEffect 로 커밋 시 동기 반영한다.
   useLayoutEffect(() => {
     gameStateRef.current = gameState;
@@ -204,6 +185,10 @@ export const useBlockStackingGame = (
     onBlockPlacedRef.current = onBlockPlaced;
     onFailRef.current = onFail;
     isLocalGameOverRef.current = isLocalGameOver;
+    myNameRef.current = myName;
+    rankingsRef.current = rankings;
+    towersRef.current = towers;
+    colorOfRef.current = colorOf;
   });
 
   // --- 3. Game Actions (주요 액션 함수) ---
@@ -223,7 +208,6 @@ export const useBlockStackingGame = (
     const topBlock = stack[stack.length - 1];
     if (!topBlock) return;
     const cur = currentBlockRef.current;
-    const currentColor = BLOCK_COLORS[stack.length % BLOCK_COLORS.length];
 
     // 겹치는 영역 계산
     const leftEdge = Math.max(cur.x, topBlock.x);
@@ -232,11 +216,11 @@ export const useBlockStackingGame = (
 
     // [Case A] 완전히 빗나간 경우: 게임 오버 처리
     if (overlap <= 0) {
-      fallingPiecesRef.current.push(
-        toFallingPiece(cur.x, cameraYRef.current, cur.width, currentColor)
-      );
+      fallingPiecesRef.current.push(toFallingPiece(cur.x, cameraYRef.current, cur.width));
 
       shakeRef.current = { intensity: 12, startTime: performance.now(), duration: 500 };
+      stoppedAtRef.current = performance.now();
+      failedRef.current = true;
       soundsRef.current.playGameOver();
       setLocalGameOverRef.current();
       onFailRef.current();
@@ -256,7 +240,6 @@ export const useBlockStackingGame = (
         leftEdge,
         rightEdge,
         y: cameraYRef.current,
-        color: currentColor,
       });
       fallingPiecesRef.current = [...fallingPiecesRef.current, ...newPieces];
     }
@@ -288,6 +271,7 @@ export const useBlockStackingGame = (
     // 시각/청각 피드백
     if (isPerfect) {
       shakeRef.current = { intensity: 6, startTime: performance.now(), duration: 300 };
+      perfectAtRef.current = performance.now();
       soundsRef.current.playPerfect();
     } else {
       shakeRef.current = { intensity: 3, startTime: performance.now(), duration: 200 };
@@ -313,9 +297,10 @@ export const useBlockStackingGame = (
 
     const updateTimer = () => {
       const remaining = computeRemaining();
-      setTimeLeft(remaining);
+      timeLeftRef.current = remaining;
 
       if (remaining <= 0) {
+        if (!stoppedAtRef.current) stoppedAtRef.current = performance.now();
         setLocalGameOverRef.current();
         return;
       }
@@ -353,9 +338,183 @@ export const useBlockStackingGame = (
     fallingPiecesRef.current = [];
     shakeRef.current = { intensity: 0, startTime: 0, duration: 0 };
     cameraYRef.current = virtualHeight - 2 * BLOCK_HEIGHT;
+    timeLeftRef.current = GAME_DURATION;
+    stoppedAtRef.current = 0;
+    failedRef.current = false;
+    perfectAtRef.current = -Infinity;
+    skylineRef.current = createSkylineAnim();
+    myRankRef.current = 0;
+    floorsRef.current = {};
+    toastRef.current = { message: '', at: -Infinity };
 
     let prevTime = 0;
     let rafId: number;
+
+    /** 나와 다른 참가자를 한 목록으로. 순위는 층수가 같으면 같게 매긴다(결과 화면 기준) */
+    const collectPlayers = (): TowerPlayer[] => {
+      const me = myNameRef.current;
+      const players: Omit<TowerPlayer, 'rank'>[] = rankingsRef.current
+        .filter((r) => r.name !== me)
+        .map((r) => ({
+          name: r.name,
+          floor: r.floor,
+          failed: r.failed,
+          me: false,
+          color: colorOfRef.current(r.name),
+          blocks: towersRef.current[r.name] ?? [stackRef.current[0]],
+        }));
+      players.push({
+        name: me,
+        floor: scoreRef.current,
+        failed: failedRef.current,
+        me: true,
+        color: NIGHT_TOWER.me,
+        blocks: stackRef.current,
+      });
+      return players.map((p) => ({
+        ...p,
+        rank: 1 + players.filter((q) => q.floor > p.floor).length,
+      }));
+    };
+
+    /** 탈락한 뒤 순위가 밀리면 누가 나를 넘었는지 알린다 */
+    const trackOvertake = (players: TowerPlayer[], now: number) => {
+      const me = players.find((p) => p.me);
+      if (!me) return;
+      const prevRank = myRankRef.current;
+      if (stoppedAtRef.current && prevRank && me.rank > prevRank) {
+        const passer = players.find(
+          (p) => !p.me && p.floor > me.floor && (floorsRef.current[p.name] ?? 0) <= me.floor
+        );
+        if (passer) {
+          toastRef.current = {
+            message: `${passer.name}님이 나를 넘었어요 · ${prevRank}위 → ${me.rank}위`,
+            at: now,
+          };
+        }
+      }
+      myRankRef.current = me.rank;
+      players.forEach((p) => {
+        floorsRef.current[p.name] = p.floor;
+      });
+    };
+
+    const drawPlayScene = (
+      W: number,
+      H: number,
+      movingBlockY: number,
+      players: TowerPlayer[],
+      now: number
+    ) => {
+      const stack = stackRef.current;
+      const score = scoreRef.current;
+      const stopped = stoppedAtRef.current > 0;
+      const sky = skyAt(score);
+      drawSky(ctx, W, H, sky.top, sky.bottom, (sky.phase - 1) * 0.8);
+
+      // 화면 흔들림 효과 연산
+      const shake = shakeRef.current;
+      const shakeProgress =
+        shake.duration > 0 ? Math.max(0, 1 - (now - shake.startTime) / shake.duration) : 0;
+      const sx = (Math.random() * 2 - 1) * shake.intensity * shakeProgress;
+      const sy = (Math.random() * 2 - 1) * shake.intensity * shakeProgress;
+
+      ctx.save();
+      ctx.translate(sx, sy);
+
+      const blockY = (i: number) => movingBlockY + (stack.length - i) * BLOCK_HEIGHT;
+      const groundY = blockY(0) + BLOCK_HEIGHT - BLOCK_GAP;
+      drawFarCity(ctx, W, H, groundY, sky.phase > 1);
+      if (groundY < H + 60) {
+        drawGround(ctx, W, H, groundY, Math.min(1, sky.phase / 1.6), PLAY_TREES);
+      }
+
+      // 쌓여있는 빌딩 층
+      const lit = sky.phase > 0.6 ? 0.65 : 0.2;
+      stack.forEach((block, i) => {
+        const y = blockY(i);
+        if (y > H + BLOCK_HEIGHT) return;
+        const fill = i === 0 ? NIGHT_TOWER.base : NIGHT_TOWER.floor;
+        drawFloor(
+          ctx,
+          block.x,
+          y,
+          block.width,
+          BLOCK_HEIGHT - BLOCK_GAP,
+          i,
+          stopped ? 0.08 : lit,
+          fill
+        );
+      });
+
+      const top = stack[stack.length - 1];
+      if (stopped) {
+        drawTape(ctx, top.x, blockY(stack.length - 1) - 5, top.width);
+      } else {
+        // 크레인 줄에 매달린 다음 층
+        const cur = currentBlockRef.current;
+        const cx = cur.x + cur.width / 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 14, movingBlockY);
+        ctx.lineTo(cx, movingBlockY - 16);
+        ctx.lineTo(cx + 14, movingBlockY);
+        ctx.moveTo(cx, movingBlockY - 16);
+        ctx.lineTo(cx, 0);
+        ctx.stroke();
+        drawFloor(
+          ctx,
+          cur.x,
+          movingBlockY,
+          cur.width,
+          BLOCK_HEIGHT - BLOCK_GAP,
+          stack.length,
+          lit,
+          NIGHT_TOWER.crane
+        );
+      }
+
+      fallingPiecesRef.current.forEach((p) => {
+        ctx.globalAlpha = p.opacity;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.width, BLOCK_HEIGHT - BLOCK_GAP);
+      });
+      ctx.globalAlpha = 1;
+
+      const perfectAge = (now - perfectAtRef.current) / 700;
+      if (perfectAge < 1) {
+        ctx.globalAlpha = 1 - perfectAge;
+        const y = blockY(stack.length - 1) - 14 - perfectAge * 22;
+        text(ctx, 'PERFECT', W / 2, y, `800 18px ${FONT}`, NIGHT_TOWER.window);
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore(); // shake translate restore
+
+      drawRivalLines(
+        ctx,
+        W,
+        H,
+        players.filter((p) => !p.me),
+        score,
+        blockY,
+        64
+      );
+
+      // HUD: 시계, 내 층수와 순위 (우상단은 소리 버튼 자리)
+      const me = players.find((p) => p.me);
+      drawClock(ctx, W / 2, 12, timeLeftRef.current, timeLeftRef.current < 5);
+      text(ctx, `${score}층`, 14, 36, `800 24px ${FONT}`, '#fff', 'left');
+      text(
+        ctx,
+        `${me?.rank ?? 1}위 / ${players.length}명`,
+        14,
+        54,
+        `700 12px ${FONT}`,
+        'rgba(255,255,255,0.8)',
+        'left'
+      );
+    };
 
     /**
      * 프레임 드로우 함수 (Main Loop)
@@ -383,18 +542,6 @@ export const useBlockStackingGame = (
       ctx.save();
       ctx.scale(currentScale, currentScale);
 
-      drawBackground(ctx, W, H, scoreRef.current);
-
-      // 화면 흔들림 효과 연산
-      const shake = shakeRef.current;
-      const shakeProgress =
-        shake.duration > 0 ? Math.max(0, 1 - (time - shake.startTime) / shake.duration) : 0;
-      const sx = (Math.random() * 2 - 1) * shake.intensity * shakeProgress;
-      const sy = (Math.random() * 2 - 1) * shake.intensity * shakeProgress;
-
-      ctx.save();
-      ctx.translate(sx, sy);
-
       const stack = stackRef.current;
       const isGameOver = isLocalGameOverRef.current;
 
@@ -409,27 +556,40 @@ export const useBlockStackingGame = (
       cameraYRef.current += (targetCameraY - cameraYRef.current) * (1 - Math.pow(0.9, dt60));
       const movingBlockY = cameraYRef.current;
 
-      // [Drawing Logic] 쌓여있는 블록들 렌더링
-      drawStackedBlocks(ctx, stack, movingBlockY, H);
+      // 낙하 중인 조각들 업데이트
+      fallingPiecesRef.current = updateFallingPieces(fallingPiecesRef.current, H, dt60);
 
-      // 현재 움직이는 블록 렌더링
-      if (!isGameOver) {
-        const cur = currentBlockRef.current;
-        const color = BLOCK_COLORS[stack.length % BLOCK_COLORS.length];
-        drawCurrentBlock(ctx, cur.x, movingBlockY, cur.width, color);
+      const players = collectPlayers();
+      trackOvertake(players, time);
+
+      drawPlayScene(W, H, movingBlockY, players, time);
+
+      // 탈락 뒤: 잠깐 "N층에서 멈춤"을 보여 주고 스카이라인으로 넘어간다
+      const stoppedAt = stoppedAtRef.current;
+      if (stoppedAt) {
+        const t = (time - stoppedAt - STOP_HOLD_MS) / SKYLINE_FADE_MS;
+        if (t <= 0) {
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          ctx.fillRect(0, 0, W, H);
+          text(
+            ctx,
+            `${scoreRef.current}층에서 멈춤`,
+            W / 2,
+            H * 0.3,
+            `800 26px ${FONT}`,
+            NIGHT_TOWER.warn
+          );
+        } else {
+          // 시간이 다 돼서 멈췄으면 결과 비교를 위해 전원을 세운다
+          const showAll = !failedRef.current;
+          ctx.globalAlpha = easeOut(t);
+          drawSkyline(ctx, W, H, players, showAll, skylineRef.current, time);
+          drawClock(ctx, W / 2, 12, timeLeftRef.current, timeLeftRef.current < 5);
+          drawToast(ctx, W, 64, toastRef.current.message, time - toastRef.current.at);
+          ctx.globalAlpha = 1;
+        }
       }
 
-      // 낙하 중인 조각들 업데이트 및 렌더링
-      fallingPiecesRef.current = updateFallingPieces(fallingPiecesRef.current, H, dt60);
-      drawFallingPieces(ctx, fallingPiecesRef.current);
-
-      // 스코어 텍스트 표시
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = `bold 28px 'Pretendard Variable', Pretendard, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(`${scoreRef.current}층`, W / 2, 60);
-
-      ctx.restore(); // shake translate restore
       ctx.restore(); // scale restore
 
       // 서버 대기 모드(DONE)가 되기 전까지 애니메이션 루프 유지
@@ -442,7 +602,7 @@ export const useBlockStackingGame = (
     return () => cancelAnimationFrame(rafId);
   }, [gameState, canvasRef]);
 
-  return { timeLeft, handleTap };
+  return { handleTap };
 };
 
 // 외부에서 CANVAS_WIDTH를 참조할 수 있도록 재-export

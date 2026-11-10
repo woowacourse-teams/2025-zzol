@@ -8,7 +8,7 @@
 
 > `dev`는 BE+FE 통합 브랜치다. **모든 작업(백엔드·프론트·풀스택)은 `dev`에서 분기해 `dev`로 PR한다.** 브랜치명은 prefix 없이 `{type}/{N}-{slug}`.
 >
-> `prod`는 BE+FE 통합 **프로덕션** 브랜치다(#1574). 승격은 `dev`→`prod` PR로만 하며, `prod` push가 곧 운영 배포 트리거다(backend-cd·frontend-cd).
+> `prod`는 BE+FE 통합 **프로덕션** 브랜치다(#1574). 승격은 `dev`→`prod` PR로만 하며, `prod` push가 곧 backend-cd·frontend-cd·admin-cd의 운영 배포 트리거다.
 
 이 브랜치들의 변경은 **PR로만** 반영한다. Claude는 어떤 경우에도 이 브랜치로 직접 push하거나, 이 브랜치를 체크아웃해 직접 커밋하지 않는다.
 

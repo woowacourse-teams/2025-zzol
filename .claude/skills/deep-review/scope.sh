@@ -57,6 +57,7 @@ echo "SRC_LINES=$SRC_LINES"
 [ -z "$SRC" ] && echo "SRC_EMPTY=1"
 printf '%s\n' "$SRC" | grep -q '^backend/'  && echo "HAS_BE=1"
 printf '%s\n' "$SRC" | grep -q '^frontend/' && echo "HAS_FE=1"
+printf '%s\n' "$SRC" | grep -q '^admin-web/' && echo "HAS_ADMIN=1"
 # 보안 렌즈 조건 — 인증·비밀값·입력검증·외부 노출 경로
 printf '%s\n' "$SRC" | grep -qEi 'security|jwt|auth|token|credential|\.env|application.*\.ya?ml|filter|interceptor' \
   && echo "NEEDS_SECURITY=1"

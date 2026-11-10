@@ -126,7 +126,7 @@ export const GAME_CONFIGS: Record<MiniGameType, GameConfig> = {
     ReadyPage: BlockStackingGameReadyPage,
     slides: [
       {
-        textLines: ['블록이 좌우로 움직입니다', '화면을 탭해서 블록을 쌓으세요!'],
+        textLines: ['빌딩 층이 좌우로 움직입니다', '화면을 탭해서 한 층씩 쌓으세요!'],
         imageSrc: BlockStackingDescription1,
         className: 'slide-first',
       },

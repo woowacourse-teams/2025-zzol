@@ -60,6 +60,16 @@ jobs:
           echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.production
           echo "ENABLE_DEVTOOLS=${{ github.ref_name == 'prod' && 'false' || 'true' }}" >> .env.production
 
+      # wsOpenApi.d.ts 는 BE 가 쓴 ws-openapi.json 에서 openapi-typescript 가 만든다. 커밋본과 다르면
+      # JSON 만 갱신하고 npm run generate:ws 를 빼먹은 것이다. 낡은 타입으로는 payload drift 를 못 잡는다.
+      - name: Check ws payload types freshness
+        run: |
+          npm run generate:ws
+          git diff --exit-code -- src/apis/websocket/generated/wsOpenApi.d.ts || {
+            echo "::error::wsOpenApi.d.ts 가 ws-openapi.json 과 다릅니다. 'cd frontend && npm run generate:ws' 후 커밋하세요."
+            exit 1
+          }
+
       - name: Run ESLint
         run: npm run lint
         continue-on-error: false

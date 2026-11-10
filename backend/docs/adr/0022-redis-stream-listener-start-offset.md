@@ -2,7 +2,7 @@
 
 ## 상태
 
-승인 (2026-06-07)
+적용됨 (2026-06-07; 2026-07-17 #1573 개정으로 SmartLifecycle phase 1024 추가)
 
 ## 컨텍스트
 
@@ -77,6 +77,7 @@ container options의 errorHandler를 제거한다. 진실 공급원은 `buildRea
 
 - `RedisStreamContainerRegistry`(스트림 키별 컨테이너 단일 장부)가 `@PreDestroy`(정상 종료·refresh 실패 양쪽에서 호출됨)에서 일괄 `stop()`한다. Starter는 start/await **이전**에 레지스트리에 등록하므로 기동 중단 시에도 stop 대상에 포함된다
 - Starter의 `@PreDestroy`는 stopping 플래그만 확정한다. **Starter가 레지스트리를 생성자 주입하므로 빈 파괴는 역의존 순서(Starter → Registry)** — 플래그 설정이 일괄 stop보다 항상 먼저 실행된다. 이 불변식은 생성자 주입 관계에 의존하므로, 주입 방식을 setter/lazy로 바꾸면 깨진다
+- 2026-07-17 개정(#1573): `RedisStreamContainerRegistry`를 `SmartLifecycle`(phase 1024)로 편입해, 컨텍스트 pause·종료 시 폴러가 커넥션 팩토리(phase 0)보다 먼저 멈춘다. 종료 순서표는 `docs/architecture.md` 「종료 순서」 절에 있다
 
 ## 트레이드오프
 
@@ -109,6 +110,7 @@ container options의 errorHandler를 제거한다. 진실 공급원은 `buildRea
 - 장점: ACK 기반 처리 보장, 다운타임 발행분 재전달
 - 단점: 그룹 내 메시지 분배는 브로드캐스트 의미론과 충돌 — 인스턴스별 고유 그룹 + PEL 관리·고아 그룹 정리 등 운영 복잡도가 크게 증가
 - 기각: 현 요구(브로드캐스트, 일시 유실 허용) 대비 과도. 처리 보장이 필요한 경로는 이미 Outbox가 담당
+- 예외: 전역 단일 상태인 시즌 정산 스트림은 이 기각 조건이 셋 다 뒤집혀 컨슈머 그룹을 도입했다([ADR-0035](0035-settlement-consumer-group.md))
 
 ## 결과
 

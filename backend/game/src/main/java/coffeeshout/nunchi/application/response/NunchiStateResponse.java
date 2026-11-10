@@ -4,6 +4,7 @@ import coffeeshout.nunchi.domain.NunchiState;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 눈치게임 상태 브로드캐스트(ADR-0031 결정 8). 상태 머신
@@ -23,15 +24,15 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public record NunchiStateResponse(
         NunchiState state,
-        Integer currentNumber,
-        List<String> stood,
-        Integer number,
-        List<String> collided,
-        Long serverNowEpochMs,
-        Long idleDeadlineEpochMs,
-        Long hardCapEpochMs,
-        Long resumeAtEpochMs,
-        Long playStartEpochMs) {
+        @Nullable Integer currentNumber,
+        @Nullable List<String> stood,
+        @Nullable Integer number,
+        @Nullable List<String> collided,
+        @Nullable Long serverNowEpochMs,
+        @Nullable Long idleDeadlineEpochMs,
+        @Nullable Long hardCapEpochMs,
+        @Nullable Long resumeAtEpochMs,
+        @Nullable Long playStartEpochMs) {
 
     public static NunchiStateResponse description(long serverNowEpochMs) {
         return new NunchiStateResponse(

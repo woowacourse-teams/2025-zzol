@@ -10,7 +10,7 @@ import {
 import type { ReactNode } from 'react';
 import { api, ApiError } from '@/api/client';
 import type { AdminMe, AdminToken } from '@/api/types';
-import { clearToken, readToken, saveToken, subscribeToken } from '@/auth/tokenStore';
+import { clearToken, saveToken, subscribeToken } from '@/auth/tokenStore';
 import { disableGoogleAutoSelect } from '@/auth/google';
 
 type AuthState =
@@ -28,13 +28,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   /*
-   * 토큰이 있는지는 첫 렌더 전에 이미 알 수 있다. 그래서 초기값에서 갈라 둔다.
-   * 무조건 loading 으로 시작하고 이펙트에서 anonymous 로 내리면, 토큰이 없는
-   * 사람에게 로딩 화면이 한 프레임 번쩍이고 렌더가 한 번 더 돈다.
+   * 토큰이 없어도 loading 으로 시작한다. 저장된 토큰이 없다는 것만으로는 로그아웃 상태라고
+   * 말할 수 없다. 새 창이거나 며칠 만에 돌아온 경우에도 refresh 쿠키가 살아 있으면 구글
+   * 로그인 없이 들어가야 한다. 아래 확인이 401 을 받으면 client 가 그 쿠키로 재발급을 시도한다.
    */
-  const [state, setState] = useState<AuthState>(() =>
-    readToken() ? { status: 'loading' } : { status: 'anonymous' },
-  );
+  const [state, setState] = useState<AuthState>({ status: 'loading' });
 
   /**
    * 로그인 교환 중에는 구독이 끼어들지 않게 한다.
@@ -56,9 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // 토큰이 없는 경우를 따로 가르지 않는다. 여기 올 때는 토큰이 있었고, 그사이 사라졌다면
-    // 헤더 없이 나간 요청을 서버가 401 로 돌려보내 아래 catch 가 같은 자리로 데려온다.
-    // 이펙트 안에서 setState 를 곧바로 부르면 렌더가 한 번 더 돌기도 한다.
+    // 토큰이 없는 경우를 따로 가르지 않는다. 헤더 없이 나간 요청이 401 을 받으면 client 가
+    // refresh 쿠키로 재발급을 시도하고, 그것도 안 되면 아래 catch 가 로그아웃 상태로 데려온다.
     let cancelled = false;
     api
       .get<AdminMe>('/auth/me')
@@ -66,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setState({ status: 'authenticated', email: me.email });
       })
       .catch(() => {
-        // client 가 401 에서 이미 토큰을 지운다. 여기서는 상태만 맞춘다.
+        // 재발급까지 실패했으면 client 가 이미 토큰을 지웠다. 여기서는 상태만 맞춘다.
         if (!cancelled) setState({ status: 'anonymous' });
       });
 
@@ -124,6 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    // 서버의 refresh 를 폐기한다. 이것을 안 하면 다음에 앱을 열 때 쿠키로 다시 로그인된다.
+    // 실패해도 화면은 내린다. 사람이 누른 로그아웃을 네트워크 오류로 막을 수는 없다.
+    api.post('/auth/logout').catch(() => undefined);
     clearToken();
     // 다음 로그인에서 계정 선택 화면이 다시 뜨게 한다. 이것을 안 하면 방금 로그아웃한
     // 계정으로 곧바로 다시 들어가진다.

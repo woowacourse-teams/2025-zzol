@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ComponentType } from 'react';
 import BackButton from '@/components/@common/BackButton/BackButton';
 import TopBar from '@/layouts/TopBar/TopBar';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
 import SuggestionTab from '../SuggestionTab/SuggestionTab';
 import AccountSection from '../tabs/MenuTab/AccountSection/AccountSection';
 import PatchNotesView from './views/PatchNotesView';
@@ -78,22 +79,28 @@ const MENU_ITEMS: {
 type Props = { initialView?: MenuView | null };
 
 const MenuTab = ({ initialView }: Props) => {
-  const [activeView, setActiveView] = useState<MenuView | null>(initialView ?? null);
+  const { isAuthenticated } = useAuth();
+  const [activeView, setActiveView] = useState<MenuView | null>(
+    initialView === 'my-info' && !isAuthenticated ? null : (initialView ?? null)
+  );
+  const menuItems = isAuthenticated ? MENU_ITEMS : MENU_ITEMS.filter((i) => i.key !== 'my-info');
+  // 탈퇴·세션 만료로 로그아웃되면 열려 있던 내 정보 화면을 메뉴로 되돌린다
+  const view = activeView === 'my-info' && !isAuthenticated ? null : activeView;
 
-  if (activeView !== null) {
+  if (view !== null) {
     return (
       <S.SubViewContainer>
         <TopBar
           left={<BackButton onClick={() => setActiveView(null)} />}
-          center={<S.SubViewTitle>{VIEW_TITLE[activeView]}</S.SubViewTitle>}
+          center={<S.SubViewTitle>{VIEW_TITLE[view]}</S.SubViewTitle>}
         />
         <S.SubViewContent>
-          {activeView === 'report' && <SuggestionTab />}
-          {activeView === 'patch-notes' && <PatchNotesView />}
-          {activeView === 'service-info' && <ServiceInfoView />}
-          {activeView === 'my-info' && <MyInfoView />}
-          {activeView === 'game-manual' && <GameManualView />}
-          {activeView === 'app-install' && <AppInstallView />}
+          {view === 'report' && <SuggestionTab />}
+          {view === 'patch-notes' && <PatchNotesView />}
+          {view === 'service-info' && <ServiceInfoView />}
+          {view === 'my-info' && <MyInfoView />}
+          {view === 'game-manual' && <GameManualView />}
+          {view === 'app-install' && <AppInstallView />}
         </S.SubViewContent>
       </S.SubViewContainer>
     );
@@ -105,7 +112,7 @@ const MenuTab = ({ initialView }: Props) => {
       <S.SectionLabel>서비스</S.SectionLabel>
       <S.MenuCard>
         <S.MenuList>
-          {MENU_ITEMS.map(({ key, icon: Icon, title, desc }) => (
+          {menuItems.map(({ key, icon: Icon, title, desc }) => (
             <li key={key}>
               <S.MenuItemButton onClick={() => setActiveView(key)}>
                 <S.MenuItemLeft>

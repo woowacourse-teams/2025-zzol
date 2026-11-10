@@ -52,6 +52,6 @@ allowed-tools: Read, Edit
 
 ```text
 수정 완료: N건
-- L12: rgba(245, 62, 65, 0.3) → ${theme.color.point[400]}4D
+- L12: rgba(245, 62, 65, 0.3) → ${theme.color.point[500]}4D
 - L28: z-index: 999 → ${Z_INDEX.MODAL}
 ```

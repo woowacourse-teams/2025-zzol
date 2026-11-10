@@ -51,7 +51,7 @@ export const MyInfoCard = styled.div`
 
 export const MyInfoStatGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
 `;
 
 export const MyInfoStat = styled.div`
@@ -59,8 +59,9 @@ export const MyInfoStat = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 
-  &:first-of-type {
+  &:not(:last-of-type) {
     border-right: 1px solid ${({ theme }) => theme.color.gray[100]};
   }
 `;
@@ -91,6 +92,33 @@ export const MyInfoUnit = styled.span`
   font-weight: 600;
   color: ${({ theme }) => theme.color.gray[500]};
   letter-spacing: -0.02em;
+`;
+
+export const MyInfoFooter = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 20px;
+  border: none;
+  border-top: 1px solid ${({ theme }) => theme.color.gray[100]};
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  ${({ theme }) => theme.typography.small};
+  font-weight: ${({ theme }) => theme.typography.h4.fontWeight};
+  color: ${({ theme }) => theme.color.gray[700]};
+
+  &:active {
+    background: ${({ theme }) => theme.color.gray[50]};
+  }
+`;
+
+export const MyInfoChevron = styled.span`
+  font-size: ${({ theme }) => theme.typography.h3.fontSize};
+  line-height: 1;
+  color: ${({ theme }) => theme.color.gray[300]};
 `;
 
 export const ScrollIndicator = styled.div`

@@ -6,7 +6,7 @@
         "run", "--rm", "-i",
         "-e", "GRAFANA_URL",
         "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
-        "grafana/mcp-grafana:1.4.2",
+        "grafana/mcp-grafana:1.6.1",
         "-t", "stdio",
         "--disable-write",
         "--enabled-tools", "datasource,prometheus,loki"

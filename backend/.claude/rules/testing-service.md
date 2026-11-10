@@ -14,6 +14,6 @@ paths:
 
 ## 서비스 테스트 체크
 
-- 베이스: 모듈 로컬 `{Module}ServiceTest`(`coffeeshout.support.ServiceTest` 확장). `src/test/java/coffeeshout/` 아래에 위치
-- Mock 빈은 `src/test/java/coffeeshout/config/ServiceTestConfig.java`에 선언한다
+- 베이스: `coffeeshout.support.ServiceTest`를 확장한 모듈 로컬 `{Module}ModuleServiceTest`. `src/test/java/coffeeshout/` 아래에 위치. `:app`은 `coffeeshout.support.app.ServiceTest`, `:profanity`는 로컬 베이스 없이 `coffeeshout.support.ServiceTest`를 직접 상속
+- Mock 빈은 `src/test/java/coffeeshout/config/ServiceTestConfig.java`에 선언한다. `:app`은 `support/app/config/`에 둔다
 - `ApplicationEventPublisher`는 `coffeeshout.support.ServiceTest`가 `@MockitoBean`으로 제공한다. `ServiceTestConfig`에 **재선언 금지**

@@ -134,6 +134,25 @@ class BlockStackingServiceTest extends GameModuleServiceTest {
         }
     }
 
+    @Nested
+    class 실패_기록 {
+
+        @Test
+        void 탈락하면_진행_상황을_브로드캐스트한다() {
+            service.recordFailure(joinCode.getValue(), HOST_NAME);
+
+            verify(notifier, times(1)).notifyProgressUpdated(any(), any());
+        }
+
+        @Test
+        void 이미_탈락한_플레이어의_중복_실패는_브로드캐스트하지_않는다() {
+            service.recordFailure(joinCode.getValue(), HOST_NAME);
+            service.recordFailure(joinCode.getValue(), HOST_NAME);
+
+            verify(notifier, times(1)).notifyProgressUpdated(any(), any());
+        }
+    }
+
     private int floorOf(String playerName) {
         return game.getRanking().stream()
                 .filter(r -> r.name().equals(playerName))

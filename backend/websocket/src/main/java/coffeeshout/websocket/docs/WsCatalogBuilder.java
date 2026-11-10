@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
@@ -19,9 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -46,6 +49,7 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
     private final WsCatalogProperties properties;
     private volatile WsCatalog cached;
     private volatile String cachedEtag;
+    private volatile Map<String, Class<?>> cachedSchemaClasses;
 
     public WsCatalogBuilder(ApplicationContext applicationContext, WsCatalogProperties properties) {
         this.applicationContext = applicationContext;
@@ -75,6 +79,12 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         return cachedEtag;
     }
 
+    /** 카탈로그 {@code schemas} 와 같은 이름 집합의 원본 클래스. 계약 테스트가 OpenAPI 스키마를 만들 때 쓴다. */
+    public Map<String, Class<?>> schemaClasses() {
+        build();
+        return cachedSchemaClasses;
+    }
+
     private WsCatalog buildInternal() {
         final List<RawTopic> rawTopics = new ArrayList<>();
         final List<RawQueue> rawQueues = new ArrayList<>();
@@ -92,7 +102,9 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
                 .thenComparing(entry -> entry.source().className())
                 .thenComparing(entry -> entry.source().methodName()));
 
-        final Map<String, WsCatalog.SchemaEntry> schemas = expandSchemas(referenced);
+        final SchemaExpander expander = new SchemaExpander();
+        final Map<String, WsCatalog.SchemaEntry> schemas = expander.expand(referenced);
+        cachedSchemaClasses = Collections.unmodifiableMap(new TreeMap<>(expander.seenByName));
 
         return new WsCatalog(
                 properties.stompEndpoint(),
@@ -364,10 +376,6 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         return List.of();
     }
 
-    private Map<String, WsCatalog.SchemaEntry> expandSchemas(Set<Class<?>> seeds) {
-        return new SchemaExpander().expand(seeds);
-    }
-
     private class SchemaExpander {
         private final Map<String, WsCatalog.SchemaEntry> result = new LinkedHashMap<>();
         private final Map<String, Class<?>> seenByName = new LinkedHashMap<>();
@@ -390,12 +398,12 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
             }
             final String simpleName = cls.getSimpleName();
             if (seenByName.containsKey(simpleName)) {
-                log.warn(
-                        "스키마 simpleName 충돌: '{}' — {} vs {} (첫 선언 유지)",
-                        simpleName,
-                        seenByName.get(simpleName).getName(),
-                        cls.getName());
-                return;
+                // 카탈로그는 FE 타입의 원천이라 한쪽을 버리면 FE 가 다른 클래스의 모양으로 필드를 읽는다.
+                throw new SystemException(
+                        WsCatalogErrorCode.SCHEMA_NAME_COLLISION,
+                        "스키마 simpleName 충돌: '%s' — %s vs %s"
+                                .formatted(
+                                        simpleName, seenByName.get(simpleName).getName(), cls.getName()));
             }
             seenByName.put(simpleName, cls);
             result.put(simpleName, describe(cls));
@@ -422,10 +430,18 @@ public class WsCatalogBuilder implements SmartInitializingSingleton {
         private WsCatalog.SchemaEntry describeRecord(Class<?> cls) {
             final List<WsCatalog.FieldEntry> fields = new ArrayList<>();
             for (final RecordComponent component : cls.getRecordComponents()) {
-                fields.add(
-                        new WsCatalog.FieldEntry(component.getName(), describeFieldType(component.getGenericType())));
+                final String type = describeFieldType(component.getGenericType());
+                fields.add(new WsCatalog.FieldEntry(component.getName(), isNullable(component) ? type + "?" : type));
             }
             return new WsCatalog.SchemaEntry(WsCatalog.SchemaKind.RECORD, fields, null);
+        }
+
+        /**
+         * jspecify {@code @Nullable} 이 붙은 컴포넌트는 타입 뒤에 {@code ?} 를 붙인다. 래퍼 타입만으로는 null 여부를
+         * 알 수 없고, FE 는 이 표시로 {@code field?: T | null} 을 만든다. TYPE_USE 애노테이션이라 타입 쪽에서 읽는다.
+         */
+        private static boolean isNullable(RecordComponent component) {
+            return component.getAnnotatedType().isAnnotationPresent(Nullable.class);
         }
 
         private String describeFieldType(Type type) {

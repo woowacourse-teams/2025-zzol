@@ -8,7 +8,7 @@
 
 브랜치 전략은 모노레포 공통이다. 루트 [CLAUDE.md](../CLAUDE.md)와 [git-push-safety](../.claude/rules/git-push-safety.md)를 따른다. 백엔드에서 추가로 알아야 할 것:
 
-- `dev`가 저장소 **기본 브랜치**다. README·dependabot·CodeRabbit·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다(dependabot·보안 스캔·스케줄은 기본 브랜치 기준으로 동작). `main`은 배포 브랜치가 아니며(배포는 `dev`·`prod` push 트리거) 전환기 잔재로만 남아 있다. 신규 작업에 사용하지 않는다.
+- `dev`가 저장소 **기본 브랜치**다. README·dependabot·워크플로우 등 GitHub 관련 파일도 `dev`에서 관리한다. `main`은 배포 브랜치가 아니고 전환기 잔재로만 남아 있어 신규 작업에 쓰지 않는다. 배포는 `dev`·`prod` push가 트리거한다.
 
 ## 작업 규칙
 
@@ -85,7 +85,7 @@ Gradle 멀티모듈이라 **모든 소스 경로에 모듈명이 앞에 붙는�
 - [문서 작성 컨벤션](docs/conventions-docs.md) — Markdown 린트 규칙 (MD040, MD031, MD022)
 - [ADR 인덱스](docs/adr/index.md) — 주요 기술 의사결정 한 줄 요약 목록 (`/adr [주제]`로 새 ADR 작성, 상세 내용은 개별 파일 참조)
 - [포스트모템 인덱스](docs/postmortem/index.md) — 장애·인시던트·반복 오진의 사후 회고 목록 (`/postmortem [사건]`으로 새 회고 작성, ADR과 독립된 번호 시퀀스)
-- [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL, WebSocket 명세서 DB 구조 및 작업 흐름
+- [Notion 워크스페이스](docs/notion-workspace.md) — Notion 주요 페이지 URL. WebSocket 계약은 생성 타입이 출처다(ADR-0037)
 
 통합 테스트는 Docker 기반 TestContainers를 사용하므로 Docker가 실행 중이어야 한다.
 

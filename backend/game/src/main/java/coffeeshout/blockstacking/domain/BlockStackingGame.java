@@ -94,7 +94,8 @@ public class BlockStackingGame implements Playable {
             return false;
         }
 
-        playerProgresses.put(gamer, progress.advanceTo(floor));
+        // 새로 쌓인 블록은 두 블록이 겹친 구간이다
+        playerProgresses.put(gamer, progress.advanceTo(floor, Math.max(movingBlockX, stackTopX), overlap));
         return true;
     }
 
@@ -134,7 +135,8 @@ public class BlockStackingGame implements Playable {
                 .sorted(Comparator.comparingInt(BlockStackingPlayerProgress::currentFloor)
                         .reversed()
                         .thenComparing(p -> p.gamer().getName()))
-                .map(p -> new BlockStackingPlayerRankInfo(p.gamer().getName(), p.currentFloor()))
+                .map(p -> new BlockStackingPlayerRankInfo(
+                        p.gamer().getName(), p.currentFloor(), p.failed(), p.topX(), p.topWidth()))
                 .toList();
     }
 

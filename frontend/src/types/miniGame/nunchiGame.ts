@@ -1,8 +1,9 @@
 /**
  * 눈치게임(Nunchi) 메시지/상태 타입.
  *
- * 컨트랙트 SSOT(권위): backend ADR-0031 "결정 8(WebSocket 상태 컨트랙트)" + 구현 노트 N1~N7.
- * 아래 타입은 ADR의 JSON 컨트랙트를 그대로 옮긴 것이다. 필드명·옵셔널 여부를 임의로 바꾸지 않는다.
+ * 와이어 타입의 원천은 BE 가 생성한 `src/apis/websocket/generated/wsContract.ts` 의 `NunchiStateResponse` 다.
+ * 아래 union 은 그 평탄한 record 를 ADR-0031 "결정 8(WebSocket 상태 컨트랙트)" 대로 state 별로 좁힌 것이다.
+ * union 이 생성 타입을 extends 해야 provider 의 캐스팅이 컴파일된다. 필드명·옵셔널 여부를 임의로 바꾸지 않는다.
  *
  * 주의(필드명 함정 — ADR JSON 그대로):
  *  - PLAYING 은 `currentNumber` 를 쓴다.

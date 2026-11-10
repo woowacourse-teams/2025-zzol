@@ -1,0 +1,1170 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "쫄 WebSocket payload",
+    "version" : "1"
+  },
+  "paths" : { },
+  "components" : {
+    "schemas" : {
+      "BlindTimerGameState" : {
+        "type" : "string",
+        "enum" : [
+          "DESCRIPTION",
+          "PREPARE",
+          "PLAYING",
+          "DONE"
+        ]
+      },
+      "BlindTimerPlayerProgress" : {
+        "required" : [
+          "playerName",
+          "stopped",
+          "timedOut"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "stopped" : {
+            "type" : "boolean"
+          },
+          "timedOut" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "BlindTimerProgressResponse" : {
+        "required" : [
+          "players"
+        ],
+        "type" : "object",
+        "properties" : {
+          "players" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BlindTimerPlayerProgress"
+            }
+          }
+        }
+      },
+      "BlindTimerStateResponse" : {
+        "required" : [
+          "blindDelayMillis",
+          "state",
+          "targetTimeMillis"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/BlindTimerGameState"
+          },
+          "targetTimeMillis" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "blindDelayMillis" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "BlockStackingGameState" : {
+        "type" : "string",
+        "enum" : [
+          "READY",
+          "PREPARE",
+          "PLAYING",
+          "DONE"
+        ]
+      },
+      "BlockStackingPlayerRankInfo" : {
+        "required" : [
+          "failed",
+          "floor",
+          "name",
+          "topWidth",
+          "topX"
+        ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "floor" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "failed" : {
+            "type" : "boolean"
+          },
+          "topX" : {
+            "type" : "number",
+            "format" : "double",
+            "nullable" : true
+          },
+          "topWidth" : {
+            "type" : "number",
+            "format" : "double",
+            "nullable" : true
+          }
+        }
+      },
+      "BlockStackingProgressRequest" : {
+        "required" : [
+          "floor",
+          "movingBlockX",
+          "stackTopWidth",
+          "stackTopX"
+        ],
+        "type" : "object",
+        "properties" : {
+          "floor" : {
+            "minimum" : 0,
+            "exclusiveMinimum" : true,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "movingBlockX" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "stackTopX" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "stackTopWidth" : {
+            "minimum" : 0,
+            "exclusiveMinimum" : true,
+            "type" : "number",
+            "format" : "double"
+          }
+        }
+      },
+      "BlockStackingProgressResponse" : {
+        "required" : [
+          "players"
+        ],
+        "type" : "object",
+        "properties" : {
+          "players" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BlockStackingPlayerRankInfo"
+            }
+          }
+        }
+      },
+      "BlockStackingStateResponse" : {
+        "required" : [
+          "state"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/BlockStackingGameState"
+          },
+          "endTimeEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          }
+        }
+      },
+      "CardGameState" : {
+        "type" : "string",
+        "enum" : [
+          "READY",
+          "FIRST_LOADING",
+          "LOADING",
+          "PREPARE",
+          "PLAYING",
+          "SCORE_BOARD",
+          "DONE"
+        ]
+      },
+      "CardInfoMessage" : {
+        "required" : [
+          "cardType",
+          "selected",
+          "value"
+        ],
+        "type" : "object",
+        "properties" : {
+          "cardType" : {
+            "$ref" : "#/components/schemas/CardType"
+          },
+          "value" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "selected" : {
+            "type" : "boolean"
+          },
+          "playerName" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "colorIndex" : {
+            "type" : "integer",
+            "format" : "int32",
+            "nullable" : true
+          }
+        }
+      },
+      "CardType" : {
+        "type" : "string",
+        "enum" : [
+          "ADDITION",
+          "MULTIPLIER"
+        ]
+      },
+      "CommandType" : {
+        "type" : "string",
+        "enum" : [
+          "START_MINI_GAME",
+          "SELECT_CARD"
+        ]
+      },
+      "Entry" : {
+        "required" : [
+          "playerName",
+          "seasonRank",
+          "tier",
+          "totalPoints"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "totalPoints" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tier" : {
+            "type" : "string"
+          },
+          "seasonRank" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "FriendRemovedPayload" : {
+        "required" : [
+          "removedByUserId"
+        ],
+        "type" : "object",
+        "properties" : {
+          "removedByUserId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "FriendRequestPayload" : {
+        "required" : [
+          "createdAt",
+          "fromNickname",
+          "fromUserCode",
+          "fromUserId",
+          "requestId"
+        ],
+        "type" : "object",
+        "properties" : {
+          "requestId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fromUserId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fromUserCode" : {
+            "type" : "string"
+          },
+          "fromNickname" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "FriendResponsePayload" : {
+        "required" : [
+          "accepted",
+          "counterpartNickname",
+          "counterpartUserCode",
+          "counterpartUserId",
+          "requestId"
+        ],
+        "type" : "object",
+        "properties" : {
+          "requestId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "accepted" : {
+            "type" : "boolean"
+          },
+          "counterpartUserId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "counterpartUserCode" : {
+            "type" : "string"
+          },
+          "counterpartNickname" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LadderDrawRequest" : {
+        "required" : [
+          "row",
+          "segmentIndex"
+        ],
+        "type" : "object",
+        "properties" : {
+          "segmentIndex" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "row" : {
+            "minimum" : 1,
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "LadderGameState" : {
+        "type" : "string",
+        "enum" : [
+          "DESCRIPTION",
+          "PREPARE",
+          "DRAWING",
+          "RESULT",
+          "DONE"
+        ]
+      },
+      "LadderLineResponse" : {
+        "required" : [
+          "playerName",
+          "row",
+          "segmentIndex"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "segmentIndex" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "row" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "colorIndex" : {
+            "type" : "integer",
+            "format" : "int32",
+            "nullable" : true
+          }
+        }
+      },
+      "LadderStateResponse" : {
+        "required" : [
+          "state"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/LadderGameState"
+          },
+          "poles" : {
+            "type" : "array",
+            "nullable" : true,
+            "items" : {
+              "$ref" : "#/components/schemas/PoleInfo"
+            }
+          },
+          "bottomRanks" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "nullable" : true
+          },
+          "rowCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "nullable" : true
+          },
+          "endTimeEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          },
+          "rankings" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "nullable" : true
+          },
+          "animationDurationMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          }
+        }
+      },
+      "MiniGameMessage" : {
+        "required" : [
+          "commandRequest",
+          "commandType"
+        ],
+        "type" : "object",
+        "properties" : {
+          "commandType" : {
+            "$ref" : "#/components/schemas/CommandType"
+          },
+          "commandRequest" : {
+            "type" : "object"
+          }
+        }
+      },
+      "MiniGameSelectMessage" : {
+        "required" : [
+          "hostName",
+          "miniGameTypes"
+        ],
+        "type" : "object",
+        "properties" : {
+          "hostName" : {
+            "type" : "string"
+          },
+          "miniGameTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MiniGameType"
+            }
+          }
+        }
+      },
+      "MiniGameStartMessage" : {
+        "required" : [
+          "miniGameType"
+        ],
+        "type" : "object",
+        "properties" : {
+          "miniGameType" : {
+            "$ref" : "#/components/schemas/MiniGameType"
+          }
+        }
+      },
+      "MiniGameStateMessage" : {
+        "required" : [
+          "allSelected",
+          "cardGameState",
+          "cardInfoMessages",
+          "currentRound"
+        ],
+        "type" : "object",
+        "properties" : {
+          "cardGameState" : {
+            "$ref" : "#/components/schemas/CardGameState"
+          },
+          "currentRound" : {
+            "$ref" : "#/components/schemas/RoundLabel"
+          },
+          "cardInfoMessages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CardInfoMessage"
+            }
+          },
+          "allSelected" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "MiniGameType" : {
+        "type" : "string",
+        "enum" : [
+          "CARD_GAME",
+          "RACING_GAME",
+          "SPEED_TOUCH",
+          "BLIND_TIMER",
+          "BLOCK_STACKING",
+          "LADDER_GAME",
+          "NUNCHI_GAME",
+          "WORM_GAME"
+        ]
+      },
+      "NunchiStandResponse" : {
+        "required" : [
+          "idleDeadlineEpochMs",
+          "name",
+          "number",
+          "serverNowEpochMs"
+        ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "serverNowEpochMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "idleDeadlineEpochMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "NunchiState" : {
+        "type" : "string",
+        "enum" : [
+          "DESCRIPTION",
+          "READY",
+          "PLAYING",
+          "COLLISION_COOLDOWN",
+          "DONE"
+        ]
+      },
+      "NunchiStateResponse" : {
+        "required" : [
+          "state"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/NunchiState"
+          },
+          "currentNumber" : {
+            "type" : "integer",
+            "format" : "int32",
+            "nullable" : true
+          },
+          "stood" : {
+            "type" : "array",
+            "nullable" : true,
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32",
+            "nullable" : true
+          },
+          "collided" : {
+            "type" : "array",
+            "nullable" : true,
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "serverNowEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          },
+          "idleDeadlineEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          },
+          "hardCapEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          },
+          "resumeAtEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          },
+          "playStartEpochMs" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          }
+        }
+      },
+      "PlayerResponse" : {
+        "required" : [
+          "colorIndex",
+          "isReady",
+          "playerName",
+          "playerType",
+          "probability"
+        ],
+        "type" : "object",
+        "properties" : {
+          "userId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "nullable" : true
+          },
+          "playerName" : {
+            "type" : "string"
+          },
+          "playerType" : {
+            "$ref" : "#/components/schemas/PlayerType"
+          },
+          "isReady" : {
+            "type" : "boolean"
+          },
+          "colorIndex" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "probability" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }
+      },
+      "PlayerType" : {
+        "type" : "string",
+        "enum" : [
+          "HOST",
+          "GUEST"
+        ]
+      },
+      "Point" : {
+        "required" : [
+          "x",
+          "y"
+        ],
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "y" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }
+      },
+      "PoleInfo" : {
+        "required" : [
+          "index",
+          "playerName"
+        ],
+        "type" : "object",
+        "properties" : {
+          "index" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "playerName" : {
+            "type" : "string"
+          },
+          "colorIndex" : {
+            "type" : "integer",
+            "format" : "int32",
+            "nullable" : true
+          }
+        }
+      },
+      "PresencePayload" : {
+        "required" : [
+          "joinable",
+          "online",
+          "userId"
+        ],
+        "type" : "object",
+        "properties" : {
+          "userId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "online" : {
+            "type" : "boolean"
+          },
+          "joinCode" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "joinable" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "QrCodeStatus" : {
+        "type" : "string",
+        "enum" : [
+          "PENDING",
+          "SUCCESS",
+          "ERROR"
+        ]
+      },
+      "QrCodeStatusResponse" : {
+        "required" : [
+          "status"
+        ],
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "$ref" : "#/components/schemas/QrCodeStatus"
+          },
+          "qrCodeUrl" : {
+            "type" : "string",
+            "nullable" : true
+          }
+        }
+      },
+      "RacingGameRunnersStateResponse" : {
+        "required" : [
+          "distance",
+          "players"
+        ],
+        "type" : "object",
+        "properties" : {
+          "distance" : {
+            "$ref" : "#/components/schemas/RacingRange"
+          },
+          "players" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RunnerPosition"
+            }
+          }
+        }
+      },
+      "RacingGameState" : {
+        "type" : "string",
+        "enum" : [
+          "DESCRIPTION",
+          "PREPARE",
+          "PLAYING",
+          "DONE"
+        ]
+      },
+      "RacingGameStateResponse" : {
+        "required" : [
+          "state"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/RacingGameState"
+          }
+        }
+      },
+      "RacingRange" : {
+        "required" : [
+          "end",
+          "start"
+        ],
+        "type" : "object",
+        "properties" : {
+          "start" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "end" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ReadyChangeMessage" : {
+        "required" : [
+          "isReady",
+          "joinCode",
+          "playerName"
+        ],
+        "type" : "object",
+        "properties" : {
+          "joinCode" : {
+            "type" : "string"
+          },
+          "playerName" : {
+            "type" : "string"
+          },
+          "isReady" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "RoomInvitationPayload" : {
+        "required" : [
+          "inviterNickname",
+          "inviterUserId",
+          "joinCode"
+        ],
+        "type" : "object",
+        "properties" : {
+          "inviterUserId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "inviterNickname" : {
+            "type" : "string"
+          },
+          "joinCode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "RoomState" : {
+        "type" : "string",
+        "enum" : [
+          "READY",
+          "PLAYING",
+          "SCORE_BOARD",
+          "ROULETTE",
+          "DONE"
+        ]
+      },
+      "RoomStatusResponse" : {
+        "required" : [
+          "joinCode",
+          "roomState"
+        ],
+        "type" : "object",
+        "properties" : {
+          "joinCode" : {
+            "type" : "string"
+          },
+          "roomState" : {
+            "$ref" : "#/components/schemas/RoomState"
+          }
+        }
+      },
+      "RouletteSpinMessage" : {
+        "required" : [
+          "hostName"
+        ],
+        "type" : "object",
+        "properties" : {
+          "hostName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "RoundLabel" : {
+        "type" : "string",
+        "enum" : [
+          "READY",
+          "FIRST",
+          "SECOND"
+        ]
+      },
+      "RunnerPosition" : {
+        "required" : [
+          "playerName",
+          "position",
+          "speed"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "speed" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SeasonRankMessage" : {
+        "required" : [
+          "entries",
+          "seasonKey"
+        ],
+        "type" : "object",
+        "properties" : {
+          "seasonKey" : {
+            "type" : "string"
+          },
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Entry"
+            }
+          }
+        }
+      },
+      "SpeedTouchGameState" : {
+        "type" : "string",
+        "enum" : [
+          "DESCRIPTION",
+          "PREPARE",
+          "PLAYING",
+          "DONE"
+        ]
+      },
+      "SpeedTouchPlayerProgress" : {
+        "required" : [
+          "currentNumber",
+          "finished",
+          "playerName"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "currentNumber" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "finished" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "SpeedTouchProgressResponse" : {
+        "required" : [
+          "players"
+        ],
+        "type" : "object",
+        "properties" : {
+          "players" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SpeedTouchPlayerProgress"
+            }
+          }
+        }
+      },
+      "SpeedTouchStateResponse" : {
+        "required" : [
+          "state"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/SpeedTouchGameState"
+          }
+        }
+      },
+      "SteerCommand" : {
+        "required" : [
+          "angle",
+          "seq"
+        ],
+        "type" : "object",
+        "properties" : {
+          "angle" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "seq" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "TapCommand" : {
+        "required" : [
+          "tapCount"
+        ],
+        "type" : "object",
+        "properties" : {
+          "tapCount" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "TouchCommand" : {
+        "required" : [
+          "touchedNumber"
+        ],
+        "type" : "object",
+        "properties" : {
+          "touchedNumber" : {
+            "maximum" : 25,
+            "minimum" : 1,
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "WinnerResponse" : {
+        "required" : [
+          "colorIndex",
+          "playerName",
+          "randomAngle"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "colorIndex" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "randomAngle" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "WormGameState" : {
+        "type" : "string",
+        "enum" : [
+          "DESCRIPTION",
+          "PREPARE",
+          "PLAYING",
+          "FINISH",
+          "DONE"
+        ]
+      },
+      "WormGameStateResponse" : {
+        "required" : [
+          "state"
+        ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/WormGameState"
+          }
+        }
+      },
+      "WormPosition" : {
+        "required" : [
+          "alive",
+          "angle",
+          "lastSeq",
+          "playerName",
+          "x",
+          "y"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "x" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "y" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "angle" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "alive" : {
+            "type" : "boolean"
+          },
+          "lastSeq" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "WormSnapshotResponse" : {
+        "required" : [
+          "radius",
+          "serverNow",
+          "tick",
+          "tickMillis",
+          "worms"
+        ],
+        "type" : "object",
+        "properties" : {
+          "tick" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tickMillis" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serverNow" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "radius" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "worms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WormTrailSnapshot"
+            }
+          }
+        }
+      },
+      "WormTrailSnapshot" : {
+        "required" : [
+          "alive",
+          "playerName",
+          "trail"
+        ],
+        "type" : "object",
+        "properties" : {
+          "playerName" : {
+            "type" : "string"
+          },
+          "alive" : {
+            "type" : "boolean"
+          },
+          "trail" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Point"
+            }
+          }
+        }
+      },
+      "WormsStateResponse" : {
+        "required" : [
+          "radius",
+          "tick",
+          "worms"
+        ],
+        "type" : "object",
+        "properties" : {
+          "tick" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "radius" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "worms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WormPosition"
+            }
+          }
+        }
+      }
+    }
+  }
+}

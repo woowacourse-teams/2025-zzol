@@ -8,10 +8,17 @@ import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import coffeeshout.support.ServiceTest;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 측정용 미검열 닉네임 적재. 10만 건을 넣고 회차를 돌려 파이프라인 처리량을 재는 것이 목적이라
@@ -31,13 +38,17 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     private LocalNicknameAuditDataInitializer 초기화기(int seedCount) {
         return new LocalNicknameAuditDataInitializer(
                 auditRepository,
                 NicknameAuditPropertiesFixture.적재(seedCount),
                 jdbcTemplate,
                 Clock.systemUTC(),
-                entityManager);
+                entityManager,
+                transactionTemplate);
     }
 
     private long 미검열_건수() {
@@ -81,6 +92,42 @@ class LocalNicknameAuditDataInitializerTest extends ServiceTest {
             초기화기(0).run(null);
 
             assertThat(미검열_건수()).isZero();
+        }
+    }
+
+    /**
+     * 실제 기동에는 주변 트랜잭션이 없다. 베이스의 테스트 트랜잭션 안에서만 돌리면 접수 시각을 흩는 벌크
+     * UPDATE가 그 트랜잭션에 얹혀 통과하고, 로컬 기동은 TransactionRequiredException으로 죽는다(#1859).
+     * 그래서 이 묶음만 테스트 트랜잭션을 끄고, 커밋된 행은 직접 지운다. 앞선 테스트가 남긴 대기 행이
+     * 있으면 샘플 적재가 통째로 건너뛰어지므로 시작 전에도 비운다.
+     */
+    @Nested
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    class 트랜잭션_없는_기동 {
+
+        @BeforeEach
+        void 남은_행을_지운다() {
+            cleanDatabase();
+        }
+
+        @AfterEach
+        void 커밋된_행을_지운다() {
+            cleanDatabase();
+        }
+
+        @Test
+        void 샘플_데이터를_넣고_접수_시각을_흩는다() {
+            // 스프링이 기동 때 부르는 호출 그대로다. null 자리는 기동 인자인데 시더가 읽지 않는다.
+            // 시더가 스스로 트랜잭션을 열지 않으면 이 줄에서 TransactionRequiredException이 올라와 실패한다.
+            초기화기(0).run(null);
+
+            // 시더가 쓴 것과 같은 JPQL 매핑으로 결과만 읽는다. JDBC로 읽으면 시간대 변환이 달라진다.
+            final Instant 가장_이른_접수 = entityManager
+                    .createQuery("SELECT MIN(a.createdAt) FROM NicknameAudit a", Instant.class)
+                    .getSingleResult();
+            assertThat(가장_이른_접수)
+                    .as("접수 시각이 전부 기동 시각에 몰리면 검열 화면의 접수 열이 아무 말도 하지 않는다.")
+                    .isBefore(Instant.now().minus(Duration.ofDays(1)));
         }
     }
 }

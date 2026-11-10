@@ -1,6 +1,7 @@
 package coffeeshout.room.ui.messaging;
 
 import coffeeshout.gamecommon.JoinCode;
+import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.event.dto.MiniGameSelectEvent;
 import coffeeshout.minigame.event.dto.MiniGameSelectFailedEvent;
 import coffeeshout.room.application.service.RoomQueryService;
@@ -58,7 +59,7 @@ public class RoomMessagePublisher {
     @WsTopic(
             path = "/room/{joinCode}/minigame",
             payload = List.class,
-            generic = String.class,
+            generic = MiniGameType.class,
             description = "미니게임 목록 변경 브로드캐스트")
     public void onMiniGameListChanged(MiniGameSelectEvent event) {
         log.debug(

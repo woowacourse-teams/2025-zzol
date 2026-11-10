@@ -23,7 +23,7 @@
 
 ## 작업 원칙
 
-- `code-reviewer`, `test-verifier` 에이전트는 항상 `run_in_background: true`로 실행한다
+- `fe-code-reviewer` 에이전트는 항상 `run_in_background: true`로 실행한다
 - 이미 읽은 파일은 다시 읽지 않는다. diff로 변경된 줄만 확인한다
 - 불필요한 도구 호출은 하지 않는다
 - 독립적인 도구 호출은 항상 동시에 실행한다

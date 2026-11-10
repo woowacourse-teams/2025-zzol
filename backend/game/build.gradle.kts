@@ -21,6 +21,8 @@ dependencies {
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:context-propagation")
     implementation(libs.spring.boot.jackson2)
+    // 회원 기록 집계 어댑터(#1794)가 JPAQueryFactory를 쓴다
+    implementation(libs.querydsl.jpa)
 
     annotationProcessor(variantOf(libs.querydsl.apt) { classifier("jpa") })
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")

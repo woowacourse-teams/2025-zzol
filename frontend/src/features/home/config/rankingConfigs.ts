@@ -20,6 +20,7 @@ import {
   MOCK_SPEED_TOUCH_TOP_PLAYERS,
   MOCK_WORM_GAME_TOP_PLAYERS,
 } from './dashboardMock';
+import { millisToSeconds } from '../utils/formatRecord';
 
 export type RankingItem = {
   rank: number;
@@ -37,13 +38,10 @@ export type RankingCategory = {
   mockRaw?: unknown;
 };
 
-/** 밀리초를 소수점 2자리 초로 변환한다 (예: 18230 → 18.23). */
-const millisToSeconds = (millis: number) => Math.round(millis / 10) / 100;
-
 export const RANKING_CATEGORIES: RankingCategory[] = [
   {
     key: 'blockstacking-top-players',
-    label: '블록쌓기 최고 기록',
+    label: '빌딩쌓기 최고 기록',
     icon: BlocksIcon,
     endpoint: '/dashboard/block-stacking-top-players',
     mockRaw: MOCK_BLOCK_STACKING_TOP_PLAYERS,

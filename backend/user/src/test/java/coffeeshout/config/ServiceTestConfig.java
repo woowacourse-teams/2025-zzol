@@ -2,6 +2,8 @@ package coffeeshout.config;
 
 import coffeeshout.friend.application.port.RoomInvitationValidator;
 import coffeeshout.friend.application.port.RoomMembershipQuery;
+import coffeeshout.gamecommon.MemberMiniGameRecordQuery;
+import coffeeshout.gamecommon.MemberRouletteRecordQuery;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.global.nickname.WordPicker;
 import coffeeshout.user.application.port.ReportAnonymizationPort;
@@ -27,6 +29,19 @@ public class ServiceTestConfig {
     @Primary
     public ProfanityChecker mockProfanityChecker() {
         return Mockito.mock(ProfanityChecker.class);
+    }
+
+    // 내 기록 포트(#1794)의 실구현체는 :room·:game에 있어 :user 컨텍스트에는 없다
+    @Bean
+    @Primary
+    public MemberRouletteRecordQuery mockMemberRouletteRecordQuery() {
+        return Mockito.mock(MemberRouletteRecordQuery.class);
+    }
+
+    @Bean
+    @Primary
+    public MemberMiniGameRecordQuery mockMemberMiniGameRecordQuery() {
+        return Mockito.mock(MemberMiniGameRecordQuery.class);
     }
 
     @Bean("stompPrincipalInterceptor")

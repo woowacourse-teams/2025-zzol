@@ -1,7 +1,7 @@
 # 0031. 눈치게임(Nunchi) 서버 설계 — 순차 카운팅·동시 입력 순위 판정과 FE/BE 조율
 
 - 날짜: 2026-06-21
-- 상태: 승인 (FE/BE 조율 완료 — 구 미결 질문 Q1~Q7 모두 확정; 2026-06-21 구현 메커니즘 확정 — 「구현 노트」 절 참조; 2026-06-24 개정 — 시작 `DESCRIPTION` 단계 추가, 결정 8 구독 스냅샷을 description 종료 자동 재발행으로 대체. 「결정 9」 절 참조; 2026-06-24 개정 — `DESCRIPTION`과 `PLAYING` 사이 `READY`(곧 시작 카운트다운) 단계 추가, `playStartEpochMs`를 DESCRIPTION → READY로 이동, 결정 9의 `result-delay` 결과 대기 버퍼 제거(DONE 후 동기 즉시 전이). 「결정 9」 절 참조)
+- 상태: 적용됨 (#1484 머지; FE/BE 조율 완료 — 구 미결 질문 Q1~Q7 모두 확정; 2026-06-21 구현 메커니즘 확정 — 「구현 노트」 절 참조; 2026-06-24 개정 — 시작 `DESCRIPTION` 단계 추가, 결정 8 구독 스냅샷을 description 종료 자동 재발행으로 대체. 「결정 9」 절 참조; 2026-06-24 개정 — `DESCRIPTION`과 `PLAYING` 사이 `READY`(곧 시작 카운트다운) 단계 추가, `playStartEpochMs`를 DESCRIPTION → READY로 이동, 결정 9의 `result-delay` 결과 대기 버퍼 제거(DONE 후 동기 즉시 전이). 「결정 9」 절 참조)
 
 ## 컨텍스트
 

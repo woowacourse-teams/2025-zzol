@@ -1,8 +1,0 @@
-bug:
-  - "**/fix/**"
-feature:
-  - "**/feat/**"
-BE:
-  - "be/**"
-FE:
-  - "fe/**"

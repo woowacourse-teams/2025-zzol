@@ -71,6 +71,7 @@ public abstract class GameModuleWebSocketTest extends WebSocketIntegrationTestSu
     protected void 결과_저장과_정산_아웃박스를_확인한다(MiniGameType miniGameType, int playerCount) {
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             assertThat(저장된_결과_수(miniGameType)).isEqualTo(playerCount);
+            assertThat(회원_결과_수(miniGameType)).as("명단에서 회원은 루키 하나").isEqualTo(1);
             assertThat(정산_아웃박스_수(miniGameType)).isEqualTo(1);
         });
     }
@@ -78,6 +79,14 @@ public abstract class GameModuleWebSocketTest extends WebSocketIntegrationTestSu
     private Integer 저장된_결과_수(MiniGameType miniGameType) {
         return jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM mini_game_result WHERE mini_game_type = ?", Integer.class, miniGameType.name());
+    }
+
+    /** {@code 루키가_회원인_명단}은 회원이 루키 하나라 user_id가 채워진 결과 행도 하나여야 한다(#1794). */
+    private Integer 회원_결과_수(MiniGameType miniGameType) {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM mini_game_result WHERE mini_game_type = ? AND user_id IS NOT NULL",
+                Integer.class,
+                miniGameType.name());
     }
 
     private Integer 정산_아웃박스_수(MiniGameType miniGameType) {

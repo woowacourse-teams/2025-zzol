@@ -1,11 +1,10 @@
-export type SpeedTouchGameState = 'DESCRIPTION' | 'PREPARE' | 'PLAYING' | 'DONE';
+import type {
+  SpeedTouchPlayerProgress,
+  SpeedTouchProgressResponse,
+} from '@/apis/websocket/generated/wsContract';
 
-export type PlayerProgress = {
-  playerName: string;
-  currentNumber: number;
-  finished: boolean;
-};
+export type { SpeedTouchGameState } from '@/apis/websocket/generated/wsContract';
 
-export type SpeedTouchProgressData = {
-  players: PlayerProgress[];
-};
+export type PlayerProgress = SpeedTouchPlayerProgress;
+
+export type SpeedTouchProgressData = SpeedTouchProgressResponse;

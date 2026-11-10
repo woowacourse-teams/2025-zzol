@@ -89,7 +89,9 @@ public class ProfanityAuditService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onUnregisteredNicknamesExposed(UnregisteredNicknamesExposedEvent event) {
         log.debug("랭킹 노출 닉네임 검열 등록 요청 수신: {}건", event.nicknames().size());
-        event.nicknames().forEach(this::register);
+        // 홈은 랭킹 여러 개를 한꺼번에 부른다. 겹치는 닉네임을 트랜잭션마다 다른 순서로 넣으면 중복 키 잠금이 엇갈려
+        // 데드락이 날 수 있어 순서를 고정한다. 운영자 허용 여부는 발행 쪽이 이미 걸렀으므로 다시 묻지 않는다.
+        event.nicknames().stream().sorted().forEach(this::enqueueIfAbsent);
     }
 
     public Page<NicknameAudit> listByStatus(NicknameAuditStatus status, Pageable pageable) {
@@ -108,6 +110,10 @@ public class ProfanityAuditService {
             log.debug("운영자 허용 닉네임 — 검열 등록 생략: {}", nickname);
             return;
         }
+        enqueueIfAbsent(nickname);
+    }
+
+    private void enqueueIfAbsent(String nickname) {
         if (auditRepository.existsByNickname(nickname)) {
             // 상태 무관으로 검사한다. 유니크 제약이 (player_name, status)라 이미 검열된(CLEAN 등)
             // 닉네임에 대해 UNAUDITED만 검사하면 새 UNAUDITED 중복이 생기고, 다음 검열 시

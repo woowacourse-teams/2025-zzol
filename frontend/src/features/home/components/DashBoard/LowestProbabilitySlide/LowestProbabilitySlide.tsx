@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import RankingNickname from '@/components/@common/RankingNickname/RankingNickname';
 import * as S from './LowestProbabilitySlide.styled';
 
-type Player = { nickname: string; userCode: string | null; masked?: boolean };
+type Player = { nickname: string; userCode: string };
 
 type Props = {
   players: Player[];
@@ -90,23 +89,15 @@ const LowestProbabilitySlide = ({ players, probability }: Props) => {
             </S.WinnerLabel>
             {players.length === 1 ? (
               <S.WinnerRow>
-                <S.WinnerName>
-                  <RankingNickname masked={players[0].masked} tone="dark">
-                    {players[0].nickname}
-                  </RankingNickname>
-                </S.WinnerName>
-                {!players[0].masked && <S.WinnerCode>#{players[0].userCode}</S.WinnerCode>}
+                <S.WinnerName>{players[0].nickname}</S.WinnerName>
+                <S.WinnerCode>#{players[0].userCode}</S.WinnerCode>
               </S.WinnerRow>
             ) : (
               <S.MultiWinnerList>
-                {players.map((p, index) => (
-                  <S.WinnerRow key={p.userCode ?? `masked-${index}`}>
-                    <S.WinnerName>
-                      <RankingNickname masked={p.masked} tone="dark">
-                        {p.nickname}
-                      </RankingNickname>
-                    </S.WinnerName>
-                    {!p.masked && <S.WinnerCode>#{p.userCode}</S.WinnerCode>}
+                {players.map((p) => (
+                  <S.WinnerRow key={p.userCode}>
+                    <S.WinnerName>{p.nickname}</S.WinnerName>
+                    <S.WinnerCode>#{p.userCode}</S.WinnerCode>
                   </S.WinnerRow>
                 ))}
               </S.MultiWinnerList>

@@ -57,13 +57,3 @@ export const SingleWinner: Story = {
     winners: [{ nickname: '세라', userCode: 'AB12C', winCount: 20 }],
   },
 };
-
-export const WithMasked: Story = {
-  args: {
-    winners: [
-      { nickname: '세라', userCode: 'AB12C', winCount: 20 },
-      { nickname: '처리 중인 닉네임', userCode: null, winCount: 15, masked: true },
-      { nickname: '지영', userCode: 'GH56I', winCount: 12 },
-    ],
-  },
-};

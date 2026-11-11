@@ -1,4 +1,3 @@
-import RankingNickname from '@/components/@common/RankingNickname/RankingNickname';
 import type { TopWinner } from '@/types/dashBoard';
 import * as S from './TopWinnersSlide.styled';
 
@@ -15,13 +14,11 @@ const TopWinnersSlide = ({ winners, displayCount = 5 }: Props) => (
     ) : (
       <S.List>
         {winners.slice(0, displayCount).map((winner, index) => (
-          <S.Item key={winner.userCode ?? `masked-${index}`} $index={index}>
+          <S.Item key={winner.userCode} $index={index}>
             <S.Rank $rank={index + 1}>{index + 1}</S.Rank>
             <S.NameWrapper>
-              <S.Name>
-                <RankingNickname masked={winner.masked}>{winner.nickname}</RankingNickname>
-              </S.Name>
-              {!winner.masked && <S.UserCode>#{winner.userCode}</S.UserCode>}
+              <S.Name>{winner.nickname}</S.Name>
+              <S.UserCode>#{winner.userCode}</S.UserCode>
             </S.NameWrapper>
             <S.Count>{winner.winCount}회</S.Count>
           </S.Item>

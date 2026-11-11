@@ -60,24 +60,6 @@ export const MultipleWinners: Story = {
   },
 };
 
-export const Masked: Story = {
-  args: {
-    players: [{ nickname: '처리 중인 닉네임', userCode: null, masked: true }],
-    probability: 1,
-  },
-};
-
-export const MultipleWinnersWithMasked: Story = {
-  args: {
-    players: [
-      { nickname: '세라', userCode: 'A1B2' },
-      { nickname: '처리 중인 닉네임', userCode: null, masked: true },
-      { nickname: '지영', userCode: 'E5F6' },
-    ],
-    probability: 3,
-  },
-};
-
 export const Empty: Story = {
   args: {
     players: [],

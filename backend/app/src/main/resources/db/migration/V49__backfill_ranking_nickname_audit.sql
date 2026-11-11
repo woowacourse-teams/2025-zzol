@@ -10,6 +10,8 @@
 -- 애플리케이션의 register()가 existsByNickname으로 거르는 기준과 같다.
 -- 콜레이션이 같다고 보는 이름이 원천에 여럿 있으면 (player_name, status) 유니크 키에 걸리는데,
 -- insertUnaudited와 같이 ON DUPLICATE KEY UPDATE로 흡수한다.
+-- 원천 컬럼(player·app_user)은 utf8mb4_0900_ai_ci, 검열 컬럼은 utf8mb4_unicode_ci라 그대로 비교하면 ERROR 1267로 멈춘다(#1917).
+-- 검열 컬럼 콜레이션으로 맞춰 PAD SPACE·대소문자 무시 기준을 지킨다.
 -- created_at은 엔티티의 Instant 매핑과 맞춰 UTC로 넣는다.
 INSERT INTO player_name_audit (player_name, status, attempt_count, created_at)
 SELECT candidate.name, 'UNAUDITED', 0, UTC_TIMESTAMP(6)
@@ -23,5 +25,5 @@ FROM (SELECT p.player_name AS name
                JOIN app_user u ON u.id = p.user_id
       WHERE r.created_at >= NOW() - INTERVAL 32 DAY
         AND u.nickname IS NOT NULL) candidate
-WHERE NOT EXISTS (SELECT 1 FROM player_name_audit a WHERE a.player_name = candidate.name)
+WHERE NOT EXISTS (SELECT 1 FROM player_name_audit a WHERE a.player_name = candidate.name COLLATE utf8mb4_unicode_ci)
 ON DUPLICATE KEY UPDATE id = id;

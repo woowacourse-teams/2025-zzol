@@ -48,7 +48,9 @@ class FlywayMigrationIntegrationTest {
     static final MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:8.0"))
             .withDatabaseName("flyway_verify")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            // dev·prod compose와 같은 서버 콜레이션. 콜레이션이 다른 컬럼끼리 비교하는 마이그레이션을 잡는다(#1917).
+            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci");
 
     @SuppressWarnings("resource")
     static final GenericContainer<?> valkey = new GenericContainer<>(DockerImageName.parse("valkey/valkey:alpine"))

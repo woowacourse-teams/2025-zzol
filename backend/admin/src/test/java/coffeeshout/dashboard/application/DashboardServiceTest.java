@@ -9,7 +9,6 @@ import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
-import coffeeshout.dashboard.domain.RankedMember;
 import coffeeshout.dashboard.domain.RankedPlayerName;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
@@ -121,11 +120,11 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.getFirst().winner().nickname()).isEqualTo("철수");
+            assertThat(result.getFirst().nickname()).isEqualTo("철수");
             assertThat(result.getFirst().winCount()).isEqualTo(5);
-            assertThat(result.get(1).winner().nickname()).isEqualTo("영희");
+            assertThat(result.get(1).nickname()).isEqualTo("영희");
             assertThat(result.get(1).winCount()).isEqualTo(3);
-            assertThat(result.get(2).winner().nickname()).isEqualTo("민수");
+            assertThat(result.get(2).nickname()).isEqualTo("민수");
             assertThat(result.get(2).winCount()).isEqualTo(2);
         }
 
@@ -156,7 +155,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.getFirst().winner().nickname()).isEqualTo("철수");
+            assertThat(result.getFirst().nickname()).isEqualTo("철수");
         }
 
         @Test
@@ -202,9 +201,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).hasSize(5);
-            assertThat(result.getFirst().winner().nickname()).isEqualTo("플레이어10");
+            assertThat(result.getFirst().nickname()).isEqualTo("플레이어10");
             assertThat(result.getFirst().winCount()).isEqualTo(10);
-            assertThat(result.get(4).winner().nickname()).isEqualTo("플레이어6");
+            assertThat(result.get(4).nickname()).isEqualTo("플레이어6");
             assertThat(result.get(4).winCount()).isEqualTo(6);
         }
     }
@@ -270,7 +269,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.03);
-            assertThat(result.players()).extracting(RankedMember::nickname).containsExactlyInAnyOrder("영희", "민수");
+            assertThat(result.players())
+                    .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
+                    .containsExactlyInAnyOrder("영희", "민수");
         }
 
         @Test
@@ -320,7 +321,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result.probability()).isEqualTo(0.03);
-            assertThat(result.players()).extracting(RankedMember::nickname).containsExactly("민수");
+            assertThat(result.players())
+                    .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
+                    .containsExactly("민수");
         }
 
         @Test
@@ -343,7 +346,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.probability()).isEqualTo(0.30);
                 softly.assertThat(result.players())
-                        .extracting(RankedMember::nickname)
+                        .extracting(LowestProbabilityWinnerResponse.PlayerInfo::nickname)
                         .containsExactly("철수");
             });
         }
@@ -766,7 +769,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
     }
 
     /**
-     * 순위와 기록은 그대로 두고, 검열을 통과하지 않은 닉네임만 가린다(#1906).
+     * 미니게임 랭킹은 순위와 기록을 그대로 두고 판정 전 이름만 가린다. 당첨자 슬라이드는 판정 전 회원을 뺀다(#1906).
      * 상태별 판정은 {@code NicknameExposureServiceTest}가 본다. 여기서는 엔드포인트마다 규칙이 걸렸는지 본다.
      */
     @Nested
@@ -775,7 +778,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
         private static final String MASKED = "처리 중인 닉네임";
 
         @Test
-        void TOP5_당첨자에서_검열_전_닉네임과_유저_코드를_가리고_당첨_횟수는_그대로_둔다() {
+        void TOP5_당첨자에서_판정_전_회원은_빼고_다음_순위로_채운다() {
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK1"));
             final UserEntity 통과 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
             final UserEntity 미검열 = userJpaRepository.save(new UserEntity("XY4ZQ", "검열전닉"));
@@ -789,14 +792,35 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             final List<TopWinnerResponse> result = dashboardService.getTop5Winners();
 
-            assertThat(result)
-                    .containsExactly(
-                            new TopWinnerResponse(new RankedMember(MASKED, null, true), 2L),
-                            new TopWinnerResponse(new RankedMember("철수", "AB3CD", false), 1L));
+            assertThat(result).containsExactly(new TopWinnerResponse("철수", "AB3CD", 1L));
         }
 
         @Test
-        void 최저_확률_당첨자에서_판정이_PENDING인_닉네임과_유저_코드를_가린다() {
+        void TOP5_당첨자는_판정_전_회원이_빠져도_5명을_채운다() {
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK3"));
+            for (int i = 1; i <= 6; i++) {
+                final String nickname = "회원" + i;
+                if (i > 1) {
+                    검열_행(nickname, NicknameAuditStatus.CLEAN);
+                }
+                final UserEntity user = userJpaRepository.save(new UserEntity("UC00" + i, nickname));
+                final PlayerEntity player =
+                        playerJpaRepository.save(new PlayerEntity(room, nickname, PlayerType.GUEST, user.getId()));
+                for (int win = 0; win < 10 - i; win++) {
+                    rouletteResultJpaRepository.save(new RouletteResultEntity(room, player, 10));
+                }
+            }
+
+            final List<TopWinnerResponse> result = dashboardService.getTop5Winners();
+
+            // 1등 "회원1"은 검열 행이 없어 빠지고, 6등이던 "회원6"이 5번째 자리를 채운다.
+            assertThat(result)
+                    .extracting(TopWinnerResponse::nickname)
+                    .containsExactly("회원2", "회원3", "회원4", "회원5", "회원6");
+        }
+
+        @Test
+        void 최저_확률_공동_당첨자_중_판정이_PENDING인_회원은_뺀다() {
             검열_행("보류닉", NicknameAuditStatus.PENDING);
             final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK2"));
             final UserEntity 통과 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
@@ -810,12 +834,22 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             final LowestProbabilityWinnerResponse result = dashboardService.getLowestProbabilityWinner();
 
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.probability()).isEqualTo(0.05);
-                softly.assertThat(result.players())
-                        .containsExactlyInAnyOrder(
-                                new RankedMember("철수", "AB3CD", false), new RankedMember(MASKED, null, true));
-            });
+            assertThat(result)
+                    .isEqualTo(new LowestProbabilityWinnerResponse(
+                            0.05, List.of(new LowestProbabilityWinnerResponse.PlayerInfo("철수", "AB3CD"))));
+        }
+
+        @Test
+        void 최저_확률_당첨자가_모두_판정_전이면_빈_상태로_둔다() {
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK4"));
+            final UserEntity 미검열 = userJpaRepository.save(new UserEntity("XY4ZQ", "검열전닉"));
+            final PlayerEntity 미검열_플레이어 =
+                    playerJpaRepository.save(new PlayerEntity(room, "검열전닉", PlayerType.GUEST, 미검열.getId()));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 미검열_플레이어, 5));
+
+            // 다음으로 낮은 확률을 최저라고 보여 주면 틀린 정보다. 판정이 끝날 때까지 비운다.
+            assertThat(dashboardService.getLowestProbabilityWinner())
+                    .isEqualTo(LowestProbabilityWinnerResponse.empty());
         }
 
         @Test

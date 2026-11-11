@@ -1,8 +1,9 @@
 package coffeeshout.dashboard.infra.persistence;
 
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
-import coffeeshout.dashboard.domain.MemberScore;
+import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
 import coffeeshout.dashboard.domain.PlayerScore;
+import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.QMiniGameEntity;
@@ -18,6 +19,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -36,9 +38,10 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<MemberScore> findTopWinnersBetween(LocalDateTime startDate, LocalDateTime endDate, int limit) {
+    public List<TopWinnerResponse> findTopWinnersBetween(LocalDateTime startDate, LocalDateTime endDate, int limit) {
         return queryFactory
-                .select(USER.nickname, USER.userCode, ROULETTE_RESULT.count())
+                .select(Projections.constructor(
+                        TopWinnerResponse.class, USER.nickname, USER.userCode, ROULETTE_RESULT.count()))
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
                 .join(USER)
@@ -47,15 +50,12 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .groupBy(PLAYER.userId)
                 .orderBy(ROULETTE_RESULT.count().desc())
                 .limit(limit)
-                .fetch()
-                .stream()
-                .map(tuple -> new MemberScore(
-                        tuple.get(USER.nickname), tuple.get(USER.userCode), tuple.get(ROULETTE_RESULT.count())))
-                .toList();
+                .fetch();
     }
 
     @Override
-    public List<MemberScore> findLowestProbabilityWinners(LocalDateTime startDate, LocalDateTime endDate, int limit) {
+    public Optional<LowestProbabilityWinnerResponse> findLowestProbabilityWinner(
+            LocalDateTime startDate, LocalDateTime endDate, int limit) {
         final Integer minProbability = queryFactory
                 .select(ROULETTE_RESULT.winnerProbability.min())
                 .from(ROULETTE_RESULT)
@@ -66,11 +66,11 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .fetchOne();
 
         if (minProbability == null) {
-            return List.of();
+            return Optional.empty();
         }
 
-        return queryFactory
-                .select(USER.nickname, USER.userCode)
+        final List<Tuple> results = queryFactory
+                .select(ROULETTE_RESULT.winnerProbability, USER.nickname, USER.userCode)
                 .from(ROULETTE_RESULT)
                 .join(ROULETTE_RESULT.winner, PLAYER)
                 .join(USER)
@@ -81,10 +81,14 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .distinct()
                 .orderBy(USER.nickname.asc())
                 .limit(limit)
-                .fetch()
-                .stream()
-                .map(tuple -> new MemberScore(tuple.get(USER.nickname), tuple.get(USER.userCode), minProbability))
+                .fetch();
+
+        final List<LowestProbabilityWinnerResponse.PlayerInfo> players = results.stream()
+                .map(tuple -> new LowestProbabilityWinnerResponse.PlayerInfo(
+                        tuple.get(USER.nickname), tuple.get(USER.userCode)))
                 .toList();
+
+        return Optional.of(LowestProbabilityWinnerResponse.of(minProbability, players));
     }
 
     @Override

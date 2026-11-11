@@ -154,7 +154,7 @@ class QueryPerformanceTest {
         // 웜업
         System.out.println("=== 웜업 (3회) ===");
         for (int i = 0; i < 3; i++) {
-            dashboardStatisticsRepository.findLowestProbabilityWinners(startDate, endDate, 5);
+            dashboardStatisticsRepository.findLowestProbabilityWinner(startDate, endDate, 5);
         }
         em.clear();
 
@@ -167,7 +167,7 @@ class QueryPerformanceTest {
         for (int i = 0; i < iterations; i++) {
             em.clear();
             long start = System.currentTimeMillis();
-            dashboardStatisticsRepository.findLowestProbabilityWinners(startDate, endDate, 5);
+            dashboardStatisticsRepository.findLowestProbabilityWinner(startDate, endDate, 5);
             long elapsed = System.currentTimeMillis() - start;
             times.add(elapsed);
             totalTime += elapsed;

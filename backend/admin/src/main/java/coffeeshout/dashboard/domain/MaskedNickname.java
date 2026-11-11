@@ -13,7 +13,7 @@ public final class MaskedNickname {
 
     private MaskedNickname() {}
 
-    static boolean isRevealable(String nickname, Set<String> revealable) {
+    public static boolean isRevealable(String nickname, Set<String> revealable) {
         return nickname != null && revealable.contains(nickname);
     }
 }

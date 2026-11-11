@@ -97,25 +97,39 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
                 "/dashboard/blind-timer-top-players"
             })
     void 닉네임을_내보내는_엔드포인트는_검열_전_닉네임의_원문과_유저_코드를_싣지_않는다(String endpoint) throws Exception {
-        final String body = mockMvc.perform(get(endpoint))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString(StandardCharsets.UTF_8);
+        final String body = 조회(endpoint);
 
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(body)
-                    .doesNotContain(ORIGINAL)
-                    .contains("처리 중인 닉네임")
-                    .contains("\"masked\":true");
-            // 유저 코드가 남으면 응답만 보고도 가린 닉네임이 누구인지 알 수 있다.
-            softly.assertThat(body).doesNotContain("AB3CD");
-            // 이름 VO는 펼쳐서 내보낸다. 감싼 객체로 나가면 기존 프론트가 닉네임을 못 읽는다.
-            softly.assertThat(body).doesNotContain("\"player\":", "\"winner\":");
+            softly.assertThat(body).doesNotContain(ORIGINAL, "AB3CD");
             // 등록은 닉네임을 저장할 때 한다. 공개 GET은 검열 테이블에 쓰지 않는다.
             softly.assertThat(nicknameAuditJpaRepository.findAllByNicknameIn(List.of(ORIGINAL)))
                     .isEmpty();
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "/dashboard/racing-game-top-players",
+                "/dashboard/block-stacking-top-players",
+                "/dashboard/worm-game-top-players",
+                "/dashboard/speed-touch-top-players",
+                "/dashboard/blind-timer-top-players"
+            })
+    void 미니게임_랭킹은_판정_전_이름_자리에_고정_문구를_싣는다(String endpoint) throws Exception {
+        final String body = 조회(endpoint);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(body).contains("처리 중인 닉네임").contains("\"masked\":true");
+            // 이름 VO는 펼쳐서 내보낸다. 감싼 객체로 나가면 기존 프론트가 이름을 못 읽는다.
+            softly.assertThat(body).doesNotContain("\"player\":");
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/dashboard/top-winners", "/dashboard/lowest-probability-winner"})
+    void 당첨자_슬라이드는_판정_전_회원을_고정_문구로도_싣지_않는다(String endpoint) throws Exception {
+        assertThat(조회(endpoint)).doesNotContain("처리 중인 닉네임");
     }
 
     @ParameterizedTest
@@ -125,12 +139,14 @@ class DashboardControllerTest extends AdminModuleIntegrationTest {
         audit.updateStatus(NicknameAuditStatus.CLEAN);
         nicknameAuditJpaRepository.save(audit);
 
-        final String body = mockMvc.perform(get(endpoint))
+        assertThat(조회(endpoint)).contains(ORIGINAL);
+    }
+
+    private String 조회(String endpoint) throws Exception {
+        return mockMvc.perform(get(endpoint))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
-
-        assertThat(body).contains(ORIGINAL).contains("\"masked\":false");
     }
 }

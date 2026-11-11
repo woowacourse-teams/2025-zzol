@@ -1,7 +1,7 @@
 package coffeeshout.dashboard.application;
 
-import coffeeshout.dashboard.domain.MemberScore;
 import coffeeshout.dashboard.domain.PlayerScore;
+import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.global.nickname.NicknamesCollectedEvent;
 import java.time.Clock;
@@ -50,7 +50,7 @@ public class RankingNicknameCollectionScheduler {
         final Set<String> nicknames = new HashSet<>();
 
         dashboardRepository.findTopWinnersBetween(start, end, RANKING_LIMIT).stream()
-                .map(MemberScore::nickname)
+                .map(TopWinnerResponse::nickname)
                 .forEach(nicknames::add);
 
         dashboardRepository.findRacingGameTopPlayers(start, end, RANKING_LIMIT).stream()

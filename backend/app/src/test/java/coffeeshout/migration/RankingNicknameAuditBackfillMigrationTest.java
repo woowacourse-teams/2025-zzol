@@ -36,6 +36,7 @@ class RankingNicknameAuditBackfillMigrationTest {
         jdbc = new JdbcTemplate(dataSource);
 
         flyway(dataSource, "48").migrate();
+        운영_DB처럼_콜레이션을_섞는다();
 
         final long room = 방();
         플레이어(room, "새미니게임", 1);
@@ -69,6 +70,17 @@ class RankingNicknameAuditBackfillMigrationTest {
                 .locations("classpath:db/migration")
                 .target(target)
                 .load();
+    }
+
+    /**
+     * dev·prod는 player·app_user를 서버 콜레이션을 바꾸기 전에 만들어 원천 컬럼과 검열 컬럼의 콜레이션이 다르다(#1917).
+     * 컨테이너는 모든 테이블을 같은 콜레이션으로 만들어서 그대로 두면 비교식의 콜레이션 충돌을 못 잡는다.
+     */
+    private static void 운영_DB처럼_콜레이션을_섞는다() {
+        jdbc.execute("ALTER TABLE player MODIFY player_name VARCHAR(10) COLLATE utf8mb4_0900_ai_ci NOT NULL");
+        jdbc.execute("ALTER TABLE app_user MODIFY nickname VARCHAR(10) COLLATE utf8mb4_0900_ai_ci NULL");
+        jdbc.execute(
+                "ALTER TABLE player_name_audit MODIFY player_name VARCHAR(10) COLLATE utf8mb4_unicode_ci NOT NULL");
     }
 
     private static long 방() {

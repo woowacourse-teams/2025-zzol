@@ -6,12 +6,12 @@
 --   2. TOP5·최저 확률 당첨자: 룰렛 당첨 회원의 app_user.nickname
 -- 랭킹 구간은 이번 달 1일부터다. 서버와 DB 시간대가 달라도 이번 달을 다 덮도록 32일을 본다.
 --
--- 이미 검열 행이 있는 이름은 넣지 않는다. 비교는 player_name 콜레이션을 따라 대소문자와 끝 공백을 무시한다.
--- 애플리케이션의 register()가 existsByNickname으로 거르는 기준과 같다.
+-- 이미 검열 행이 있는 이름은 넣지 않는다. 비교는 검열 컬럼(player_name_audit.player_name)의 utf8mb4_unicode_ci를 따라
+-- 대소문자와 끝 공백을 무시한다. 애플리케이션의 register()가 existsByNickname으로 거르는 기준과 같다.
+-- 원천 컬럼은 CHARSET=utf8mb4만 지정해 만든 테이블이라 utf8mb4_0900_ai_ci다. 콜레이션을 적지 않으면
+-- 두 컬럼을 비교할 때 ERROR 1267로 멈춘다(#1917).
 -- 콜레이션이 같다고 보는 이름이 원천에 여럿 있으면 (player_name, status) 유니크 키에 걸리는데,
 -- insertUnaudited와 같이 ON DUPLICATE KEY UPDATE로 흡수한다.
--- 원천 컬럼(player·app_user)은 utf8mb4_0900_ai_ci, 검열 컬럼은 utf8mb4_unicode_ci라 그대로 비교하면 ERROR 1267로 멈춘다(#1917).
--- 검열 컬럼 콜레이션으로 맞춰 PAD SPACE·대소문자 무시 기준을 지킨다.
 -- created_at은 엔티티의 Instant 매핑과 맞춰 UTC로 넣는다.
 INSERT INTO player_name_audit (player_name, status, attempt_count, created_at)
 SELECT candidate.name, 'UNAUDITED', 0, UTC_TIMESTAMP(6)

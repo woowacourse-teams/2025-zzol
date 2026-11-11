@@ -62,7 +62,11 @@ class NicknameAuditGoldenTest {
 
         final NicknameAuditEvaluation evaluation = new NicknameAuditEvaluator(
                         new TextNormalizer(), properties.minTermLength())
-                .evaluate(NicknameGoldenSetFixture.골든셋(goldenSet), 간격을_두고_한도_초과면_멈추는(검열기(properties)), batchSize, repeats);
+                .evaluate(
+                        NicknameGoldenSetFixture.골든셋(goldenSet),
+                        간격을_두고_한도_초과면_멈추는(검열기(properties)),
+                        batchSize,
+                        repeats);
 
         final Path report = Path.of(
                 "build/reports/golden",

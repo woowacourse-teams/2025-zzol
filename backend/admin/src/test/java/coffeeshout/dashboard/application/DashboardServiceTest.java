@@ -8,6 +8,8 @@ import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
 import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
+import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
+import coffeeshout.dashboard.domain.RankedPlayerName;
 import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
 import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
@@ -16,6 +18,9 @@ import coffeeshout.minigame.infra.persistence.MiniGameEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameJpaRepository;
 import coffeeshout.minigame.infra.persistence.MiniGameResultEntity;
 import coffeeshout.minigame.infra.persistence.MiniGameResultJpaRepository;
+import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.infra.persistence.audit.NicknameAuditJpaRepository;
 import coffeeshout.room.domain.player.PlayerType;
 import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.PlayerJpaRepository;
@@ -27,7 +32,10 @@ import coffeeshout.speedtouch.domain.SpeedTouchScore;
 import coffeeshout.user.infra.persistence.UserEntity;
 import coffeeshout.user.infra.persistence.UserJpaRepository;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -55,6 +63,27 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
     @Autowired
     private MiniGameResultJpaRepository miniGameResultJpaRepository;
+
+    @Autowired
+    private NicknameAuditJpaRepository nicknameAuditJpaRepository;
+
+    /**
+     * 집계 테스트가 쓰는 닉네임은 검열을 통과한 것으로 둔다. 검열 전 닉네임은 가려지므로(#1906),
+     * 그대로 두면 집계가 맞아도 닉네임 단언이 깨진다. 가림 규칙은 맨 아래 {@link 랭킹_닉네임_가림}이 본다.
+     */
+    @BeforeEach
+    void 집계_테스트의_닉네임은_검열을_통과했다() {
+        Stream.concat(
+                        Stream.of("철수", "영희", "민수", "게스트", "완주자", "미완주자", "정상", "타임아웃"),
+                        IntStream.rangeClosed(1, 10).mapToObj(i -> "플레이어" + i))
+                .forEach(nickname -> 검열_행(nickname, NicknameAuditStatus.CLEAN));
+    }
+
+    private void 검열_행(String nickname, NicknameAuditStatus status) {
+        final NicknameAudit audit = new NicknameAudit(nickname);
+        audit.updateStatus(status);
+        nicknameAuditJpaRepository.save(audit);
+    }
 
     @Nested
     @DisplayName("getTop5Winners 테스트")
@@ -433,10 +462,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(3);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("민수");
                 softly.assertThat(result.get(0).bestSurvivalMillis()).isEqualTo(70_000L);
-                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
-                softly.assertThat(result.get(2).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(1).player().playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(2).player().playerName()).isEqualTo("철수");
             });
         }
 
@@ -475,10 +504,10 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(3);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("철수");
                 softly.assertThat(result.get(0).maxFloor()).isEqualTo(30L);
-                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
-                softly.assertThat(result.get(2).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(1).player().playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(2).player().playerName()).isEqualTo("민수");
             });
         }
 
@@ -535,7 +564,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("철수");
             });
         }
     }
@@ -565,9 +594,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(3);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("철수");
                 softly.assertThat(result.get(0).bestTime()).isEqualTo(1000L);
-                softly.assertThat(result.get(2).playerName()).isEqualTo("민수");
+                softly.assertThat(result.get(2).player().playerName()).isEqualTo("민수");
             });
         }
 
@@ -591,7 +620,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("완주자");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("완주자");
                 softly.assertThat(result.getFirst().bestTime()).isEqualTo(4000L);
             });
         }
@@ -662,7 +691,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("철수");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("철수");
             });
         }
 
@@ -698,9 +727,9 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(2);
-                softly.assertThat(result.get(0).playerName()).isEqualTo("철수");
+                softly.assertThat(result.get(0).player().playerName()).isEqualTo("철수");
                 softly.assertThat(result.get(0).bestErrorMillis()).isEqualTo(120L);
-                softly.assertThat(result.get(1).playerName()).isEqualTo("영희");
+                softly.assertThat(result.get(1).player().playerName()).isEqualTo("영희");
             });
         }
 
@@ -724,7 +753,7 @@ class DashboardServiceTest extends AdminModuleServiceTest {
             // then
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result).hasSize(1);
-                softly.assertThat(result.getFirst().playerName()).isEqualTo("정상");
+                softly.assertThat(result.getFirst().player().playerName()).isEqualTo("정상");
                 softly.assertThat(result.getFirst().bestErrorMillis()).isEqualTo(3000L);
             });
         }
@@ -736,6 +765,161 @@ class DashboardServiceTest extends AdminModuleServiceTest {
 
             // then
             assertThat(result).isEmpty();
+        }
+    }
+
+    /**
+     * 미니게임 랭킹은 순위와 기록을 그대로 두고 판정 전 이름만 가린다. 당첨자 슬라이드는 판정 전 회원을 뺀다(#1906).
+     * 상태별 판정은 {@code NicknameExposureServiceTest}가 본다. 여기서는 엔드포인트마다 규칙이 걸렸는지 본다.
+     */
+    @Nested
+    class 랭킹_닉네임_가림 {
+
+        private static final String MASKED = "처리 중인 닉네임";
+
+        @Test
+        void TOP5_당첨자에서_판정_전_회원은_빼고_다음_순위로_채운다() {
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK1"));
+            final UserEntity 통과 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final UserEntity 미검열 = userJpaRepository.save(new UserEntity("XY4ZQ", "검열전닉"));
+            final PlayerEntity 통과_플레이어 =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, 통과.getId()));
+            final PlayerEntity 미검열_플레이어 =
+                    playerJpaRepository.save(new PlayerEntity(room, "검열전닉", PlayerType.GUEST, 미검열.getId()));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 미검열_플레이어, 10));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 미검열_플레이어, 10));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 통과_플레이어, 10));
+
+            final List<TopWinnerResponse> result = dashboardService.getTop5Winners();
+
+            assertThat(result).containsExactly(new TopWinnerResponse("철수", "AB3CD", 1L));
+        }
+
+        @Test
+        void TOP5_당첨자는_판정_전_회원이_빠져도_5명을_채운다() {
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK3"));
+            for (int i = 1; i <= 6; i++) {
+                final String nickname = "회원" + i;
+                if (i > 1) {
+                    검열_행(nickname, NicknameAuditStatus.CLEAN);
+                }
+                final UserEntity user = userJpaRepository.save(new UserEntity("UC00" + i, nickname));
+                final PlayerEntity player =
+                        playerJpaRepository.save(new PlayerEntity(room, nickname, PlayerType.GUEST, user.getId()));
+                for (int win = 0; win < 10 - i; win++) {
+                    rouletteResultJpaRepository.save(new RouletteResultEntity(room, player, 10));
+                }
+            }
+
+            final List<TopWinnerResponse> result = dashboardService.getTop5Winners();
+
+            // 1등 "회원1"은 검열 행이 없어 빠지고, 6등이던 "회원6"이 5번째 자리를 채운다.
+            assertThat(result)
+                    .extracting(TopWinnerResponse::nickname)
+                    .containsExactly("회원2", "회원3", "회원4", "회원5", "회원6");
+        }
+
+        @Test
+        void 최저_확률_공동_당첨자_중_판정이_PENDING인_회원은_뺀다() {
+            검열_행("보류닉", NicknameAuditStatus.PENDING);
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK2"));
+            final UserEntity 통과 = userJpaRepository.save(new UserEntity("AB3CD", "철수"));
+            final UserEntity 보류 = userJpaRepository.save(new UserEntity("XY4ZQ", "보류닉"));
+            final PlayerEntity 통과_플레이어 =
+                    playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.HOST, 통과.getId()));
+            final PlayerEntity 보류_플레이어 =
+                    playerJpaRepository.save(new PlayerEntity(room, "보류닉", PlayerType.GUEST, 보류.getId()));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 통과_플레이어, 5));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 보류_플레이어, 5));
+
+            final LowestProbabilityWinnerResponse result = dashboardService.getLowestProbabilityWinner();
+
+            assertThat(result)
+                    .isEqualTo(new LowestProbabilityWinnerResponse(
+                            0.05, List.of(new LowestProbabilityWinnerResponse.PlayerInfo("철수", "AB3CD"))));
+        }
+
+        @Test
+        void 최저_확률_당첨자가_모두_판정_전이면_빈_상태로_둔다() {
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSK4"));
+            final UserEntity 미검열 = userJpaRepository.save(new UserEntity("XY4ZQ", "검열전닉"));
+            final PlayerEntity 미검열_플레이어 =
+                    playerJpaRepository.save(new PlayerEntity(room, "검열전닉", PlayerType.GUEST, 미검열.getId()));
+            rouletteResultJpaRepository.save(new RouletteResultEntity(room, 미검열_플레이어, 5));
+
+            // 다음으로 낮은 확률을 최저라고 보여 주면 틀린 정보다. 판정이 끝날 때까지 비운다.
+            assertThat(dashboardService.getLowestProbabilityWinner())
+                    .isEqualTo(LowestProbabilityWinnerResponse.empty());
+        }
+
+        @Test
+        void 레이싱_랭킹에서_검열_전_닉네임을_가리고_기록은_그대로_둔다() {
+            미니게임_기록(MiniGameType.RACING_GAME, 1000L, 2000L);
+
+            final List<RacingGameTopPlayerResponse> result = dashboardService.getRacingGameTopPlayers();
+
+            assertThat(result)
+                    .containsExactly(
+                            new RacingGameTopPlayerResponse(new RankedPlayerName(MASKED, true), 1000L),
+                            new RacingGameTopPlayerResponse(new RankedPlayerName("철수", false), 2000L));
+        }
+
+        @Test
+        void 빌딩쌓기_랭킹에서_검열_전_닉네임을_가리고_기록은_그대로_둔다() {
+            미니게임_기록(MiniGameType.BLOCK_STACKING, 30L, 20L);
+
+            final List<BlockStackingTopPlayerResponse> result = dashboardService.getBlockStackingTopPlayers();
+
+            assertThat(result)
+                    .containsExactly(
+                            new BlockStackingTopPlayerResponse(new RankedPlayerName(MASKED, true), 30L),
+                            new BlockStackingTopPlayerResponse(new RankedPlayerName("철수", false), 20L));
+        }
+
+        @Test
+        void 지렁이_랭킹에서_검열_전_닉네임을_가리고_기록은_그대로_둔다() {
+            미니게임_기록(MiniGameType.WORM_GAME, 60_000L, 30_000L);
+
+            final List<WormGameTopPlayerResponse> result = dashboardService.getWormGameTopPlayers();
+
+            assertThat(result)
+                    .containsExactly(
+                            new WormGameTopPlayerResponse(new RankedPlayerName(MASKED, true), 60_000L),
+                            new WormGameTopPlayerResponse(new RankedPlayerName("철수", false), 30_000L));
+        }
+
+        @Test
+        void 스피드터치_랭킹에서_검열_전_닉네임을_가리고_기록은_그대로_둔다() {
+            미니게임_기록(MiniGameType.SPEED_TOUCH, 1000L, 2000L);
+
+            final List<SpeedTouchTopPlayerResponse> result = dashboardService.getSpeedTouchTopPlayers();
+
+            assertThat(result)
+                    .containsExactly(
+                            new SpeedTouchTopPlayerResponse(new RankedPlayerName(MASKED, true), 1000L),
+                            new SpeedTouchTopPlayerResponse(new RankedPlayerName("철수", false), 2000L));
+        }
+
+        @Test
+        void 초시계_랭킹에서_검열_전_닉네임을_가리고_기록은_그대로_둔다() {
+            미니게임_기록(MiniGameType.BLIND_TIMER, 100L, 200L);
+
+            final List<BlindTimerTopPlayerResponse> result = dashboardService.getBlindTimerTopPlayers();
+
+            assertThat(result)
+                    .containsExactly(
+                            new BlindTimerTopPlayerResponse(new RankedPlayerName(MASKED, true), 100L),
+                            new BlindTimerTopPlayerResponse(new RankedPlayerName("철수", false), 200L));
+        }
+
+        /** 검열 행이 없는 "검열전닉"이 1등 기록, 검열을 통과한 "철수"가 2등 기록을 낸다. */
+        private void 미니게임_기록(MiniGameType type, long firstScore, long secondScore) {
+            final RoomEntity room = roomJpaRepository.save(new RoomEntity("MSKG"));
+            final MiniGameEntity miniGame = miniGameJpaRepository.save(new MiniGameEntity(room.getId(), type));
+            final PlayerEntity 미검열 = playerJpaRepository.save(new PlayerEntity(room, "검열전닉", PlayerType.HOST));
+            final PlayerEntity 통과 = playerJpaRepository.save(new PlayerEntity(room, "철수", PlayerType.GUEST));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 미검열.getId(), 1, firstScore));
+            miniGameResultJpaRepository.save(new MiniGameResultEntity(miniGame, 통과.getId(), 2, secondScore));
         }
     }
 }

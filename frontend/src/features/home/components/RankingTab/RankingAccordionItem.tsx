@@ -102,7 +102,13 @@ const RankingAccordionItem = ({ category }: Props) => {
           )}
           {items.map((item, index) => (
             <S.AnimatedItem key={item.rank} $index={index}>
-              <RankingItem rank={item.rank} name={item.name} count={item.count} unit={item.unit} />
+              <RankingItem
+                rank={item.rank}
+                name={item.name}
+                count={item.count}
+                unit={item.unit}
+                masked={item.masked}
+              />
             </S.AnimatedItem>
           ))}
         </S.AccordionContent>

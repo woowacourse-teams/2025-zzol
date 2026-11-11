@@ -1,3 +1,5 @@
 package coffeeshout.dashboard.domain;
 
-public record WormGameTopPlayerResponse(String playerName, Long bestSurvivalMillis) {}
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
+public record WormGameTopPlayerResponse(@JsonUnwrapped RankedPlayerName player, Long bestSurvivalMillis) {}

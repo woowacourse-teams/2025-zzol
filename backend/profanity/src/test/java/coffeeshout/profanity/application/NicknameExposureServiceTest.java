@@ -1,0 +1,119 @@
+package coffeeshout.profanity.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import coffeeshout.profanity.domain.audit.NicknameAudit;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.infra.persistence.audit.NicknameAuditJpaRepository;
+import coffeeshout.support.ServiceTest;
+import java.util.Arrays;
+import java.util.List;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
+
+class NicknameExposureServiceTest extends ServiceTest {
+
+    @Autowired
+    private NicknameExposureService exposureService;
+
+    @Autowired
+    private NicknameAuditJpaRepository auditRepository;
+
+    @Autowired
+    private ProfanityWordManagementService wordManagementService;
+
+    @Nested
+    class 검열_상태별_공개 {
+
+        @ParameterizedTest
+        @EnumSource(
+                value = NicknameAuditStatus.class,
+                names = {"CLEAN", "ALLOWED"})
+        void 판정이_CLEAN_ALLOWED면_공개한다(NicknameAuditStatus status) {
+            검열_행(status, "통과닉");
+
+            assertThat(exposureService.findRevealable(List.of("통과닉"))).containsExactly("통과닉");
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = NicknameAuditStatus.class,
+                names = {"CLEAN", "ALLOWED"},
+                mode = EnumSource.Mode.EXCLUDE)
+        void 판정이_CLEAN_ALLOWED가_아니면_가린다(NicknameAuditStatus status) {
+            검열_행(status, "미통과닉");
+
+            assertThat(exposureService.findRevealable(List.of("미통과닉"))).isEmpty();
+        }
+
+        @Test
+        void 상태가_다른_행이_섞여_있으면_하나라도_통과가_아니면_가린다() {
+            // 유니크 제약이 (player_name, status)라 같은 닉네임에 CLEAN과 FLAGGED가 함께 있을 수 있다.
+            검열_행(NicknameAuditStatus.CLEAN, "섞인닉");
+            검열_행(NicknameAuditStatus.FLAGGED, "섞인닉");
+
+            assertThat(exposureService.findRevealable(List.of("섞인닉"))).isEmpty();
+        }
+
+        @Test
+        void 대소문자만_다른_검열_행도_같은_닉네임의_판정으로_본다() {
+            // player_name 콜레이션은 대소문자를 구분하지 않는다. register()의 existsByNickname도 같은 기준이라
+            // "abc"는 "ABC" 행이 있으면 자기 행을 따로 갖지 못한다. Java 쪽이 정확히 일치만 보면 영영 가려진다.
+            검열_행(NicknameAuditStatus.CLEAN, "ZzolKing");
+
+            assertThat(exposureService.findRevealable(List.of("zzolking"))).containsExactly("zzolking");
+        }
+
+        @Test
+        void 끝_공백만_다른_CLEAN_행도_같은_닉네임의_판정으로_본다() {
+            // player_name 콜레이션(utf8mb4_unicode_ci)은 PAD SPACE라 끝 공백을 무시한다. IN 쿼리가 "철수 "로 "철수" 행을
+            // 돌려주는데 Java 쪽이 공백까지 비교하면 행 없음으로 분류된다. register()의 existsByNickname은 행이 있다고
+            // 보고 INSERT를 건너뛰므로, "철수 "는 자기 행을 갖지 못해 영영 가려진다.
+            검열_행(NicknameAuditStatus.CLEAN, "철수");
+
+            assertThat(exposureService.findRevealable(List.of("철수 "))).containsExactly("철수 ");
+        }
+
+        @Test
+        void 공개_여부는_조회한_닉네임마다_따로_정한다() {
+            검열_행(NicknameAuditStatus.CLEAN, "보임");
+            검열_행(NicknameAuditStatus.PENDING, "가림");
+
+            assertThat(exposureService.findRevealable(List.of("보임", "가림", "행없음")))
+                    .containsExactly("보임");
+        }
+    }
+
+    @Nested
+    class 검열_행이_없는_닉네임 {
+
+        @Test
+        void 가린다() {
+            assertThat(exposureService.findRevealable(List.of("새닉네임"))).isEmpty();
+        }
+
+        @Test
+        void 정규화하면_운영자_허용_단어와_같아도_가린다() {
+            // 운영자가 허용한 닉네임 자신은 ALLOWED 행이 있다. 행이 없는 건 "ZZ0L"처럼 정규화하면 허용 단어와
+            // 같아지는 변형뿐이고, 변형은 검열을 한 번도 받지 않았으므로 판정을 받을 때까지 가린다.
+            wordManagementService.operatorAllow("zzol");
+
+            assertThat(exposureService.findRevealable(List.of("ZZ0L"))).isEmpty();
+        }
+    }
+
+    @Test
+    void 빈_목록이나_null_닉네임은_공개하지_않는다() {
+        assertThat(exposureService.findRevealable(List.of())).isEmpty();
+        assertThat(exposureService.findRevealable(Arrays.asList(null, null))).isEmpty();
+    }
+
+    private void 검열_행(NicknameAuditStatus status, String nickname) {
+        final NicknameAudit audit = new NicknameAudit(nickname);
+        audit.updateStatus(status);
+        auditRepository.save(audit);
+    }
+}

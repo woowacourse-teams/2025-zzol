@@ -1,13 +1,9 @@
 package coffeeshout.dashboard.infra.persistence;
 
-import coffeeshout.dashboard.domain.BlindTimerTopPlayerResponse;
-import coffeeshout.dashboard.domain.BlockStackingTopPlayerResponse;
 import coffeeshout.dashboard.domain.GamePlayCountResponse;
 import coffeeshout.dashboard.domain.LowestProbabilityWinnerResponse;
-import coffeeshout.dashboard.domain.RacingGameTopPlayerResponse;
-import coffeeshout.dashboard.domain.SpeedTouchTopPlayerResponse;
+import coffeeshout.dashboard.domain.PlayerScore;
 import coffeeshout.dashboard.domain.TopWinnerResponse;
-import coffeeshout.dashboard.domain.WormGameTopPlayerResponse;
 import coffeeshout.dashboard.domain.repository.DashboardStatisticsRepository;
 import coffeeshout.minigame.domain.MiniGameType;
 import coffeeshout.minigame.infra.persistence.QMiniGameEntity;
@@ -24,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -110,57 +105,39 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
     }
 
     @Override
-    public List<RacingGameTopPlayerResponse> findRacingGameTopPlayers(
-            LocalDateTime startDate, LocalDateTime endDate, int limit) {
-        return findTopPlayersByMinScore(
-                MiniGameType.RACING_GAME, startDate, endDate, limit, null, RacingGameTopPlayerResponse::new);
+    public List<PlayerScore> findRacingGameTopPlayers(LocalDateTime startDate, LocalDateTime endDate, int limit) {
+        return findTopPlayersByMinScore(MiniGameType.RACING_GAME, startDate, endDate, limit, null);
     }
 
     @Override
-    public List<SpeedTouchTopPlayerResponse> findSpeedTouchTopPlayers(
-            LocalDateTime startDate, LocalDateTime endDate, int limit) {
+    public List<PlayerScore> findSpeedTouchTopPlayers(LocalDateTime startDate, LocalDateTime endDate, int limit) {
         // 완주 점수는 완주 시간(ms). DNF는 SpeedTouchScore에서 DNF_BASE(1_000_000_000) - progress로
         // 10^9 부근 값이므로, 이 경계 미만(실제 완주 기록)만 집계해 미완주 기록을 TOP에서 제외한다.
         final long finishScoreCeiling = 1_000_000L;
 
         return findTopPlayersByMinScore(
-                MiniGameType.SPEED_TOUCH,
-                startDate,
-                endDate,
-                limit,
-                MINI_GAME_RESULT.score.lt(finishScoreCeiling),
-                SpeedTouchTopPlayerResponse::new);
+                MiniGameType.SPEED_TOUCH, startDate, endDate, limit, MINI_GAME_RESULT.score.lt(finishScoreCeiling));
     }
 
     @Override
-    public List<BlindTimerTopPlayerResponse> findBlindTimerTopPlayers(
-            LocalDateTime startDate, LocalDateTime endDate, int limit) {
+    public List<PlayerScore> findBlindTimerTopPlayers(LocalDateTime startDate, LocalDateTime endDate, int limit) {
         // 점수는 목표 시간과의 오차(ms, 작을수록 가까움). 타임아웃은 BlindTimerScore에서 TIMEOUT_PENALTY(999_999_999)로
         // 항상 꼴등 그룹이므로, 이 경계 미만(정상 STOP, 최대 오차 약 20초)만 집계해 타임아웃 기록을 TOP에서 제외한다.
         final long normalStopScoreCeiling = 1_000_000L;
 
         return findTopPlayersByMinScore(
-                MiniGameType.BLIND_TIMER,
-                startDate,
-                endDate,
-                limit,
-                MINI_GAME_RESULT.score.lt(normalStopScoreCeiling),
-                BlindTimerTopPlayerResponse::new);
+                MiniGameType.BLIND_TIMER, startDate, endDate, limit, MINI_GAME_RESULT.score.lt(normalStopScoreCeiling));
     }
 
     @Override
-    public List<BlockStackingTopPlayerResponse> findBlockStackingTopPlayers(
-            LocalDateTime startDate, LocalDateTime endDate, int limit) {
-        return findTopPlayersByMaxScore(
-                MiniGameType.BLOCK_STACKING, startDate, endDate, limit, BlockStackingTopPlayerResponse::new);
+    public List<PlayerScore> findBlockStackingTopPlayers(LocalDateTime startDate, LocalDateTime endDate, int limit) {
+        return findTopPlayersByMaxScore(MiniGameType.BLOCK_STACKING, startDate, endDate, limit);
     }
 
     /** 지렁이 게임 — 점수 = 생존 시간(ms)이므로 블록쌓기와 같은 최대값 기준. */
     @Override
-    public List<WormGameTopPlayerResponse> findWormGameTopPlayers(
-            LocalDateTime startDate, LocalDateTime endDate, int limit) {
-        return findTopPlayersByMaxScore(
-                MiniGameType.WORM_GAME, startDate, endDate, limit, WormGameTopPlayerResponse::new);
+    public List<PlayerScore> findWormGameTopPlayers(LocalDateTime startDate, LocalDateTime endDate, int limit) {
+        return findTopPlayersByMaxScore(MiniGameType.WORM_GAME, startDate, endDate, limit);
     }
 
     /**
@@ -168,12 +145,8 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
      * findTopPlayersByMinScore 와 같은 2-스텝 방식이다 — player_id 로 집계해야 다른 방의 동명이인이 한 행으로 합쳐지지 않는다.
      * 동점은 playerId 오름차순으로 순서를 고정한다.
      */
-    private <T> List<T> findTopPlayersByMaxScore(
-            MiniGameType type,
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            int limit,
-            BiFunction<String, Long, T> mapper) {
+    private List<PlayerScore> findTopPlayersByMaxScore(
+            MiniGameType type, LocalDateTime startDate, LocalDateTime endDate, int limit) {
         final List<Tuple> aggregations = queryFactory
                 .select(MINI_GAME_RESULT.playerId, MINI_GAME_RESULT.score.max())
                 .from(MINI_GAME_RESULT)
@@ -192,7 +165,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
                 .toList());
 
         return aggregations.stream()
-                .map(tuple -> mapper.apply(
+                .map(tuple -> new PlayerScore(
                         playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
                         tuple.get(MINI_GAME_RESULT.score.max())))
                 .toList();
@@ -203,15 +176,13 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
      * player_id로 집계 후 별도 쿼리로 이름을 매핑하는 2-스텝 방식으로, 집계 단계의 JOIN을 피한다.
      *
      * @param scoreFilter 점수 경계 등 추가 필터(없으면 null — QueryDSL이 null 조건을 무시한다)
-     * @param mapper      (playerName, bestScore) → 응답 DTO 생성자
      */
-    private <T> List<T> findTopPlayersByMinScore(
+    private List<PlayerScore> findTopPlayersByMinScore(
             MiniGameType miniGameType,
             LocalDateTime startDate,
             LocalDateTime endDate,
             int limit,
-            BooleanExpression scoreFilter,
-            BiFunction<String, Long, T> mapper) {
+            BooleanExpression scoreFilter) {
         final List<Tuple> aggregations = queryFactory
                 .select(MINI_GAME_RESULT.playerId, MINI_GAME_RESULT.score.min())
                 .from(MINI_GAME_RESULT)
@@ -235,7 +206,7 @@ public class QueryDslDashboardStatisticsRepository implements DashboardStatistic
         final Map<Long, String> playerNameMap = findPlayerNames(playerIds);
 
         return aggregations.stream()
-                .map(tuple -> mapper.apply(
+                .map(tuple -> new PlayerScore(
                         playerNameMap.get(tuple.get(MINI_GAME_RESULT.playerId)),
                         tuple.get(MINI_GAME_RESULT.score.min())))
                 .toList();

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import coffeeshout.fixture.UserFixture;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.global.nickname.NicknamesCollectedEvent;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
@@ -24,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class UserNicknameCleanupServiceTest {
@@ -36,6 +38,9 @@ class UserNicknameCleanupServiceTest {
 
     @Mock
     ProfanityChecker profanityChecker;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     UserNicknameCleanupService userNicknameCleanupService;
@@ -72,6 +77,15 @@ class UserNicknameCleanupServiceTest {
                 given(userRepository.findAllByNickname(new UserNickname("나쁜말"))).willReturn(List.of(사용자1, 사용자2));
                 given(nicknameDefaultGenerator.generate()).willReturn("용감한호랑이", "귀여운여우");
                 given(userRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+            }
+
+            @Test
+            void 새_닉네임마다_검열_등록을_요청한다() {
+                userNicknameCleanupService.onProfanityWordBlocked(new ProfanityWordBlockedEvent("나쁜말"));
+
+                // 새 닉네임도 랭킹에 나간다. 등록하지 않으면 판정을 받을 길이 없어 영영 가려진다(#1906).
+                then(eventPublisher).should().publishEvent(new NicknameSubmittedEvent("용감한호랑이"));
+                then(eventPublisher).should().publishEvent(new NicknameSubmittedEvent("귀여운여우"));
             }
 
             @Test

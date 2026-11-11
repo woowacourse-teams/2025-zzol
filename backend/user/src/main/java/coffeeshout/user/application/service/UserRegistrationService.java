@@ -1,6 +1,7 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.user.application.port.UserCreationPort;
 import coffeeshout.user.config.UserCodeProperties;
@@ -13,6 +14,7 @@ import coffeeshout.user.domain.repository.UserRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ public class UserRegistrationService {
     private final UserCodeProperties userCodeProperties;
     private final ProfanityChecker profanityChecker;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
+    private final ApplicationEventPublisher eventPublisher;
 
     public LoginResult registerOrLogin(
             OAuthProvider provider, String providerUserId, String email, String suggestedNickname) {
@@ -39,6 +42,8 @@ public class UserRegistrationService {
         final UserNickname nickname = resolveNickname(suggestedNickname);
         final OAuthAccount oAuthAccount = new OAuthAccount(provider, providerUserId, email);
         final User newUser = saveNewUserWithRetry(nickname, oAuthAccount, provider);
+        // 회원 닉네임은 TOP5·최저 확률 랭킹에 나간다. 자동 생성 닉네임도 판정을 받아야 공개된다(#1906).
+        eventPublisher.publishEvent(new NicknameSubmittedEvent(nickname.value()));
 
         return new LoginResult(newUser, true);
     }

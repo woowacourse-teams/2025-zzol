@@ -115,6 +115,7 @@ def model_summary(items, latencies):
         "욕설·우회 미탐": rate(sum(v == "CLEAN" for v in missed), len(missed)),
         "정상(CLEAN) 오탐률": share("CLEAN", CAUGHT),
         "경계(AMBIGUOUS) PENDING 비율": share("AMBIGUOUS", {"PENDING"}),
+        "경계 판정 분포 CLEAN / FLAGGED / PENDING": " / ".join(str(by_expected["AMBIGUOUS"].count(v)) for v in VERDICTS),
         "회차별 MISSING": " / ".join(
             str(sum(i["runs"].get(r, "MISSING") == "MISSING" for i in items.values())) for r in run_ids
         ),
@@ -122,6 +123,24 @@ def model_summary(items, latencies):
         f" ({len(latencies)}회 호출)",
         "반복 간 판정 뒤집힘": rate(flipped, len(comparable)),
     }
+
+
+def category_rows(name_a, items_a, name_b, items_b):
+    """카테고리와 expected 묶음마다 두 모델이 걸러낸(FLAGGED/PENDING) 비율과 PENDING 비율을 낸다."""
+    groups = defaultdict(lambda: ([], []))
+    for n, a in items_a.items():
+        va, vb = majority(a["runs"]), majority(items_b[n]["runs"]) if n in items_b else None
+        if va is not None and vb is not None:
+            groups[(a["category"], a["expected"])][0].append(va)
+            groups[(a["category"], a["expected"])][1].append(vb)
+    out = ["걸러냄은 FLAGGED 와 PENDING 을 합친 비율이다. 욕설·우회 행에서는 재현율이고 정상 행에서는 오탐률이다.", "",
+           f"| 카테고리 | expected | 걸러냄 {name_a} | 걸러냄 {name_b} | PENDING {name_a} | PENDING {name_b} |",
+           "| --- | --- | --- | --- | --- | --- |"]
+    for (category, expected), (va, vb) in groups.items():
+        caught = [rate(sum(v in CAUGHT for v in vs), len(vs)) for vs in (va, vb)]
+        pending = [f"{vs.count('PENDING')}/{len(vs)}" for vs in (va, vb)]
+        out.append(f"| {category} | {expected} | {caught[0]} | {caught[1]} | {pending[0]} | {pending[1]} |")
+    return out
 
 
 def paired(items_a, items_b, include):
@@ -187,6 +206,8 @@ def report(name_a, items_a, lat_a, name_b, items_b, lat_b):
     verdict = "비열등하다" if whole["lower"] > -MARGIN else "비열등하다고 말할 수 없다"
     out += ["", f"비열등 한계 -{100 * MARGIN:.0f}%p 기준: 전체 범위 구간 하한이 {100 * whole['lower']:+.2f}%p 라서"
             f" {name_b} 는 {name_a} 보다 {verdict}."]
+
+    out += ["", "## 카테고리별", ""] + category_rows(name_a, items_a, name_b, items_b)
 
     out += ["", "## 부록: 다수결 판정이 엇갈린 표본", "",
             f"| 닉네임 | expected | 카테고리 | {name_a} (회차별) | {name_b} (회차별) |", "| --- | --- | --- | --- | --- |"]

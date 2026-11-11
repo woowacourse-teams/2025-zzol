@@ -1,0 +1,1738 @@
+nickname	expected	category	run	batch	predicted	batch_latency_ms	reason
+씨발	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+씨발놈	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+시발놈아	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+개새끼	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+개새끼야	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+병신	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+병신아	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+좆까	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+지랄하네	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+존나짜증	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어/비속성 접두사 포함
+엿먹어라	PROFANE	직접욕설	1	1	FLAGGED	22147	욕설 표현 포함
+미친년	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+미친놈	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+썅년	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+니애미	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+느금마	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+애미뒤진	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+좆밥	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+씹새끼	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+호로새끼	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+염병할놈	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+닥쳐씨발	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+개씨발	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+씨발년	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+섹스머신	PROFANE	직접욕설	1	1	FLAGGED	22147	선정적 단어 포함
+보지털	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+fuckyou	PROFANE	직접욕설	1	1	FLAGGED	22147	영어 욕설 포함
+shithead	PROFANE	직접욕설	1	1	FLAGGED	22147	영어 욕설 포함
+bitch	PROFANE	직접욕설	1	1	FLAGGED	22147	영어 욕설 포함
+창녀	PROFANE	직접욕설	1	1	FLAGGED	22147	비속어 포함
+민수병신	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+지훈씨발	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+철수개새끼	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+영희미친년	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+서연좆밥	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+김대리병신	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+박과장씨발	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+준호지랄	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+수빈이썅년	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+병신민재	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+씨발도윤	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+개새끼하준	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+지우엿먹어	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+태현좆까	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+예린미친놈	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+시발은우	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+현우씹새끼	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+유나보지	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+정민느금마	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+하은니애미	PROFANE	이름+욕설	1	1	FLAGGED	22147	비속어 포함
+ㅆㅣ발	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+씨ㅂㅏㄹ	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㅂㅕㅇ신	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+병ㅅㅣㄴ	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㄱㅐ새끼	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+개ㅅㅐ끼	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㅈㅗㅈ까	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㅈㅣ랄	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㅁㅣ친년	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㅅㅣ발놈	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+존ㄴㅏ싫다	EVASION	자모분리	1	1	FLAGGED	22147	비속어 포함
+ㅂㅕㅇㅅㅣㄴ	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+씹ㅅㅐ끼	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+ㅆㅣㅂㅏㄹ	EVASION	자모분리	1	1	FLAGGED	22147	자모분리 비속어 우회
+민수ㅂㅕㅇ신	EVASION	자모분리	1	1	FLAGGED	22147	비속어 우회
+씨*발	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+시.발	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+병_신	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+개.새.끼	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+좆#까	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+씨8발	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+지~랄	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+미!친!년	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+병1신	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+s.h.i.t	EVASION	특수문자삽입	1	1	FLAGGED	22147	영어 욕설 우회
+f*ck	EVASION	특수문자삽입	1	1	FLAGGED	22147	영어 욕설 우회
+씨-발놈	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+개_새_끼야	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+존.나	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+엿.먹.어	EVASION	특수문자삽입	1	1	FLAGGED	22147	특수문자 삽입 비속어 우회
+시바롬	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+씨바	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+씨빨	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+시벌	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+씨불	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+쉬발	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+븅신	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+병쉰	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+빙신	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+개색기	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+개쉐이	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+개새기	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+좃까	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+졷까	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+지롤	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+니미럴	EVASION	유사발음	1	1	FLAGGED	22147	비속어 포함
+씌발	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+싀발	EVASION	유사발음	1	1	FLAGGED	22147	비속어 변형
+퍽유	EVASION	유사발음	1	1	FLAGGED	22147	영어 욕설 음차
+뻑큐	EVASION	유사발음	1	1	FLAGGED	22147	영어 욕설 음차
+ㅅㅂ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅆㅂ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅂㅅ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅈㄹ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㄱㅅㄲ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅅㅂㄴ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅁㅊㄴ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅈㄴ싫어	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅅㅂ민수	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅂㅅ아	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅆㅂㄹㅁ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅈㄲ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㄴㄱㅁ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+ㅗㅗ	EVASION	초성	1	1	FLAGGED	22147	욕설 제스처 의미
+ㅆㅂㅅㄲ	EVASION	초성	1	1	FLAGGED	22147	초성 비속어 우회
+미친듯이	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 부사적 표현
+병신년	AMBIGUOUS	경계	1	1	CLEAN	22147	연도(丙申年) 의미 포함
+똥강아지	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 별명
+병맛인생	AMBIGUOUS	경계	1	1	CLEAN	22147	인터넷 유행어, 엄격한 비속어 아님
+존맛탱	AMBIGUOUS	경계	1	1	CLEAN	22147	신조어 감탄사
+개꿀잼	AMBIGUOUS	경계	1	1	CLEAN	22147	신조어 감탄사
+빡빡이	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 별명
+섹시한남자	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 닉네임
+변태가면	AMBIGUOUS	경계	1	1	CLEAN	22147	만화 캐릭터 기반 일반 닉네임
+나쁜놈	AMBIGUOUS	경계	1	1	CLEAN	22147	순화된 표현
+멸치대가리	AMBIGUOUS	경계	1	1	CLEAN	22147	경미한 놀림 표현
+개노잼	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 신조어
+존버중	AMBIGUOUS	경계	1	1	CLEAN	22147	신조어
+씹덕	AMBIGUOUS	경계	1	1	CLEAN	22147	인터넷 하위문화 용어
+찐따	AMBIGUOUS	경계	1	1	CLEAN	22147	은어이나 일반적 맥락
+개웃겨	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 신조어
+또라이	AMBIGUOUS	경계	1	1	CLEAN	22147	경미한 속어
+돌아이	AMBIGUOUS	경계	1	1	CLEAN	22147	경미한 속어
+호구왕	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 닉네임
+개빡침	AMBIGUOUS	경계	1	1	CLEAN	22147	신조어 감탄사
+졸라멋짐	AMBIGUOUS	경계	1	1	CLEAN	22147	비속성 강조어 포함이나 전체적 감탄
+미친개	AMBIGUOUS	경계	1	1	CLEAN	22147	일반 동물 조합 닉네임
+시발점	CLEAN	오탐유발정상어	1	1	CLEAN	22147	정상 단어(始發点)
+시발택시	CLEAN	오탐유발정상어	1	1	CLEAN	22147	정상 단어
+시바견	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동물 품종
+시바이누	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동물 품종
+시바견사랑	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동물 품종
+개나리	CLEAN	오탐유발정상어	1	1	CLEAN	22147	식물 이름
+개구리	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동물 이름
+개미왕	CLEAN	오탐유발정상어	1	1	CLEAN	22147	곤충 이름
+개발자	CLEAN	오탐유발정상어	1	1	CLEAN	22147	직업 이름
+개구쟁이	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+새끼손가락	CLEAN	오탐유발정상어	1	1	CLEAN	22147	신체 부위
+새끼고양이	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동물 새끼
+새끼곰	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동물 새끼
+호박엿	CLEAN	오탐유발정상어	1	1	CLEAN	22147	음식 이름
+엿장수	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+쌍둥이	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+쌍화차	CLEAN	오탐유발정상어	1	1	CLEAN	22147	음료 이름
+청년	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+소년탐정	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+신년운세	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+보지마세요	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동사 '보다' 활용형 포함
+자지마	CLEAN	오탐유발정상어	1	1	CLEAN	22147	동사 '자다' 활용형 포함
+딸기우유	CLEAN	오탐유발정상어	1	1	CLEAN	22147	음료 이름
+정자동	CLEAN	오탐유발정상어	1	1	CLEAN	22147	지명
+성기사	CLEAN	오탐유발정상어	1	1	CLEAN	22147	게임 직업
+고자질	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+애자일	CLEAN	오탐유발정상어	1	1	CLEAN	22147	개발 방법론
+등신대	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 물품
+등신불	CLEAN	오탐유발정상어	1	1	CLEAN	22147	문학 작품명
+호로록	CLEAN	오탐유발정상어	1	1	CLEAN	22147	의성어
+껌씹는중	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 상태
+수박씨	CLEAN	오탐유발정상어	1	1	CLEAN	22147	식물 부위
+씨름왕	CLEAN	오탐유발정상어	1	1	CLEAN	22147	운동 종목
+발바닥	CLEAN	오탐유발정상어	1	1	CLEAN	22147	신체 부위
+미쳤다	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 감탄사
+Scunthorpe	CLEAN	오탐유발정상어	1	1	CLEAN	22147	지명
+cocktail	CLEAN	오탐유발정상어	1	1	CLEAN	22147	음료 이름
+assassin	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+classic	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+Hancock	CLEAN	오탐유발정상어	1	1	CLEAN	22147	고유명사
+bassist	CLEAN	오탐유발정상어	1	1	CLEAN	22147	직업/악기 연주자
+Sussex	CLEAN	오탐유발정상어	1	1	CLEAN	22147	지명
+titanic	CLEAN	오탐유발정상어	1	1	CLEAN	22147	일반 단어
+cucumber	CLEAN	오탐유발정상어	1	1	CLEAN	22147	식물 이름
+Dickens	CLEAN	오탐유발정상어	1	1	CLEAN	22147	인명
+용감한고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+용감한여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+졸린여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+배고픈여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+행복한여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+수줍은여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+느긋한여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+반짝이는여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한부엉이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한수달	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한햄스터	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+조용한여우	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+씩씩한고양이	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+씩씩한판다	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+씩씩한다람쥐	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+씩씩한펭귄	CLEAN	일반닉네임	1	1	CLEAN	22147	일반 닉네임
+씩씩한부엉이	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+씩씩한수달	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+씩씩한햄스터	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+씩씩한여우	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른고양이	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른판다	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른다람쥐	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른펭귄	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른부엉이	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른수달	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른햄스터	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+게으른여우	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+sunny_day	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+blueberry9	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+moonwalker	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+pixelcat	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+rainyday7	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+tofu_king	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+lazybear	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+kiwi2025	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+nightowl	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+sky_runner	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+mintchoco	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+pancake33	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+dreamer_01	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+lucky7	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+bookworm	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+snowball	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+capybara	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+oj_lover	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+jazzhands	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+waffle	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+커피한잔	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+아메리카노	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+치즈케이크	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+떡볶이러버	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+오늘도출근	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+퇴근하고싶다	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+주말만기다려	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+월요병환자	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+코딩하는곰	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+달빛산책	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+초코우유	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+여름바다	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+겨울왕자	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+봄날의곰	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+가을하늘	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+민트초코파	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+붕어빵장수	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+김치찌개	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+한강라면	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+용감한호랑이	CLEAN	일반닉네임	1	2	CLEAN	28281	일반 닉네임
+ㅆ.ㅣ.발	EVASION	복합우회	1	2	FLAGGED	28281	비속어 우회
+씨1발놈아	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+ㅂ*ㅅ아	EVASION	복합우회	1	2	FLAGGED	28281	비속어 우회
+민수ㅅ.ㅂ	EVASION	복합우회	1	2	FLAGGED	28281	비속어 우회
+쉬.발롬	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+븅~신아	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+ㄱH새끼	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+개ㅅH끼야	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+씨이~발	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+tlqkf놈	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+ㅈ같은ㅅㄲ	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+병1신새1끼	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+si발롬	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+씹ㅅ.ㄲ	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+ㅁl친놈	EVASION	복합우회	1	2	FLAGGED	28281	비속어 포함
+tlqkf	EVASION	영타	1	2	FLAGGED	28281	비속어(욕설 영문 타자)
+Tlqkfsha	EVASION	영타	1	2	FLAGGED	28281	비속어 포함
+qudtls	EVASION	영타	1	2	FLAGGED	28281	비속어(욕설 영문 타자)
+rotoRl	EVASION	영타	1	2	FLAGGED	28281	비속어 우회
+whssk	EVASION	영타	1	2	FLAGGED	28281	비속어 우회
+wlfkf	EVASION	영타	1	2	FLAGGED	28281	비속어 우회
+alclssha	EVASION	영타	1	2	FLAGGED	28281	비속어 우회
+whwRk	EVASION	영타	1	2	FLAGGED	28281	비속어 우회
+qudtls민수	EVASION	영타	1	2	FLAGGED	28281	비속어 포함
+ssibal	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+sibalnom	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+shibal	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+byungsin	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+byeongsin	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+gaesaekki	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+jonna싫어	EVASION	로마자	1	2	FLAGGED	28281	비속어 포함
+jiral	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+ssipal	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+michinnom	EVASION	로마자	1	2	FLAGGED	28281	비속어 영문 표기
+씨이발	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+시이바알	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+씨바아알	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+병시인	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+개애새끼	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+지이랄	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+조온나	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+미치인놈	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+씨이이발	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+좆까아	EVASION	늘이기	1	2	FLAGGED	28281	비속어 포함
+씹알	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+십알놈	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+시팔	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+씨팔놈	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+쓰발	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+쓰벌	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+슈발	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+시부랄	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+씨부럴	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+띠발	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+찌발	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+씨방새	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+개새키	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+개섀끼	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+개샛기	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+조까	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+좃같네	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+병시나	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+븅딱	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+지럴	EVASION	변형표기	1	2	FLAGGED	28281	비속어 포함
+ㅆl발	EVASION	유사문자	1	2	FLAGGED	28281	비속어 우회
+시I발	EVASION	유사문자	1	2	FLAGGED	28281	비속어 우회
+ㅈl랄	EVASION	유사문자	1	2	FLAGGED	28281	비속어 우회
+从ㅣ발	EVASION	유사문자	1	2	FLAGGED	28281	비속어 우회
+人ㅣ발	EVASION	유사문자	1	2	FLAGGED	28281	비속어 우회
+ㅅH끼야	EVASION	유사문자	1	2	FLAGGED	28281	비속어 우회
+병싄	EVASION	유사문자	1	2	FLAGGED	28281	비속어 포함
+씨봘	EVASION	유사문자	1	2	FLAGGED	28281	비속어 포함
+개쉑	EVASION	유사문자	1	2	FLAGGED	28281	비속어 포함
+개쉨	EVASION	유사문자	1	2	FLAGGED	28281	비속어 포함
+미췬놈	EVASION	유사문자	1	2	FLAGGED	28281	비속어 포함
+씨벌탱	EVASION	유사문자	1	2	FLAGGED	28281	비속어 포함
+씨 발	EVASION	공백삽입	1	2	FLAGGED	28281	비속어 포함
+병 신	EVASION	공백삽입	1	2	FLAGGED	28281	비속어 포함
+개 새 끼	EVASION	공백삽입	1	2	FLAGGED	28281	비속어 포함
+시 발 놈	EVASION	공백삽입	1	2	FLAGGED	28281	비속어 포함
+좆 까	EVASION	공백삽입	1	2	FLAGGED	28281	비속어 포함
+지 랄	EVASION	공백삽입	1	2	FLAGGED	28281	비속어 포함
+sh1t	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+fuk	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+fuxk	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+phuck	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+b1tch	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+biatch	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+a55hole	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+d1ckhead	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+fck u	EVASION	영어변형	1	2	FLAGGED	28281	영어 비속어
+asshole	PROFANE	영어욕설	1	2	FLAGGED	28281	영어 비속어
+dickhead	PROFANE	영어욕설	1	2	FLAGGED	28281	영어 비속어
+motherfuck	PROFANE	영어욕설	1	2	FLAGGED	28281	영어 비속어
+cunt	PROFANE	영어욕설	1	2	FLAGGED	28281	영어 비속어
+bastard	PROFANE	영어욕설	1	2	FLAGGED	28281	영어 비속어
+한남충	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+김치녀	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+틀딱충	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+급식충	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+맘충	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+짱깨놈	PROFANE	혐오비하	1	2	FLAGGED	28281	비하/혐오 표현
+쪽바리	PROFANE	혐오비하	1	2	FLAGGED	28281	비하/혐오 표현
+일베충	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+메갈년	PROFANE	혐오비하	1	2	FLAGGED	28281	혐오 표현
+느개비	PROFANE	혐오비하	1	2	FLAGGED	28281	패륜적 표현
+니애비	PROFANE	혐오비하	1	2	FLAGGED	28281	패륜적 표현
+장애인새끼	PROFANE	혐오비하	1	2	FLAGGED	28281	비하 및 욕설
+게이새끼	PROFANE	혐오비하	1	2	FLAGGED	28281	비하 및 욕설
+홍어새끼	PROFANE	혐오비하	1	2	FLAGGED	28281	지역 비하 및 욕설
+전라디언	PROFANE	혐오비하	1	2	FLAGGED	28281	지역 비하 표현
+딸딸이	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 표현
+걸레년	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 욕설
+좆물	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 표현
+보빨러	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 비하 표현
+따먹자	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 표현
+육변기	PROFANE	성적표현	1	2	FLAGGED	28281	극단적 선정적 표현
+섹파구함	PROFANE	성적표현	1	2	FLAGGED	28281	성매매 및 선정적 표현
+자지큰놈	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 표현
+빨통녀	PROFANE	성적표현	1	2	FLAGGED	28281	선정적 표현
+끼새개	AMBIGUOUS	경계	1	2	FLAGGED	28281	비속어 변형
+놈발씨	AMBIGUOUS	경계	1	2	FLAGGED	28281	비속어 변형
+흑형	AMBIGUOUS	경계	1	2	CLEAN	28281	인종 관련 은어이나 맥락에 따라 비하 여부 모호
+죽어버려	AMBIGUOUS	경계	1	2	FLAGGED	28281	자살 유도 또는 위협적 표현
+뒤져라	AMBIGUOUS	경계	1	2	FLAGGED	28281	공격적 표현
+자살각	AMBIGUOUS	경계	1	2	FLAGGED	28281	자살 관련 부적절한 표현
+stfu	AMBIGUOUS	경계	1	2	FLAGGED	28281	영어 비속어
+wtf	AMBIGUOUS	경계	1	2	FLAGGED	28281	영어 비속어
+mofo	AMBIGUOUS	경계	1	2	FLAGGED	28281	영어 비속어
+야동마스터	AMBIGUOUS	경계	1	2	FLAGGED	28281	선정적 내용 포함
+바보멍청이	AMBIGUOUS	경계	1	2	CLEAN	28281	가벼운 놀림말
+꺼져	AMBIGUOUS	경계	1	2	FLAGGED	28281	공격적 표현
+닥쳐라	AMBIGUOUS	경계	1	2	FLAGGED	28281	공격적 표현
+씹고수	AMBIGUOUS	경계	1	2	CLEAN	28281	인터넷 속어로 강조 표현으로 쓰임
+개못함	AMBIGUOUS	경계	1	2	CLEAN	28281	게임 은어, 비속어 접두사이나 단순 평가로 사용됨
+존잘남	AMBIGUOUS	경계	1	2	CLEAN	28281	인터넷 은어(신조어)
+불알친구	AMBIGUOUS	경계	1	2	CLEAN	28281	비속어 포함이나 일상적 은어로 널리 쓰임
+엠창인생	AMBIGUOUS	경계	1	2	FLAGGED	28281	비속어 및 비하 표현
+조낸멋짐	AMBIGUOUS	경계	1	2	CLEAN	28281	비속어 변형 부사이나 긍정적 의미로 쓰임
+씨밤바	AMBIGUOUS	경계	1	2	FLAGGED	28281	비속어 변형
+똥남아	AMBIGUOUS	경계	1	2	FLAGGED	28281	인종 차별/비하 표현
+꽃씨발아	CLEAN	경계걸침정상어	1	2	CLEAN	28281	식물 관련 정상 단어 조합('꽃 씨발아')
+수박씨발라	CLEAN	경계걸침정상어	1	2	CLEAN	28281	식물 관련 정상 단어 조합('수박 씨 발라')
+다시발견	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+출시발표	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+택시발견	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+도시발전	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+역시발군	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+일병신고	CLEAN	경계걸침정상어	1	2	CLEAN	28281	군대 용어 정상 단어
+상병신고식	CLEAN	경계걸침정상어	1	2	CLEAN	28281	군대 용어 정상 단어
+무지개새	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+안개새벽	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+참새끼리	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+장염병원	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+보존나무	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+생존나침반	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+감자지옥	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+피자지도	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+해보지뭐	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+두고보지	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+미들섹스	CLEAN	경계걸침정상어	1	2	CLEAN	28281	지명(Middlesex)
+에섹스백작	CLEAN	경계걸침정상어	1	2	CLEAN	28281	작위 명칭(Essex)
+아저씨발냄새	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상적인 단어 조합(아저씨 발냄새)
+강아지새끼	CLEAN	경계걸침정상어	1	2	CLEAN	28281	동물의 새끼를 뜻하는 정상 단어
+고양이새끼	CLEAN	경계걸침정상어	1	2	CLEAN	28281	동물의 새끼를 뜻하는 정상 단어
+내새끼최고	CLEAN	경계걸침정상어	1	2	CLEAN	28281	친근한 표현
+호랑이새끼	CLEAN	경계걸침정상어	1	2	CLEAN	28281	동물의 새끼를 뜻하는 정상 단어
+새끼줄	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+시발역	CLEAN	경계걸침정상어	1	2	CLEAN	28281	철도역 명칭(시발역)
+십팔세	CLEAN	경계걸침정상어	1	2	CLEAN	28281	나이 표현
+18학번	CLEAN	경계걸침정상어	1	2	CLEAN	28281	학번 표현
+조카사랑	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+족발사랑	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+시바스리갈	CLEAN	경계걸침정상어	1	2	CLEAN	28281	주류 브랜드
+신병훈련소	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+젖소목장	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+고추잠자리	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+엉덩이탐정	CLEAN	경계걸침정상어	1	2	CLEAN	28281	도서 제목 등 정상 단어
+방귀대장	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+창녕양파	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+십자수	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+가시발	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+잠시발길	CLEAN	경계걸침정상어	1	2	CLEAN	28281	정상 단어
+ㅎㅇ	CLEAN	정상초성	1	2	CLEAN	28281	초성 인사말
+ㅋㅋㅋ	CLEAN	정상초성	1	2	CLEAN	28281	웃음 표현
+ㄱㅅ	CLEAN	정상초성	1	2	CLEAN	28281	초성 감사
+ㅇㅈ	CLEAN	정상초성	1	2	CLEAN	28281	초성 인정
+ㅊㅋㅊㅋ	CLEAN	정상초성	1	2	CLEAN	28281	초성 축하
+ㄱㅊ	CLEAN	정상초성	1	2	CLEAN	28281	초성 괜찮아
+ㅈㅅ	CLEAN	정상초성	1	2	CLEAN	28281	초성 죄송
+ㅅㄱ	CLEAN	정상초성	1	2	CLEAN	28281	초성 수고
+ㅂㅂ	CLEAN	정상초성	1	2	CLEAN	28281	초성 바이
+ㅎㅎ	CLEAN	정상초성	1	2	CLEAN	28281	웃음 표현
+ㄷㄷ	CLEAN	정상초성	1	2	CLEAN	28281	초성 덜덜
+ㄱㄱ	CLEAN	정상초성	1	2	CLEAN	28281	초성 고고
+ㅇㅋ	CLEAN	정상초성	1	2	CLEAN	28281	초성 오케이
+ㄴㄴ	CLEAN	정상초성	1	2	CLEAN	28281	초성 노노
+ㅠㅠ	CLEAN	정상초성	1	2	CLEAN	28281	슬픔 표현
+ㅇㅅㅇ	CLEAN	정상초성	1	3	CLEAN	9651	일반 초성 닉네임
+shiitake	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어 (표고버섯)
+shitake	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+analyst	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 직업 단어
+analog	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+grape	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+therapist	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 직업 단어 (the-rapist 아님)
+Essex	CLEAN	오탐유발정상어	1	3	CLEAN	9651	지명
+Middlesex	CLEAN	오탐유발정상어	1	3	CLEAN	9651	지명
+cockpit	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 항공 용어
+peacock	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어 (공작새)
+arsenal	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어 (축구팀 등)
+matsushita	CLEAN	오탐유발정상어	1	3	CLEAN	9651	고유명사
+fukuoka	CLEAN	오탐유발정상어	1	3	CLEAN	9651	지명
+fukushima	CLEAN	오탐유발정상어	1	3	CLEAN	9651	지명
+sexton	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+passion	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+bassoon	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 악기 단어
+hello	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 인사말
+cumulus	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 기상 용어 (적운)
+document	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+scrap	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+butter	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+sextant	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 항해 용어 (육분의)
+cockatoo	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 동물 단어 (유황앵무)
+dickinson	CLEAN	오탐유발정상어	1	3	CLEAN	9651	고유명사 (성씨)
+kumquat	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어 (금귤)
+wankel	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 고유명사 (반켈 엔진)
+shuttle	CLEAN	오탐유발정상어	1	3	CLEAN	9651	일반 단어
+넙죽이	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+롤하는직장인	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+갓생살기	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 일반 닉네임
+야근요정	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+탕수육부먹	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+민초단장	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+치킨은진리	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+월급루팡	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 유머 닉네임
+칼퇴기원	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+맑은날	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+감자튀김	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+고구마맛탕	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+서울쥐	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+부산갈매기	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+대전빵순이	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+T1우승	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 e스포츠 응원 닉네임
+페이커팬	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 팬 닉네임
+손흥민짱	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 스포츠 팬 닉네임
+우테코7기	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 교육 과정 닉네임
+스프링장인	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 개발 관련 닉네임
+null포인터	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 개발 관련 닉네임
+1004	CLEAN	일반닉네임	1	3	CLEAN	9651	숫자 닉네임
+7777	CLEAN	일반닉네임	1	3	CLEAN	9651	숫자 닉네임
+0o0	CLEAN	일반닉네임	1	3	CLEAN	9651	특수 문자 이모티콘 닉네임
+민수	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 이름
+지훈이	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 이름
+김대리	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 직함 닉네임
+박과장님	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 직함 닉네임
+영희야놀자	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+철수와영희	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+아이스티	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 음료 닉네임
+망고빙수	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 음식 닉네임
+라떼는말이야	CLEAN	일반닉네임	1	3	CLEAN	9651	유행어 기반 닉네임
+점메추	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+저메추해줘	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+집가고싶다	CLEAN	일반닉네임	1	3	CLEAN	9651	일반 닉네임
+오운완	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+헬린이	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+주린이	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+코린이	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+무지성	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+킹받네	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+어쩔티비	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+갑분싸	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+꾸안꾸	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+알잘딱깔센	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+중꺾마	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+내돈내산	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+스불재	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+숨참고다이브	CLEAN	일반닉네임	1	3	CLEAN	9651	신조어 닉네임
+씨발	PROFANE	직접욕설	2	1	MISSING	1772	
+씨발놈	PROFANE	직접욕설	2	1	MISSING	1772	
+시발놈아	PROFANE	직접욕설	2	1	MISSING	1772	
+개새끼	PROFANE	직접욕설	2	1	MISSING	1772	
+개새끼야	PROFANE	직접욕설	2	1	MISSING	1772	
+병신	PROFANE	직접욕설	2	1	MISSING	1772	
+병신아	PROFANE	직접욕설	2	1	MISSING	1772	
+좆까	PROFANE	직접욕설	2	1	MISSING	1772	
+지랄하네	PROFANE	직접욕설	2	1	MISSING	1772	
+존나짜증	PROFANE	직접욕설	2	1	MISSING	1772	
+엿먹어라	PROFANE	직접욕설	2	1	MISSING	1772	
+미친년	PROFANE	직접욕설	2	1	MISSING	1772	
+미친놈	PROFANE	직접욕설	2	1	MISSING	1772	
+썅년	PROFANE	직접욕설	2	1	MISSING	1772	
+니애미	PROFANE	직접욕설	2	1	MISSING	1772	
+느금마	PROFANE	직접욕설	2	1	MISSING	1772	
+애미뒤진	PROFANE	직접욕설	2	1	MISSING	1772	
+좆밥	PROFANE	직접욕설	2	1	MISSING	1772	
+씹새끼	PROFANE	직접욕설	2	1	MISSING	1772	
+호로새끼	PROFANE	직접욕설	2	1	MISSING	1772	
+염병할놈	PROFANE	직접욕설	2	1	MISSING	1772	
+닥쳐씨발	PROFANE	직접욕설	2	1	MISSING	1772	
+개씨발	PROFANE	직접욕설	2	1	MISSING	1772	
+씨발년	PROFANE	직접욕설	2	1	MISSING	1772	
+섹스머신	PROFANE	직접욕설	2	1	MISSING	1772	
+보지털	PROFANE	직접욕설	2	1	MISSING	1772	
+fuckyou	PROFANE	직접욕설	2	1	MISSING	1772	
+shithead	PROFANE	직접욕설	2	1	MISSING	1772	
+bitch	PROFANE	직접욕설	2	1	MISSING	1772	
+창녀	PROFANE	직접욕설	2	1	MISSING	1772	
+민수병신	PROFANE	이름+욕설	2	1	MISSING	1772	
+지훈씨발	PROFANE	이름+욕설	2	1	MISSING	1772	
+철수개새끼	PROFANE	이름+욕설	2	1	MISSING	1772	
+영희미친년	PROFANE	이름+욕설	2	1	MISSING	1772	
+서연좆밥	PROFANE	이름+욕설	2	1	MISSING	1772	
+김대리병신	PROFANE	이름+욕설	2	1	MISSING	1772	
+박과장씨발	PROFANE	이름+욕설	2	1	MISSING	1772	
+준호지랄	PROFANE	이름+욕설	2	1	MISSING	1772	
+수빈이썅년	PROFANE	이름+욕설	2	1	MISSING	1772	
+병신민재	PROFANE	이름+욕설	2	1	MISSING	1772	
+씨발도윤	PROFANE	이름+욕설	2	1	MISSING	1772	
+개새끼하준	PROFANE	이름+욕설	2	1	MISSING	1772	
+지우엿먹어	PROFANE	이름+욕설	2	1	MISSING	1772	
+태현좆까	PROFANE	이름+욕설	2	1	MISSING	1772	
+예린미친놈	PROFANE	이름+욕설	2	1	MISSING	1772	
+시발은우	PROFANE	이름+욕설	2	1	MISSING	1772	
+현우씹새끼	PROFANE	이름+욕설	2	1	MISSING	1772	
+유나보지	PROFANE	이름+욕설	2	1	MISSING	1772	
+정민느금마	PROFANE	이름+욕설	2	1	MISSING	1772	
+하은니애미	PROFANE	이름+욕설	2	1	MISSING	1772	
+ㅆㅣ발	EVASION	자모분리	2	1	MISSING	1772	
+씨ㅂㅏㄹ	EVASION	자모분리	2	1	MISSING	1772	
+ㅂㅕㅇ신	EVASION	자모분리	2	1	MISSING	1772	
+병ㅅㅣㄴ	EVASION	자모분리	2	1	MISSING	1772	
+ㄱㅐ새끼	EVASION	자모분리	2	1	MISSING	1772	
+개ㅅㅐ끼	EVASION	자모분리	2	1	MISSING	1772	
+ㅈㅗㅈ까	EVASION	자모분리	2	1	MISSING	1772	
+ㅈㅣ랄	EVASION	자모분리	2	1	MISSING	1772	
+ㅁㅣ친년	EVASION	자모분리	2	1	MISSING	1772	
+ㅅㅣ발놈	EVASION	자모분리	2	1	MISSING	1772	
+존ㄴㅏ싫다	EVASION	자모분리	2	1	MISSING	1772	
+ㅂㅕㅇㅅㅣㄴ	EVASION	자모분리	2	1	MISSING	1772	
+씹ㅅㅐ끼	EVASION	자모분리	2	1	MISSING	1772	
+ㅆㅣㅂㅏㄹ	EVASION	자모분리	2	1	MISSING	1772	
+민수ㅂㅕㅇ신	EVASION	자모분리	2	1	MISSING	1772	
+씨*발	EVASION	특수문자삽입	2	1	MISSING	1772	
+시.발	EVASION	특수문자삽입	2	1	MISSING	1772	
+병_신	EVASION	특수문자삽입	2	1	MISSING	1772	
+개.새.끼	EVASION	특수문자삽입	2	1	MISSING	1772	
+좆#까	EVASION	특수문자삽입	2	1	MISSING	1772	
+씨8발	EVASION	특수문자삽입	2	1	MISSING	1772	
+지~랄	EVASION	특수문자삽입	2	1	MISSING	1772	
+미!친!년	EVASION	특수문자삽입	2	1	MISSING	1772	
+병1신	EVASION	특수문자삽입	2	1	MISSING	1772	
+s.h.i.t	EVASION	특수문자삽입	2	1	MISSING	1772	
+f*ck	EVASION	특수문자삽입	2	1	MISSING	1772	
+씨-발놈	EVASION	특수문자삽입	2	1	MISSING	1772	
+개_새_끼야	EVASION	특수문자삽입	2	1	MISSING	1772	
+존.나	EVASION	특수문자삽입	2	1	MISSING	1772	
+엿.먹.어	EVASION	특수문자삽입	2	1	MISSING	1772	
+시바롬	EVASION	유사발음	2	1	MISSING	1772	
+씨바	EVASION	유사발음	2	1	MISSING	1772	
+씨빨	EVASION	유사발음	2	1	MISSING	1772	
+시벌	EVASION	유사발음	2	1	MISSING	1772	
+씨불	EVASION	유사발음	2	1	MISSING	1772	
+쉬발	EVASION	유사발음	2	1	MISSING	1772	
+븅신	EVASION	유사발음	2	1	MISSING	1772	
+병쉰	EVASION	유사발음	2	1	MISSING	1772	
+빙신	EVASION	유사발음	2	1	MISSING	1772	
+개색기	EVASION	유사발음	2	1	MISSING	1772	
+개쉐이	EVASION	유사발음	2	1	MISSING	1772	
+개새기	EVASION	유사발음	2	1	MISSING	1772	
+좃까	EVASION	유사발음	2	1	MISSING	1772	
+졷까	EVASION	유사발음	2	1	MISSING	1772	
+지롤	EVASION	유사발음	2	1	MISSING	1772	
+니미럴	EVASION	유사발음	2	1	MISSING	1772	
+씌발	EVASION	유사발음	2	1	MISSING	1772	
+싀발	EVASION	유사발음	2	1	MISSING	1772	
+퍽유	EVASION	유사발음	2	1	MISSING	1772	
+뻑큐	EVASION	유사발음	2	1	MISSING	1772	
+ㅅㅂ	EVASION	초성	2	1	MISSING	1772	
+ㅆㅂ	EVASION	초성	2	1	MISSING	1772	
+ㅂㅅ	EVASION	초성	2	1	MISSING	1772	
+ㅈㄹ	EVASION	초성	2	1	MISSING	1772	
+ㄱㅅㄲ	EVASION	초성	2	1	MISSING	1772	
+ㅅㅂㄴ	EVASION	초성	2	1	MISSING	1772	
+ㅁㅊㄴ	EVASION	초성	2	1	MISSING	1772	
+ㅈㄴ싫어	EVASION	초성	2	1	MISSING	1772	
+ㅅㅂ민수	EVASION	초성	2	1	MISSING	1772	
+ㅂㅅ아	EVASION	초성	2	1	MISSING	1772	
+ㅆㅂㄹㅁ	EVASION	초성	2	1	MISSING	1772	
+ㅈㄲ	EVASION	초성	2	1	MISSING	1772	
+ㄴㄱㅁ	EVASION	초성	2	1	MISSING	1772	
+ㅗㅗ	EVASION	초성	2	1	MISSING	1772	
+ㅆㅂㅅㄲ	EVASION	초성	2	1	MISSING	1772	
+미친듯이	AMBIGUOUS	경계	2	1	MISSING	1772	
+병신년	AMBIGUOUS	경계	2	1	MISSING	1772	
+똥강아지	AMBIGUOUS	경계	2	1	MISSING	1772	
+병맛인생	AMBIGUOUS	경계	2	1	MISSING	1772	
+존맛탱	AMBIGUOUS	경계	2	1	MISSING	1772	
+개꿀잼	AMBIGUOUS	경계	2	1	MISSING	1772	
+빡빡이	AMBIGUOUS	경계	2	1	MISSING	1772	
+섹시한남자	AMBIGUOUS	경계	2	1	MISSING	1772	
+변태가면	AMBIGUOUS	경계	2	1	MISSING	1772	
+나쁜놈	AMBIGUOUS	경계	2	1	MISSING	1772	
+멸치대가리	AMBIGUOUS	경계	2	1	MISSING	1772	
+개노잼	AMBIGUOUS	경계	2	1	MISSING	1772	
+존버중	AMBIGUOUS	경계	2	1	MISSING	1772	
+씹덕	AMBIGUOUS	경계	2	1	MISSING	1772	
+찐따	AMBIGUOUS	경계	2	1	MISSING	1772	
+개웃겨	AMBIGUOUS	경계	2	1	MISSING	1772	
+또라이	AMBIGUOUS	경계	2	1	MISSING	1772	
+돌아이	AMBIGUOUS	경계	2	1	MISSING	1772	
+호구왕	AMBIGUOUS	경계	2	1	MISSING	1772	
+개빡침	AMBIGUOUS	경계	2	1	MISSING	1772	
+졸라멋짐	AMBIGUOUS	경계	2	1	MISSING	1772	
+미친개	AMBIGUOUS	경계	2	1	MISSING	1772	
+시발점	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+시발택시	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+시바견	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+시바이누	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+시바견사랑	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+개나리	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+개구리	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+개미왕	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+개발자	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+개구쟁이	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+새끼손가락	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+새끼고양이	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+새끼곰	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+호박엿	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+엿장수	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+쌍둥이	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+쌍화차	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+청년	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+소년탐정	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+신년운세	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+보지마세요	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+자지마	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+딸기우유	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+정자동	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+성기사	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+고자질	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+애자일	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+등신대	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+등신불	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+호로록	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+껌씹는중	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+수박씨	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+씨름왕	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+발바닥	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+미쳤다	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+Scunthorpe	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+cocktail	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+assassin	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+classic	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+Hancock	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+bassist	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+Sussex	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+titanic	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+cucumber	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+Dickens	CLEAN	오탐유발정상어	2	1	MISSING	1772	
+용감한고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+용감한여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+졸린여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+배고픈여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+행복한여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+수줍은여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+느긋한여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+반짝이는여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한부엉이	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한수달	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한햄스터	CLEAN	일반닉네임	2	1	MISSING	1772	
+조용한여우	CLEAN	일반닉네임	2	1	MISSING	1772	
+씩씩한고양이	CLEAN	일반닉네임	2	1	MISSING	1772	
+씩씩한판다	CLEAN	일반닉네임	2	1	MISSING	1772	
+씩씩한다람쥐	CLEAN	일반닉네임	2	1	MISSING	1772	
+씩씩한펭귄	CLEAN	일반닉네임	2	1	MISSING	1772	
+씩씩한부엉이	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+씩씩한수달	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+씩씩한햄스터	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+씩씩한여우	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른고양이	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른판다	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른다람쥐	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른펭귄	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른부엉이	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른수달	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른햄스터	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+게으른여우	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+sunny_day	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+blueberry9	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+moonwalker	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+pixelcat	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+rainyday7	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+tofu_king	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+lazybear	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+kiwi2025	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+nightowl	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+sky_runner	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+mintchoco	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+pancake33	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+dreamer_01	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+lucky7	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+bookworm	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+snowball	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+capybara	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+oj_lover	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+jazzhands	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+waffle	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+커피한잔	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+아메리카노	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+치즈케이크	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+떡볶이러버	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+오늘도출근	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+퇴근하고싶다	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+주말만기다려	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+월요병환자	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+코딩하는곰	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+달빛산책	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+초코우유	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+여름바다	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+겨울왕자	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+봄날의곰	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+가을하늘	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+민트초코파	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+붕어빵장수	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+김치찌개	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+한강라면	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+용감한호랑이	CLEAN	일반닉네임	2	2	CLEAN	24201	일반 닉네임
+ㅆ.ㅣ.발	EVASION	복합우회	2	2	FLAGGED	24201	비속어 우회 (특수문자 삽입)
+씨1발놈아	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+ㅂ*ㅅ아	EVASION	복합우회	2	2	FLAGGED	24201	비속어 우회
+민수ㅅ.ㅂ	EVASION	복합우회	2	2	FLAGGED	24201	비속어 우회
+쉬.발롬	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+븅~신아	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+ㄱH새끼	EVASION	복합우회	2	2	FLAGGED	24201	비속어 우회
+개ㅅH끼야	EVASION	복합우회	2	2	FLAGGED	24201	비속어 우회
+씨이~발	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+tlqkf놈	EVASION	복합우회	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+ㅈ같은ㅅㄲ	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+병1신새1끼	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+si발롬	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+씹ㅅ.ㄲ	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+ㅁl친놈	EVASION	복합우회	2	2	FLAGGED	24201	비속어 포함
+tlqkf	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+Tlqkfsha	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+qudtls	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+rotoRl	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+whssk	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+wlfkf	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+alclssha	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+whwRk	EVASION	영타	2	2	FLAGGED	24201	비속어 우회 (타자 변환)
+qudtls민수	EVASION	영타	2	2	FLAGGED	24201	비속어 우회
+ssibal	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+sibalnom	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+shibal	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+byungsin	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+byeongsin	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+gaesaekki	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+jonna싫어	EVASION	로마자	2	2	FLAGGED	24201	비속어 포함
+jiral	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+ssipal	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+michinnom	EVASION	로마자	2	2	FLAGGED	24201	비속어 우회
+씨이발	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+시이바알	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+씨바아알	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+병시인	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+개애새끼	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+지이랄	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+조온나	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+미치인놈	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+씨이이발	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+좆까아	EVASION	늘이기	2	2	FLAGGED	24201	비속어 포함
+씹알	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+십알놈	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+시팔	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+씨팔놈	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+쓰발	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+쓰벌	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+슈발	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+시부랄	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+씨부럴	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+띠발	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+찌발	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+씨방새	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+개새키	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+개섀끼	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+개샛기	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+조까	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+좃같네	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+병시나	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+븅딱	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+지럴	EVASION	변형표기	2	2	FLAGGED	24201	비속어 포함
+ㅆl발	EVASION	유사문자	2	2	FLAGGED	24201	비속어 우회
+시I발	EVASION	유사문자	2	2	FLAGGED	24201	비속어 우회
+ㅈl랄	EVASION	유사문자	2	2	FLAGGED	24201	비속어 우회
+从ㅣ발	EVASION	유사문자	2	2	FLAGGED	24201	비속어 우회
+人ㅣ발	EVASION	유사문자	2	2	FLAGGED	24201	비속어 우회
+ㅅH끼야	EVASION	유사문자	2	2	FLAGGED	24201	비속어 우회
+병싄	EVASION	유사문자	2	2	FLAGGED	24201	비속어 포함
+씨봘	EVASION	유사문자	2	2	FLAGGED	24201	비속어 포함
+개쉑	EVASION	유사문자	2	2	FLAGGED	24201	비속어 포함
+개쉨	EVASION	유사문자	2	2	FLAGGED	24201	비속어 포함
+미췬놈	EVASION	유사문자	2	2	FLAGGED	24201	비속어 포함
+씨벌탱	EVASION	유사문자	2	2	FLAGGED	24201	비속어 포함
+씨 발	EVASION	공백삽입	2	2	FLAGGED	24201	비속어 포함
+병 신	EVASION	공백삽입	2	2	FLAGGED	24201	비속어 포함
+개 새 끼	EVASION	공백삽입	2	2	FLAGGED	24201	비속어 포함
+시 발 놈	EVASION	공백삽입	2	2	FLAGGED	24201	비속어 포함
+좆 까	EVASION	공백삽입	2	2	FLAGGED	24201	비속어 포함
+지 랄	EVASION	공백삽입	2	2	FLAGGED	24201	비속어 포함
+sh1t	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+fuk	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+fuxk	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+phuck	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+b1tch	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+biatch	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+a55hole	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+d1ckhead	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+fck u	EVASION	영어변형	2	2	FLAGGED	24201	영어 비속어
+asshole	PROFANE	영어욕설	2	2	FLAGGED	24201	영어 비속어
+dickhead	PROFANE	영어욕설	2	2	FLAGGED	24201	영어 비속어
+motherfuck	PROFANE	영어욕설	2	2	FLAGGED	24201	영어 비속어
+cunt	PROFANE	영어욕설	2	2	FLAGGED	24201	영어 비속어
+bastard	PROFANE	영어욕설	2	2	FLAGGED	24201	영어 비속어
+한남충	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+김치녀	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+틀딱충	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+급식충	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+맘충	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+짱깨놈	PROFANE	혐오비하	2	2	FLAGGED	24201	비하 표현
+쪽바리	PROFANE	혐오비하	2	2	FLAGGED	24201	비하 표현
+일베충	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+메갈년	PROFANE	혐오비하	2	2	FLAGGED	24201	혐오 표현
+느개비	PROFANE	혐오비하	2	2	FLAGGED	24201	패륜적 표현
+니애비	PROFANE	혐오비하	2	2	FLAGGED	24201	패륜적 표현
+장애인새끼	PROFANE	혐오비하	2	2	FLAGGED	24201	비하 및 욕설
+게이새끼	PROFANE	혐오비하	2	2	FLAGGED	24201	비하 및 욕설
+홍어새끼	PROFANE	혐오비하	2	2	FLAGGED	24201	지역 비하 및 욕설
+전라디언	PROFANE	혐오비하	2	2	FLAGGED	24201	지역 비하 표현
+딸딸이	PROFANE	성적표현	2	2	FLAGGED	24201	성적 은어
+걸레년	PROFANE	성적표현	2	2	FLAGGED	24201	성적 비하 및 욕설
+좆물	PROFANE	성적표현	2	2	FLAGGED	24201	성적 비속어
+보빨러	PROFANE	성적표현	2	2	FLAGGED	24201	성적 비속어
+따먹자	PROFANE	성적표현	2	2	FLAGGED	24201	성적 표현
+육변기	PROFANE	성적표현	2	2	FLAGGED	24201	성적 비하 표현
+섹파구함	PROFANE	성적표현	2	2	FLAGGED	24201	성적 만남 유도
+자지큰놈	PROFANE	성적표현	2	2	FLAGGED	24201	성적 비속어
+빨통녀	PROFANE	성적표현	2	2	FLAGGED	24201	성적 비하 표현
+끼새개	AMBIGUOUS	경계	2	2	FLAGGED	24201	욕설 변형
+놈발씨	AMBIGUOUS	경계	2	2	FLAGGED	24201	욕설 변형
+흑형	AMBIGUOUS	경계	2	2	CLEAN	24201	슬랭 (주의 필요하나 일반적)
+죽어버려	AMBIGUOUS	경계	2	2	FLAGGED	24201	폭력적 표현
+뒤져라	AMBIGUOUS	경계	2	2	FLAGGED	24201	폭력적 표현
+자살각	AMBIGUOUS	경계	2	2	FLAGGED	24201	자살 암시 표현
+stfu	AMBIGUOUS	경계	2	2	FLAGGED	24201	영어 욕설
+wtf	AMBIGUOUS	경계	2	2	FLAGGED	24201	영어 욕설
+mofo	AMBIGUOUS	경계	2	2	FLAGGED	24201	영어 욕설
+야동마스터	AMBIGUOUS	경계	2	2	FLAGGED	24201	성인물 관련 표현
+바보멍청이	AMBIGUOUS	경계	2	2	CLEAN	24201	일반 순화어
+꺼져	AMBIGUOUS	경계	2	2	FLAGGED	24201	공격적 표현
+닥쳐라	AMBIGUOUS	경계	2	2	FLAGGED	24201	공격적 표현
+씹고수	AMBIGUOUS	경계	2	2	CLEAN	24201	인터넷 신조어 (접두사 '씹' 강조)
+개못함	AMBIGUOUS	경계	2	2	CLEAN	24201	일반 게임 용어
+존잘남	AMBIGUOUS	경계	2	2	CLEAN	24201	인터넷 신조어 (일반적 사용)
+불알친구	AMBIGUOUS	경계	2	2	CLEAN	24201	비속어 포함이나 관용구로 쓰임
+엠창인생	AMBIGUOUS	경계	2	2	FLAGGED	24201	비속어 포함
+조낸멋짐	AMBIGUOUS	경계	2	2	CLEAN	24201	강조 부사 (조낸)
+씨밤바	AMBIGUOUS	경계	2	2	FLAGGED	24201	비속어 포함
+똥남아	AMBIGUOUS	경계	2	2	FLAGGED	24201	인종 차별 표현
+꽃씨발아	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어 조합 (발아)
+수박씨발라	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어 조합
+다시발견	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+출시발표	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+택시발견	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+도시발전	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+역시발군	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+일병신고	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+상병신고식	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+무지개새	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+안개새벽	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+참새끼리	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+장염병원	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+보존나무	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+생존나침반	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+감자지옥	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+피자지도	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+해보지뭐	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+두고보지	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+미들섹스	CLEAN	경계걸침정상어	2	2	CLEAN	24201	지명 (Middlesex)
+에섹스백작	CLEAN	경계걸침정상어	2	2	CLEAN	24201	지명/호칭 (Essex)
+아저씨발냄새	CLEAN	경계걸침정상어	2	2	CLEAN	24201	발 냄새
+강아지새끼	CLEAN	경계걸침정상어	2	2	CLEAN	24201	동물의 새끼
+고양이새끼	CLEAN	경계걸침정상어	2	2	CLEAN	24201	동물의 새끼
+내새끼최고	CLEAN	경계걸침정상어	2	2	CLEAN	24201	일상 애칭
+호랑이새끼	CLEAN	경계걸침정상어	2	2	CLEAN	24201	동물의 새끼
+새끼줄	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+시발역	CLEAN	경계걸침정상어	2	2	CLEAN	24201	철도역 이름 (始發驛)
+십팔세	CLEAN	경계걸침정상어	2	2	CLEAN	24201	나이 표현
+18학번	CLEAN	경계걸침정상어	2	2	CLEAN	24201	학번 표현
+조카사랑	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+족발사랑	CLEAN	경계걸침정상어	2	2	CLEAN	24201	음식 관련
+시바스리갈	CLEAN	경계걸침정상어	2	2	CLEAN	24201	술 이름
+신병훈련소	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+젖소목장	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+고추잠자리	CLEAN	경계걸침정상어	2	2	CLEAN	24201	곤충 이름
+엉덩이탐정	CLEAN	경계걸침정상어	2	2	CLEAN	24201	만화 제목
+방귀대장	CLEAN	경계걸침정상어	2	2	CLEAN	24201	유아용 표현
+창녕양파	CLEAN	경계걸침정상어	2	2	CLEAN	24201	지역 특산물
+십자수	CLEAN	경계걸침정상어	2	2	CLEAN	24201	공예
+가시발	CLEAN	경계걸침정상어	2	2	CLEAN	24201	생물 이름 등
+잠시발길	CLEAN	경계걸침정상어	2	2	CLEAN	24201	정상 단어
+ㅎㅇ	CLEAN	정상초성	2	2	CLEAN	24201	초성 인사
+ㅋㅋㅋ	CLEAN	정상초성	2	2	CLEAN	24201	웃음 표현
+ㄱㅅ	CLEAN	정상초성	2	2	CLEAN	24201	초성 감사
+ㅇㅈ	CLEAN	정상초성	2	2	CLEAN	24201	초성 인정
+ㅊㅋㅊㅋ	CLEAN	정상초성	2	2	CLEAN	24201	초성 축하
+ㄱㅊ	CLEAN	정상초성	2	2	CLEAN	24201	초성 괜찮
+ㅈㅅ	CLEAN	정상초성	2	2	CLEAN	24201	초성 죄송
+ㅅㄱ	CLEAN	정상초성	2	2	CLEAN	24201	초성 수고
+ㅂㅂ	CLEAN	정상초성	2	2	CLEAN	24201	초성 바이
+ㅎㅎ	CLEAN	정상초성	2	2	CLEAN	24201	웃음 표현
+ㄷㄷ	CLEAN	정상초성	2	2	CLEAN	24201	감탄 표현
+ㄱㄱ	CLEAN	정상초성	2	2	CLEAN	24201	고고
+ㅇㅋ	CLEAN	정상초성	2	2	CLEAN	24201	오케이
+ㄴㄴ	CLEAN	정상초성	2	2	CLEAN	24201	노노
+ㅠㅠ	CLEAN	정상초성	2	2	CLEAN	24201	슬픔 표현
+ㅇㅅㅇ	CLEAN	정상초성	2	3	CLEAN	11361	일반 자음 이모티콘
+shiitake	CLEAN	오탐유발정상어	2	3	CLEAN	11361	표고버섯(영어 단어)
+shitake	CLEAN	오탐유발정상어	2	3	FLAGGED	11361	외국어 비속어(shit) 포함
+analyst	CLEAN	오탐유발정상어	2	3	PENDING	11361	비속어로 오인될 수 있는 어근(anal) 포함
+analog	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 영어 단어
+grape	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 과일 단어
+therapist	CLEAN	오탐유발정상어	2	3	PENDING	11361	의도적 오독을 유발하는 어휘(the rapist)
+Essex	CLEAN	오탐유발정상어	2	3	CLEAN	11361	지명
+Middlesex	CLEAN	오탐유발정상어	2	3	CLEAN	11361	지명
+cockpit	CLEAN	오탐유발정상어	2	3	CLEAN	11361	조종실(일반 영어 단어)
+peacock	CLEAN	오탐유발정상어	2	3	CLEAN	11361	공작새(일반 영어 단어)
+arsenal	CLEAN	오탐유발정상어	2	3	CLEAN	11361	무기창고 / 축구팀 이름
+matsushita	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일본식 성씨
+fukuoka	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일본 지명
+fukushima	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일본 지명
+sexton	CLEAN	오탐유발정상어	2	3	CLEAN	11361	성당지기(일반 영어 단어)
+passion	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 영어 단어
+bassoon	CLEAN	오탐유발정상어	2	3	CLEAN	11361	악기 이름
+hello	CLEAN	오탐유발정상어	2	3	CLEAN	11361	인사말
+cumulus	CLEAN	오탐유발정상어	2	3	CLEAN	11361	적운(구름 종류)
+document	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 영어 단어
+scrap	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 영어 단어
+butter	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 영어 단어
+sextant	CLEAN	오탐유발정상어	2	3	CLEAN	11361	육분의(항해용 도구)
+cockatoo	CLEAN	오탐유발정상어	2	3	CLEAN	11361	유황앵무(조류)
+dickinson	CLEAN	오탐유발정상어	2	3	CLEAN	11361	인명/성씨
+kumquat	CLEAN	오탐유발정상어	2	3	CLEAN	11361	금귤(식물)
+wankel	CLEAN	오탐유발정상어	2	3	FLAGGED	11361	외국어 비속어(wank) 포함 성씨
+shuttle	CLEAN	오탐유발정상어	2	3	CLEAN	11361	일반 영어 단어
+넙죽이	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+롤하는직장인	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+갓생살기	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+야근요정	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+탕수육부먹	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+민초단장	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+치킨은진리	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+월급루팡	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+칼퇴기원	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+맑은날	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+감자튀김	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+고구마맛탕	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+서울쥐	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+부산갈매기	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+대전빵순이	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+T1우승	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+페이커팬	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+손흥민짱	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+우테코7기	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+스프링장인	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+null포인터	CLEAN	일반닉네임	2	3	CLEAN	11361	프로그래밍 용어
+1004	CLEAN	일반닉네임	2	3	CLEAN	11361	숫자 닉네임
+7777	CLEAN	일반닉네임	2	3	CLEAN	11361	숫자 닉네임
+0o0	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 이모티콘 닉네임
+민수	CLEAN	일반닉네임	2	3	CLEAN	11361	이름
+지훈이	CLEAN	일반닉네임	2	3	CLEAN	11361	이름
+김대리	CLEAN	일반닉네임	2	3	CLEAN	11361	직급 닉네임
+박과장님	CLEAN	일반닉네임	2	3	CLEAN	11361	직급 닉네임
+영희야놀자	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+철수와영희	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+아이스티	CLEAN	일반닉네임	2	3	CLEAN	11361	음료 이름
+망고빙수	CLEAN	일반닉네임	2	3	CLEAN	11361	음식 이름
+라떼는말이야	CLEAN	일반닉네임	2	3	CLEAN	11361	유행어 닉네임
+점메추	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+저메추해줘	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+집가고싶다	CLEAN	일반닉네임	2	3	CLEAN	11361	일반 닉네임
+오운완	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+헬린이	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+주린이	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+코린이	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+무지성	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+킹받네	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+어쩔티비	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+갑분싸	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+꾸안꾸	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+알잘딱깔센	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+중꺾마	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+내돈내산	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+스불재	CLEAN	일반닉네임	2	3	CLEAN	11361	신조어
+숨참고다이브	CLEAN	일반닉네임	2	3	CLEAN	11361	밈 닉네임
+씨발	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+씨발놈	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+시발놈아	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+개새끼	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+개새끼야	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+병신	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+병신아	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+좆까	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+지랄하네	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+존나짜증	PROFANE	직접욕설	3	1	FLAGGED	23561	비속어 포함
+엿먹어라	PROFANE	직접욕설	3	1	FLAGGED	23561	욕설 표현
+미친년	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+미친놈	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+썅년	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+니애미	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+느금마	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+애미뒤진	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+좆밥	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+씹새끼	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+호로새끼	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+염병할놈	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+닥쳐씨발	PROFANE	직접욕설	3	1	FLAGGED	23561	비속어 포함
+개씨발	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+씨발년	PROFANE	직접욕설	3	1	FLAGGED	23561	직접적 비속어
+섹스머신	PROFANE	직접욕설	3	1	FLAGGED	23561	선정적 표현
+보지털	PROFANE	직접욕설	3	1	FLAGGED	23561	선정적 표현
+fuckyou	PROFANE	직접욕설	3	1	FLAGGED	23561	영어 욕설
+shithead	PROFANE	직접욕설	3	1	FLAGGED	23561	영어 욕설
+bitch	PROFANE	직접욕설	3	1	FLAGGED	23561	영어 욕설
+창녀	PROFANE	직접욕설	3	1	FLAGGED	23561	비속어
+민수병신	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+지훈씨발	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+철수개새끼	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+영희미친년	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+서연좆밥	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+김대리병신	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+박과장씨발	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+준호지랄	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+수빈이썅년	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+병신민재	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+씨발도윤	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+개새끼하준	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+지우엿먹어	PROFANE	이름+욕설	3	1	FLAGGED	23561	욕설 표현 포함
+태현좆까	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+예린미친놈	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+시발은우	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+현우씹새끼	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+유나보지	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+정민느금마	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+하은니애미	PROFANE	이름+욕설	3	1	FLAGGED	23561	비속어 포함
+ㅆㅣ발	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+씨ㅂㅏㄹ	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㅂㅕㅇ신	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+병ㅅㅣㄴ	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㄱㅐ새끼	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+개ㅅㅐ끼	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㅈㅗㅈ까	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㅈㅣ랄	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㅁㅣ친년	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㅅㅣ발놈	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+존ㄴㅏ싫다	EVASION	자모분리	3	1	FLAGGED	23561	비속어 포함
+ㅂㅕㅇㅅㅣㄴ	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+씹ㅅㅐ끼	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+ㅆㅣㅂㅏㄹ	EVASION	자모분리	3	1	FLAGGED	23561	자모 분리 비속어
+민수ㅂㅕㅇ신	EVASION	자모분리	3	1	FLAGGED	23561	비속어 포함
+씨*발	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+시.발	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+병_신	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+개.새.끼	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+좆#까	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+씨8발	EVASION	특수문자삽입	3	1	FLAGGED	23561	숫자 삽입 비속어
+지~랄	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+미!친!년	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+병1신	EVASION	특수문자삽입	3	1	FLAGGED	23561	숫자 삽입 비속어
+s.h.i.t	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 포함 영어 욕설
+f*ck	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 포함 영어 욕설
+씨-발놈	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+개_새_끼야	EVASION	특수문자삽입	3	1	FLAGGED	23561	특수문자 삽입 비속어
+존.나	EVASION	특수문자삽입	3	1	FLAGGED	23561	비속어 포함
+엿.먹.어	EVASION	특수문자삽입	3	1	FLAGGED	23561	욕설 표현
+시바롬	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+씨바	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+씨빨	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+시벌	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+씨불	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+쉬발	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+븅신	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+병쉰	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+빙신	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+개색기	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+개쉐이	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+개새기	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+좃까	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+졷까	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+지롤	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+니미럴	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+씌발	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+싀발	EVASION	유사발음	3	1	FLAGGED	23561	변형 비속어
+퍽유	EVASION	유사발음	3	1	FLAGGED	23561	욕설 음차
+뻑큐	EVASION	유사발음	3	1	FLAGGED	23561	욕설 음차
+ㅅㅂ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅆㅂ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅂㅅ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅈㄹ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㄱㅅㄲ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅅㅂㄴ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅁㅊㄴ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅈㄴ싫어	EVASION	초성	3	1	FLAGGED	23561	비속어 초성 포함
+ㅅㅂ민수	EVASION	초성	3	1	FLAGGED	23561	초성 비속어 포함
+ㅂㅅ아	EVASION	초성	3	1	FLAGGED	23561	초성 비속어 포함
+ㅆㅂㄹㅁ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅈㄲ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㄴㄱㅁ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+ㅗㅗ	EVASION	초성	3	1	FLAGGED	23561	욕설 손가락 의미 제스처
+ㅆㅂㅅㄲ	EVASION	초성	3	1	FLAGGED	23561	초성 비속어
+미친듯이	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 부사
+병신년	AMBIGUOUS	경계	3	1	FLAGGED	23561	중의적 표현(욕설 포함)
+똥강아지	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 닉네임
+병맛인생	AMBIGUOUS	경계	3	1	CLEAN	23561	은어이나 직접적 비속어 아님
+존맛탱	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 신조어
+개꿀잼	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 신조어
+빡빡이	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 별명
+섹시한남자	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 닉네임
+변태가면	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 캐릭터명/닉네임
+나쁜놈	AMBIGUOUS	경계	3	1	CLEAN	23561	경미한 표현
+멸치대가리	AMBIGUOUS	경계	3	1	CLEAN	23561	은어/놀림조
+개노잼	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 신조어
+존버중	AMBIGUOUS	경계	3	1	CLEAN	23561	은어
+씹덕	AMBIGUOUS	경계	3	1	CLEAN	23561	은어
+찐따	AMBIGUOUS	경계	3	1	CLEAN	23561	은어/놀림조
+개웃겨	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 신조어
+또라이	AMBIGUOUS	경계	3	1	CLEAN	23561	비속어 성향 있으나 허용 범위
+돌아이	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 닉네임
+호구왕	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 닉네임
+개빡침	AMBIGUOUS	경계	3	1	CLEAN	23561	신조어 감탄사
+졸라멋짐	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 닉네임
+미친개	AMBIGUOUS	경계	3	1	CLEAN	23561	일반 닉네임
+시발점	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 단어
+시발택시	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 단어
+시바견	CLEAN	오탐유발정상어	3	1	CLEAN	23561	견종 이름
+시바이누	CLEAN	오탐유발정상어	3	1	CLEAN	23561	견종 이름
+시바견사랑	CLEAN	오탐유발정상어	3	1	CLEAN	23561	견종 관련
+개나리	CLEAN	오탐유발정상어	3	1	CLEAN	23561	꽃 이름
+개구리	CLEAN	오탐유발정상어	3	1	CLEAN	23561	동물 이름
+개미왕	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 닉네임
+개발자	CLEAN	오탐유발정상어	3	1	CLEAN	23561	직업
+개구쟁이	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 단어
+새끼손가락	CLEAN	오탐유발정상어	3	1	CLEAN	23561	신체 부위
+새끼고양이	CLEAN	오탐유발정상어	3	1	CLEAN	23561	동물 이름
+새끼곰	CLEAN	오탐유발정상어	3	1	CLEAN	23561	동물 이름
+호박엿	CLEAN	오탐유발정상어	3	1	CLEAN	23561	음식
+엿장수	CLEAN	오탐유발정상어	3	1	CLEAN	23561	직업
+쌍둥이	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 단어
+쌍화차	CLEAN	오탐유발정상어	3	1	CLEAN	23561	음료
+청년	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 단어
+소년탐정	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 닉네임
+신년운세	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 단어
+보지마세요	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 동사 활용
+자지마	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 동사 활용
+딸기우유	CLEAN	오탐유발정상어	3	1	CLEAN	23561	음료
+정자동	CLEAN	오탐유발정상어	3	1	CLEAN	23561	지명
+성기사	CLEAN	오탐유발정상어	3	1	CLEAN	23561	게임 직업
+고자질	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 단어
+애자일	CLEAN	오탐유발정상어	3	1	CLEAN	23561	개발 방법론
+등신대	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 용품
+등신불	CLEAN	오탐유발정상어	3	1	CLEAN	23561	문학 작품명
+호로록	CLEAN	오탐유발정상어	3	1	CLEAN	23561	의성어
+껌씹는중	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 상태 메시지
+수박씨	CLEAN	오탐유발정상어	3	1	CLEAN	23561	과일 씨
+씨름왕	CLEAN	오탐유발정상어	3	1	CLEAN	23561	운동 종목
+발바닥	CLEAN	오탐유발정상어	3	1	CLEAN	23561	신체 부위
+미쳤다	CLEAN	오탐유발정상어	3	1	CLEAN	23561	일반 감탄사
+Scunthorpe	CLEAN	오탐유발정상어	3	1	CLEAN	23561	지명 (Scunthorpe problem)
+cocktail	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 영어 단어
+assassin	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 영어 단어
+classic	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 영어 단어
+Hancock	CLEAN	오탐유발정상어	3	1	CLEAN	23561	고유명사/성씨
+bassist	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 영어 단어
+Sussex	CLEAN	오탐유발정상어	3	1	CLEAN	23561	지명
+titanic	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 영어 단어
+cucumber	CLEAN	오탐유발정상어	3	1	CLEAN	23561	정상 영어 단어
+Dickens	CLEAN	오탐유발정상어	3	1	CLEAN	23561	고유명사/성씨
+용감한고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+용감한여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+졸린여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+배고픈여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+행복한여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+수줍은여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+느긋한여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+반짝이는여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한부엉이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한수달	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한햄스터	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+조용한여우	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+씩씩한고양이	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+씩씩한판다	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+씩씩한다람쥐	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+씩씩한펭귄	CLEAN	일반닉네임	3	1	CLEAN	23561	일반 닉네임
+씩씩한부엉이	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+씩씩한수달	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+씩씩한햄스터	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+씩씩한여우	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른고양이	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른판다	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른다람쥐	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른펭귄	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른부엉이	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른수달	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른햄스터	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+게으른여우	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+sunny_day	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+blueberry9	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+moonwalker	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+pixelcat	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+rainyday7	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+tofu_king	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+lazybear	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+kiwi2025	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+nightowl	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+sky_runner	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+mintchoco	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+pancake33	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+dreamer_01	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+lucky7	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+bookworm	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+snowball	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+capybara	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+oj_lover	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+jazzhands	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+waffle	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+커피한잔	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+아메리카노	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+치즈케이크	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+떡볶이러버	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+오늘도출근	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+퇴근하고싶다	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+주말만기다려	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+월요병환자	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+코딩하는곰	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+달빛산책	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+초코우유	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+여름바다	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+겨울왕자	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+봄날의곰	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+가을하늘	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+민트초코파	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+붕어빵장수	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+김치찌개	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+한강라면	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+용감한호랑이	CLEAN	일반닉네임	3	2	CLEAN	23421	일반 닉네임
+ㅆ.ㅣ.발	EVASION	복합우회	3	2	FLAGGED	23421	비속어 우회 (특수문자 삽입)
+씨1발놈아	EVASION	복합우회	3	2	FLAGGED	23421	비속어 및 욕설 포함
+ㅂ*ㅅ아	EVASION	복합우회	3	2	FLAGGED	23421	비속어 우회 (특수문자 삽입)
+민수ㅅ.ㅂ	EVASION	복합우회	3	2	FLAGGED	23421	비속어 초성 우회
+쉬.발롬	EVASION	복합우회	3	2	FLAGGED	23421	비속어 우회
+븅~신아	EVASION	복합우회	3	2	FLAGGED	23421	비속어 변형
+ㄱH새끼	EVASION	복합우회	3	2	FLAGGED	23421	비속어 변형 (한글+영문)
+개ㅅH끼야	EVASION	복합우회	3	2	FLAGGED	23421	비속어 변형
+씨이~발	EVASION	복합우회	3	2	FLAGGED	23421	비속어 장음 우회
+tlqkf놈	EVASION	복합우회	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+ㅈ같은ㅅㄲ	EVASION	복합우회	3	2	FLAGGED	23421	비속어 초성 및 변형
+병1신새1끼	EVASION	복합우회	3	2	FLAGGED	23421	비속어 숫자 삽입
+si발롬	EVASION	복합우회	3	2	FLAGGED	23421	영문 혼용 비속어
+씹ㅅ.ㄲ	EVASION	복합우회	3	2	FLAGGED	23421	비속어 초성 및 특수문자
+ㅁl친놈	EVASION	복합우회	3	2	FLAGGED	23421	비속어 변형
+tlqkf	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+Tlqkfsha	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+qudtls	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+rotoRl	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+whssk	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+wlfkf	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+alclssha	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+whwRk	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+qudtls민수	EVASION	영타	3	2	FLAGGED	23421	한글 타자 영문 변환 비속어
+ssibal	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+sibalnom	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+shibal	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+byungsin	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+byeongsin	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+gaesaekki	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+jonna싫어	EVASION	로마자	3	2	FLAGGED	23421	비속어 변형
+jiral	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+ssipal	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+michinnom	EVASION	로마자	3	2	FLAGGED	23421	영문 욕설
+씨이발	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+시이바알	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+씨바아알	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+병시인	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+개애새끼	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+지이랄	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+조온나	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+미치인놈	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+씨이이발	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+좆까아	EVASION	늘이기	3	2	FLAGGED	23421	비속어 변형
+씹알	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+십알놈	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+시팔	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+씨팔놈	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+쓰발	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+쓰벌	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+슈발	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+시부랄	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+씨부럴	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+띠발	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+찌발	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+씨방새	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+개새키	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+개섀끼	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+개샛기	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+조까	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+좃같네	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+병시나	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+븅딱	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+지럴	EVASION	변형표기	3	2	FLAGGED	23421	비속어
+ㅆl발	EVASION	유사문자	3	2	FLAGGED	23421	비속어 우회 (영문 l)
+시I발	EVASION	유사문자	3	2	FLAGGED	23421	비속어 우회
+ㅈl랄	EVASION	유사문자	3	2	FLAGGED	23421	비속어 우회
+从ㅣ발	EVASION	유사문자	3	2	FLAGGED	23421	비속어 우회
+人ㅣ발	EVASION	유사문자	3	2	FLAGGED	23421	비속어 우회
+ㅅH끼야	EVASION	유사문자	3	2	FLAGGED	23421	비속어 우회
+병싄	EVASION	유사문자	3	2	FLAGGED	23421	비속어 변형
+씨봘	EVASION	유사문자	3	2	FLAGGED	23421	비속어 변형
+개쉑	EVASION	유사문자	3	2	FLAGGED	23421	비속어 변형
+개쉨	EVASION	유사문자	3	2	FLAGGED	23421	비속어 변형
+미췬놈	EVASION	유사문자	3	2	FLAGGED	23421	비속어 변형
+씨벌탱	EVASION	유사문자	3	2	FLAGGED	23421	비속어
+씨 발	EVASION	공백삽입	3	2	FLAGGED	23421	비속어 띄어쓰기 우회
+병 신	EVASION	공백삽입	3	2	FLAGGED	23421	비속어 띄어쓰기 우회
+개 새 끼	EVASION	공백삽입	3	2	FLAGGED	23421	비속어 띄어쓰기 우회
+시 발 놈	EVASION	공백삽입	3	2	FLAGGED	23421	비속어 띄어쓰기 우회
+좆 까	EVASION	공백삽입	3	2	FLAGGED	23421	비속어 띄어쓰기 우회
+지 랄	EVASION	공백삽입	3	2	FLAGGED	23421	비속어 띄어쓰기 우회
+sh1t	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어 우회
+fuk	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어
+fuxk	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어 우회
+phuck	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어 우회
+b1tch	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어 우회
+biatch	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어
+a55hole	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어 우회
+d1ckhead	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어 우회
+fck u	EVASION	영어변형	3	2	FLAGGED	23421	영문 비속어
+asshole	PROFANE	영어욕설	3	2	FLAGGED	23421	영문 비속어
+dickhead	PROFANE	영어욕설	3	2	FLAGGED	23421	영문 비속어
+motherfuck	PROFANE	영어욕설	3	2	FLAGGED	23421	영문 비속어
+cunt	PROFANE	영어욕설	3	2	FLAGGED	23421	영문 비속어
+bastard	PROFANE	영어욕설	3	2	FLAGGED	23421	영문 비속어
+한남충	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+김치녀	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+틀딱충	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+급식충	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+맘충	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+짱깨놈	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+쪽바리	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+일베충	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+메갈년	PROFANE	혐오비하	3	2	FLAGGED	23421	혐오 표현
+느개비	PROFANE	혐오비하	3	2	FLAGGED	23421	패륜적 비속어
+니애비	PROFANE	혐오비하	3	2	FLAGGED	23421	패륜적 비속어
+장애인새끼	PROFANE	혐오비하	3	2	FLAGGED	23421	비하 및 욕설
+게이새끼	PROFANE	혐오비하	3	2	FLAGGED	23421	비하 및 욕설
+홍어새끼	PROFANE	혐오비하	3	2	FLAGGED	23421	지역 비하 및 욕설
+전라디언	PROFANE	혐오비하	3	2	FLAGGED	23421	지역 비하 표현
+딸딸이	PROFANE	성적표현	3	2	FLAGGED	23421	선정적 은어
+걸레년	PROFANE	성적표현	3	2	FLAGGED	23421	선정적 욕설
+좆물	PROFANE	성적표현	3	2	FLAGGED	23421	선정적 비속어
+보빨러	PROFANE	성적표현	3	2	FLAGGED	23421	선정적 비속어
+따먹자	PROFANE	성적표현	3	2	FLAGGED	23421	성적 표현
+육변기	PROFANE	성적표현	3	2	FLAGGED	23421	성적 학대 표현
+섹파구함	PROFANE	성적표현	3	2	FLAGGED	23421	조건만남 및 성적 목적 표현
+자지큰놈	PROFANE	성적표현	3	2	FLAGGED	23421	선정적 표현
+빨통녀	PROFANE	성적표현	3	2	FLAGGED	23421	선정적 표현
+끼새개	AMBIGUOUS	경계	3	2	FLAGGED	23421	비속어 변형
+놈발씨	AMBIGUOUS	경계	3	2	FLAGGED	23421	비속어 변형
+흑형	AMBIGUOUS	경계	3	2	CLEAN	23421	은어이나 문맥에 따라 일반 호칭으로 쓰일 수 있어 미적용
+죽어버려	AMBIGUOUS	경계	3	2	FLAGGED	23421	공격적 폭력 표현
+뒤져라	AMBIGUOUS	경계	3	2	FLAGGED	23421	공격적 폭력 표현
+자살각	AMBIGUOUS	경계	3	2	FLAGGED	23421	자살 유도 및 부적절한 표현
+stfu	AMBIGUOUS	경계	3	2	FLAGGED	23421	영문 비속어
+wtf	AMBIGUOUS	경계	3	2	FLAGGED	23421	영문 비속어
+mofo	AMBIGUOUS	경계	3	2	FLAGGED	23421	영문 비속어
+야동마스터	AMBIGUOUS	경계	3	2	FLAGGED	23421	성인물 관련 표현
+바보멍청이	AMBIGUOUS	경계	3	2	CLEAN	23421	단순 놀림말
+꺼져	AMBIGUOUS	경계	3	2	FLAGGED	23421	공격적 언행
+닥쳐라	AMBIGUOUS	경계	3	2	FLAGGED	23421	공격적 언행
+씹고수	AMBIGUOUS	경계	3	2	FLAGGED	23421	비속어가 포함된 인터넷 은어
+개못함	AMBIGUOUS	경계	3	2	CLEAN	23421	일반 게임 비속어적 접두사이나 단독 비속어로 보기 어려움
+존잘남	AMBIGUOUS	경계	3	2	CLEAN	23421	일반 신조어
+불알친구	AMBIGUOUS	경계	3	2	CLEAN	23421	속어이나 흔히 친근한 관계로 쓰임
+엠창인생	AMBIGUOUS	경계	3	2	FLAGGED	23421	비속어 및 저속한 표현
+조낸멋짐	AMBIGUOUS	경계	3	2	FLAGGED	23421	비속어 변형
+씨밤바	AMBIGUOUS	경계	3	2	FLAGGED	23421	비속어
+똥남아	AMBIGUOUS	경계	3	2	FLAGGED	23421	인종 차별적 혐오 표현
+꽃씨발아	CLEAN	경계걸침정상어	3	2	CLEAN	23421	식물 관련 정상 단어 (발아)
+수박씨발라	CLEAN	경계걸침정상어	3	2	CLEAN	23421	과일 관련 정상 단어
+다시발견	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+출시발표	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+택시발견	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+도시발전	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+역시발군	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+일병신고	CLEAN	경계걸침정상어	3	2	CLEAN	23421	군대 관련 정상 단어
+상병신고식	CLEAN	경계걸침정상어	3	2	CLEAN	23421	군대 관련 정상 단어
+무지개새	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+안개새벽	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+참새끼리	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+장염병원	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+보존나무	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+생존나침반	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+감자지옥	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+피자지도	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+해보지뭐	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+두고보지	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+미들섹스	CLEAN	경계걸침정상어	3	2	CLEAN	23421	지명(Middlesex) 관련 정상 단어
+에섹스백작	CLEAN	경계걸침정상어	3	2	CLEAN	23421	작위명 관련 정상 단어
+아저씨발냄새	CLEAN	경계걸침정상어	3	2	CLEAN	23421	발 냄새 관련 정상 단어
+강아지새끼	CLEAN	경계걸침정상어	3	2	CLEAN	23421	동물의 새끼를 뜻하는 정상 단어
+고양이새끼	CLEAN	경계걸침정상어	3	2	CLEAN	23421	동물의 새끼를 뜻하는 정상 단어
+내새끼최고	CLEAN	경계걸침정상어	3	2	CLEAN	23421	친근한 표현
+호랑이새끼	CLEAN	경계걸침정상어	3	2	CLEAN	23421	동물의 새끼를 뜻하는 정상 단어
+새끼줄	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+시발역	CLEAN	경계걸침정상어	3	2	CLEAN	23421	시작하는 역(始発駅) 또는 철도역 명칭
+십팔세	CLEAN	경계걸침정상어	3	2	CLEAN	23421	나이(18세)를 뜻하는 정상 단어
+18학번	CLEAN	경계걸침정상어	3	2	CLEAN	23421	학번 관련 정상 단어
+조카사랑	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+족발사랑	CLEAN	경계걸침정상어	3	2	CLEAN	23421	음식 관련 정상 단어
+시바스리갈	CLEAN	경계걸침정상어	3	2	CLEAN	23421	주류 브랜드명
+신병훈련소	CLEAN	경계걸침정상어	3	2	CLEAN	23421	군사 시설 명칭
+젖소목장	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+고추잠자리	CLEAN	경계걸침정상어	3	2	CLEAN	23421	곤충 명칭
+엉덩이탐정	CLEAN	경계걸침정상어	3	2	CLEAN	23421	동화 캐릭터 명칭
+방귀대장	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+창녕양파	CLEAN	경계걸침정상어	3	2	CLEAN	23421	지역 특산물명
+십자수	CLEAN	경계걸침정상어	3	2	CLEAN	23421	공예 명칭
+가시발	CLEAN	경계걸침정상어	3	2	CLEAN	23421	갑각류 등 생물 명칭
+잠시발길	CLEAN	경계걸침정상어	3	2	CLEAN	23421	정상 단어
+ㅎㅇ	CLEAN	정상초성	3	2	CLEAN	23421	초성 인사말
+ㅋㅋㅋ	CLEAN	정상초성	3	2	CLEAN	23421	웃음 표현
+ㄱㅅ	CLEAN	정상초성	3	2	CLEAN	23421	초성 감사 표현
+ㅇㅈ	CLEAN	정상초성	3	2	CLEAN	23421	초성 동의 표현
+ㅊㅋㅊㅋ	CLEAN	정상초성	3	2	CLEAN	23421	초성 축하 표현
+ㄱㅊ	CLEAN	정상초성	3	2	CLEAN	23421	초성 표현
+ㅈㅅ	CLEAN	정상초성	3	2	CLEAN	23421	초성 사과 표현
+ㅅㄱ	CLEAN	정상초성	3	2	CLEAN	23421	초성 표현
+ㅂㅂ	CLEAN	정상초성	3	2	CLEAN	23421	초성 인사말
+ㅎㅎ	CLEAN	정상초성	3	2	CLEAN	23421	웃음 표현
+ㄷㄷ	CLEAN	정상초성	3	2	CLEAN	23421	감탄 표현
+ㄱㄱ	CLEAN	정상초성	3	2	CLEAN	23421	진행 표현
+ㅇㅋ	CLEAN	정상초성	3	2	CLEAN	23421	동의 표현
+ㄴㄴ	CLEAN	정상초성	3	2	CLEAN	23421	부정 표현
+ㅠㅠ	CLEAN	정상초성	3	2	CLEAN	23421	슬픔 표현
+ㅇㅅㅇ	CLEAN	정상초성	3	3	CLEAN	11957	일반 닉네임
+shiitake	CLEAN	오탐유발정상어	3	3	CLEAN	11957	표고버섯(shiitake)의 영어 단어로 비속어 아님
+shitake	CLEAN	오탐유발정상어	3	3	CLEAN	11957	표고버섯의 오탈자이나, 비속어 shit과 유사하여 애매함
+analyst	CLEAN	오탐유발정상어	3	3	CLEAN	11957	분석가(analyst) 단어로 비속어 아님
+analog	CLEAN	오탐유발정상어	3	3	CLEAN	11957	아날로그(analog) 단어로 비속어 아님
+grape	CLEAN	오탐유발정상어	3	3	CLEAN	11957	포도(grape) 단어로 비속어 아님
+therapist	CLEAN	오탐유발정상어	3	3	CLEAN	11957	치료사(therapist) 단어로 비속어 아님
+Essex	CLEAN	오탐유발정상어	3	3	CLEAN	11957	영국의 지명으로 비속어 아님
+Middlesex	CLEAN	오탐유발정상어	3	3	CLEAN	11957	영국의 지명으로 비속어 아님
+cockpit	CLEAN	오탐유발정상어	3	3	CLEAN	11957	조종석(cockpit) 단어로 비속어 아님
+peacock	CLEAN	오탐유발정상어	3	3	CLEAN	11957	공작새(peacock) 단어로 비속어 아님
+arsenal	CLEAN	오탐유발정상어	3	3	CLEAN	11957	아스날(구단명) 또는 무기고 단어로 비속어 아님
+matsushita	CLEAN	오탐유발정상어	3	3	CLEAN	11957	일본 성씨(마쓰시타)로 비속어 아님
+fukuoka	CLEAN	오탐유발정상어	3	3	CLEAN	11957	일본 지명(후쿠오카)으로 비속어 아님
+fukushima	CLEAN	오탐유발정상어	3	3	CLEAN	11957	일본 지명(후쿠시마)으로 비속어 아님
+sexton	CLEAN	오탐유발정상어	3	3	CLEAN	11957	성구 관리인(sexton) 단어로 비속어 아님
+passion	CLEAN	오탐유발정상어	3	3	CLEAN	11957	열정(passion) 단어로 비속어 아님
+bassoon	CLEAN	오탐유발정상어	3	3	CLEAN	11957	바순(악기) 단어로 비속어 아님
+hello	CLEAN	오탐유발정상어	3	3	CLEAN	11957	일반 인사말
+cumulus	CLEAN	오탐유발정상어	3	3	CLEAN	11957	적운(구름 종류) 단어로 비속어 아님
+document	CLEAN	오탐유발정상어	3	3	CLEAN	11957	문서(document) 단어로 비속어 아님
+scrap	CLEAN	오탐유발정상어	3	3	CLEAN	11957	스크랩 단어로 비속어 아님
+butter	CLEAN	오탐유발정상어	3	3	CLEAN	11957	버터 단어로 비속어 아님
+sextant	CLEAN	오탐유발정상어	3	3	CLEAN	11957	육분의(항해용 기구) 단어로 비속어 아님
+cockatoo	CLEAN	오탐유발정상어	3	3	CLEAN	11957	유황앵무(새) 단어로 비속어 아님
+dickinson	CLEAN	오탐유발정상어	3	3	CLEAN	11957	영어권 성씨(디킨슨)로 비속어 아님
+kumquat	CLEAN	오탐유발정상어	3	3	CLEAN	11957	금귤(낑깡) 단어로 비속어 아님
+wankel	CLEAN	오탐유발정상어	3	3	CLEAN	11957	반켈(엔진 종류/성씨) 단어로 비속어 아님
+shuttle	CLEAN	오탐유발정상어	3	3	CLEAN	11957	셔틀 단어로 비속어 아님
+넙죽이	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+롤하는직장인	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+갓생살기	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+야근요정	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+탕수육부먹	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+민초단장	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+치킨은진리	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+월급루팡	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+칼퇴기원	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+맑은날	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+감자튀김	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+고구마맛탕	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+서울쥐	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+부산갈매기	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+대전빵순이	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+T1우승	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+페이커팬	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+손흥민짱	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+우테코7기	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+스프링장인	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+null포인터	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 개발 관련 용어 닉네임
+1004	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 숫자 닉네임
+7777	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 숫자 닉네임
+0o0	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+민수	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 이름
+지훈이	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 이름
+김대리	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 직급 닉네임
+박과장님	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 직급 닉네임
+영희야놀자	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+철수와영희	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+아이스티	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+망고빙수	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+라떼는말이야	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 유행어 닉네임
+점메추	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+저메추해줘	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+집가고싶다	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 닉네임
+오운완	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+헬린이	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+주린이	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+코린이	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+무지성	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+킹받네	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+어쩔티비	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+갑분싸	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+꾸안꾸	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+알잘딱깔센	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+중꺾마	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+내돈내산	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+스불재	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임
+숨참고다이브	CLEAN	일반닉네임	3	3	CLEAN	11957	일반 신조어 닉네임

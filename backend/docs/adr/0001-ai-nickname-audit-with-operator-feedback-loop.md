@@ -3,6 +3,7 @@
 - 날짜: 2026-03-21
 - 상태: 적용됨 (2026-04-30 범위 확장)
 - 2026-10-01 갱신: `BadWordFiltering`·`custom_profanity` 는 [ADR-0018](0018-profanity-module-extraction.md)로 제거돼 `profanity_word` 테이블로 일원화됐다. 검열 코드와 테이블은 `backend/profanity/` 에 있다.
+- 2026-11-10 갱신(#1907): 검열 주기는 5분, 모델은 `gemini-3.5-flash-lite`다. 본문의 "Gemini 2.5 Flash", "RPM 5", "12시간"은 결정 당시 기록이다.
 
 ## 컨텍스트
 

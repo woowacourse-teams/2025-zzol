@@ -34,16 +34,18 @@ report:
 
 nickname-audit:
   gemini-api-key: ${GEMINI_API_KEY}   # local/test 프로파일에서는 NoOpNicknameAuditor가 대신 동작
-  model: gemini-3.5-flash
+  model: gemini-3.5-flash-lite
   flagged-threshold: 0.85
-  batch-size: 100                      # API 호출 1회당 처리량 (RPM 5 기준 100개씩 5회 = 500개/min)
+  batch-size: 250                      # API 호출 1회당 처리량. flash-lite 골든셋 측정에서 250건 응답 최대 48.6초였다(#1910).
   feedback-injection-threshold: 20
   min-term-length: 2                   # 자동 차단할 비속어 조각의 정규화 후 최소 길이 (짧을수록 Trie 부분일치 과차단 위험 ↑)
   max-run-duration: 10m                # 한 회차가 실행기 스레드를 붙잡아도 되는 상한. 넘으면 남은 적체는 다음 회차로.
   max-attempts: 3                      # 한 행이 검열 호출 실패를 견디는 횟수. 닿으면 DEAD_LETTER가 되어 스캔에서 빠진다.
   request-timeout: 120s                # Gemini HTTP 타임아웃. 없으면 응답 없는 호출이 스케줄러 스레드를 무기한 점유한다.
                                        # batch-size 를 올리면 응답 생성 시간도 늘어나므로 함께 올린다.
-  cron: "0 0 0/12 * * *"               # 검열 회차 주기. local 은 application-local.yml 에서 5분으로 당겨 쓴다.
+  cron: "0 */5 * * * *"                # 하루 최대 288회차. 빈 큐는 호출하지 않고 호출 하나가 batch-size 건까지 담아, 하루 호출 수 ≤ 288 + 닉네임 수/250 이다.
+                                       # 이 프로젝트의 gemini-3.5-flash-lite 무료 한도는 하루 500회다.
+                                       # 한도를 넘겨 429가 나도 시도 횟수는 오르지 않고, 그 행은 다음 회차가 다시 집는다.
   seed:
     count: 0                           # local 에서 넣을 측정용 미검열 닉네임 수. 0 이면 안 넣는다.
   stub:                                # local/test 프로파일의 NoOpNicknameAuditor 동작. 아래 기본값이면 지연 0에 전부 CLEAN.

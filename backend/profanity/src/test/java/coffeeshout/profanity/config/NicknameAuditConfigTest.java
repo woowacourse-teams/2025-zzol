@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import com.google.genai.types.HttpOptions;
+import com.google.genai.types.HttpRetryOptions;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
@@ -25,5 +26,16 @@ class NicknameAuditConfigTest {
         assertThat(httpOptions.timeout())
                 .as("HttpOptions.timeout 은 밀리초 단위다. 초 단위 값을 그대로 넣으면 90ms 가 되어 모든 호출이 즉시 끊긴다.")
                 .contains(90_000);
+    }
+
+    @Test
+    void SDK_내부_재시도를_꺼서_호출_한_번이_HTTP_요청_한_번이_되게_한다() {
+        final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.요청_타임아웃(Duration.ofSeconds(90));
+
+        final HttpOptions httpOptions = NicknameAuditConfig.httpOptions(properties);
+
+        assertThat(httpOptions.retryOptions().flatMap(HttpRetryOptions::attempts))
+                .as("SDK 기본값은 408·429·5xx 응답마다 다섯 번까지 다시 보낸다. 회차 수로 맞춘 Gemini 하루 호출 수가 그만큼 불어난다.")
+                .contains(1);
     }
 }

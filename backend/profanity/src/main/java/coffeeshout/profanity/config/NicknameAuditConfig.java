@@ -2,6 +2,7 @@ package coffeeshout.profanity.config;
 
 import com.google.genai.Client;
 import com.google.genai.types.HttpOptions;
+import com.google.genai.types.HttpRetryOptions;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -43,10 +44,14 @@ public class NicknameAuditConfig {
     /**
      * SDK가 빌드된 {@link Client}에서 타임아웃을 되읽을 방법을 주지 않아, 검증 가능하도록 조립부를 분리한다.
      * {@code HttpOptions.timeout}은 밀리초 단위다.
+     *
+     * <p>SDK 재시도는 끈다. 기본값이면 408·429·5xx 응답마다 같은 요청을 다섯 번까지 다시 보내서,
+     * 회차 수로 맞춘 Gemini 하루 호출 수({@code config/service.yml}의 cron 주석)가 그만큼 불어난다.
      */
     static HttpOptions httpOptions(NicknameAuditProperties properties) {
         return HttpOptions.builder()
                 .timeout(Math.toIntExact(properties.requestTimeout().toMillis()))
+                .retryOptions(HttpRetryOptions.builder().attempts(1).build())
                 .build();
     }
 }

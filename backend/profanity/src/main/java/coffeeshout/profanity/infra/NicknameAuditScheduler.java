@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * 닉네임 AI 검열 트리거. 주기는 {@code nickname-audit.cron}이 정한다(운영 기본 12시간).
+ * 닉네임 AI 검열 트리거. 주기는 {@code nickname-audit.cron}이 정한다.
  *
  * <p>검열 작업을 직접 실행하지 않고 전용 실행기로 넘긴다. 프로덕션에서 모든 {@code @Scheduled}가
  * 단일 스레드를 공유하는데(그 안에 500ms 주기 Outbox 릴레이가 있다), 검열 회차는 적체량에 비례해

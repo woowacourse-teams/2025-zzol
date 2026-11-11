@@ -27,6 +27,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # eslint-plugin-react 가 eslint 10 을 peer 로 허용할 때까지 eslint 10 전환을 미룬다(#1903, #1905).
+    # 그때 세 패키지를 함께 올리고 이 ignore 를 지운다.
+    ignore:
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-plugin-cypress"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "frontend"

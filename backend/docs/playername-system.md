@@ -73,9 +73,11 @@ WHERE status = 'DEAD_LETTER';
 
 ## 설정
 
-`app/src/main/resources/config/service.yml`의 `nickname-audit` 블록이 모델 `gemini-3.5-flash`와 `flagged-threshold`, `batch-size`, `feedback-injection-threshold`, `min-term-length`, `max-run-duration`, `max-attempts`, `request-timeout`, `cron`을 든다. `NicknameAuditProperties`가 바인딩한다.
+`app/src/main/resources/config/service.yml`의 `nickname-audit` 블록이 모델 `gemini-3.5-flash-lite`와 `flagged-threshold`, `batch-size`, `feedback-injection-threshold`, `min-term-length`, `max-run-duration`, `max-attempts`, `request-timeout`, `cron`을 든다. `NicknameAuditProperties`가 바인딩한다.
 
 Gemini 호출의 재시도와 속도 제한은 `config/resilience4j.yml`의 `geminiAudit` 인스턴스가 정한다. retry는 지수 백오프, ratelimiter는 13초에 1회다.
+
+Gemini 하루 한도는 회차 주기로 맞춘다. 계산은 `config/service.yml`의 `cron` 주석에 있다. SDK 내부 재시도는 `NicknameAuditConfig`에서 꺼 두어 배치 하나가 HTTP 요청 하나다.
 
 ## 메트릭
 

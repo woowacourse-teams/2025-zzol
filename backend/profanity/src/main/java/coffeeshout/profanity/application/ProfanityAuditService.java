@@ -37,7 +37,7 @@ public class ProfanityAuditService {
      */
     private static final long LOCK_LEASE_MILLIS = 900_000L;
 
-    /** 주기 작업이라 완료 마킹은 짧게 둔다. cron 주기(12시간)보다 길면 다음 회차가 조용히 건너뛰어진다. */
+    /** 주기 작업이라 완료 마킹은 짧게 둔다. cron 주기보다 길면 다음 회차가 조용히 건너뛰어진다. */
     private static final long LOCK_DONE_TTL_MILLIS = 60_000L;
 
     private final NicknameAuditRepository auditRepository;

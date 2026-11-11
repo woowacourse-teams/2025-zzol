@@ -9,6 +9,7 @@ import coffeeshout.profanity.eval.GoldenItem.Expected;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.RunRow;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -38,8 +39,9 @@ public class NicknameAuditEvaluator {
     public NicknameAuditEvaluation evaluate(
             List<GoldenItem> items, NicknameAuditor auditor, int batchSize, int repeats) {
         final List<Duration> batchLatencies = new ArrayList<>();
+        final List<RunRow> rows = new ArrayList<>();
         final List<Map<String, NicknameAuditResult>> runs = IntStream.range(0, repeats)
-                .mapToObj(i -> runOnce(items, auditor, batchSize, batchLatencies))
+                .mapToObj(i -> runOnce(items, auditor, batchSize, batchLatencies, i + 1, rows))
                 .toList();
         final List<Judged> judged = items.stream()
                 .map(item -> new Judged(item, runs.getFirst().get(item.nickname())))
@@ -71,26 +73,48 @@ public class NicknameAuditEvaluator {
                         j -> j.predicted() == Predicted.PENDING),
                 rate(filter(positives, j -> j.predicted() == Predicted.FLAGGED), this::termsMatch),
                 instability(items, runs),
-                mismatches(judged));
+                mismatches(judged),
+                rows);
     }
 
     private Map<String, NicknameAuditResult> runOnce(
-            List<GoldenItem> items, NicknameAuditor auditor, int batchSize, List<Duration> batchLatencies) {
-        final List<String> nicknames = items.stream().map(GoldenItem::nickname).toList();
+            List<GoldenItem> items,
+            NicknameAuditor auditor,
+            int batchSize,
+            List<Duration> batchLatencies,
+            int run,
+            List<RunRow> rows) {
         final Map<String, NicknameAuditResult> byNickname = new HashMap<>();
-        for (int from = 0; from < nicknames.size(); from += batchSize) {
-            final List<String> batch = nicknames.subList(from, Math.min(from + batchSize, nicknames.size()));
+        for (int from = 0; from < items.size(); from += batchSize) {
+            final List<GoldenItem> batchItems = items.subList(from, Math.min(from + batchSize, items.size()));
+            final List<String> batch =
+                    batchItems.stream().map(GoldenItem::nickname).toList();
             // 응답에 섞인 다른 배치 닉네임이 뒤 항목의 판정을 가로채지 않게 요청한 닉네임만 받는다
             // HashSet이라 모델이 nickname을 null로 돌려줘도 contains가 터지지 않는다
             final Set<String> requested = new HashSet<>(batch);
             final long startedAt = System.nanoTime();
             final List<NicknameAuditResult> results = auditBatch(auditor, batch);
-            batchLatencies.add(Duration.ofNanos(System.nanoTime() - startedAt));
+            final Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
+            batchLatencies.add(latency);
             results.stream()
                     .filter(result -> requested.contains(result.nickname()))
                     .forEach(result -> byNickname.putIfAbsent(result.nickname(), result));
+            final int batchNumber = from / batchSize + 1;
+            batchItems.forEach(item -> rows.add(row(item, run, batchNumber, byNickname.get(item.nickname()), latency)));
         }
         return byNickname;
+    }
+
+    private static RunRow row(GoldenItem item, int run, int batch, NicknameAuditResult result, Duration latency) {
+        return new RunRow(
+                item.nickname(),
+                item.expected(),
+                item.category(),
+                run,
+                batch,
+                predict(result),
+                result == null ? "" : String.valueOf(result.reason()),
+                latency);
     }
 
     private List<NicknameAuditResult> auditBatch(NicknameAuditor auditor, List<String> batch) {

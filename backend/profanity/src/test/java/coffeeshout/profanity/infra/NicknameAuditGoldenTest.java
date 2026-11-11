@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.errors.ApiException;
 import com.google.genai.types.HttpOptions;
+import com.google.genai.types.HttpRetryOptions;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -35,7 +36,8 @@ import org.junit.jupiter.api.Test;
  * 실제 Gemini로 골든셋을 돌려 리포트를 쓴다. 기본 test 태스크에서 빠지고 {@code :profanity:goldenTest}로만 돈다.
  *
  * <p>환경변수로 조건을 바꾼다. {@code NICKNAME_AUDIT_MODEL}, {@code NICKNAME_AUDIT_BATCH_SIZE}(기본 100),
- * {@code NICKNAME_AUDIT_REPEATS}(기본 3), {@code NICKNAME_AUDIT_TIMEOUT_SECONDS}(기본 120).
+ * {@code NICKNAME_AUDIT_REPEATS}(기본 3), {@code NICKNAME_AUDIT_TIMEOUT_SECONDS}(기본 120),
+ * {@code NICKNAME_AUDIT_HTTP_ATTEMPTS}(기본은 SDK 기본 재시도. 1이면 재시도를 꺼서 배치 하나가 HTTP 요청 하나가 된다).
  *
  * <p>재시도는 SDK 기본 재시도(408·429·5xx, 5회)만 쓴다. 운영 {@code geminiAudit} 재시도는
  * {@code InfrastructureException}을 무시하는데 검열기가 모든 호출 오류를 그 예외로 감싸므로 운영에서도 돌지 않는다.
@@ -57,20 +59,24 @@ class NicknameAuditGoldenTest {
         final int repeats = 정수_환경변수("NICKNAME_AUDIT_REPEATS", 3);
         final Duration timeout = Duration.ofSeconds(정수_환경변수("NICKNAME_AUDIT_TIMEOUT_SECONDS", 120));
         final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.모델(apiKey, model, timeout);
+        final int httpAttempts = 정수_환경변수("NICKNAME_AUDIT_HTTP_ATTEMPTS", 0);
 
         final NicknameAuditEvaluation evaluation = new NicknameAuditEvaluator(
                         new TextNormalizer(), properties.minTermLength())
-                .evaluate(NicknameGoldenSetFixture.골든셋(), 간격을_두고_한도_초과면_멈추는(검열기(properties)), batchSize, repeats);
+                .evaluate(
+                        NicknameGoldenSetFixture.골든셋(),
+                        간격을_두고_한도_초과면_멈추는(검열기(properties, httpAttempts)),
+                        batchSize,
+                        repeats);
 
-        final Path report = Path.of(
-                "build/reports/golden",
-                "%s-%s-b%d.md"
-                        .formatted(
-                                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")),
-                                model,
-                                batchSize));
+        final String reportName = "%s-%s-b%d"
+                .formatted(
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")), model, batchSize);
+        final Path report = Path.of("build/reports/golden", reportName + ".md");
         Files.createDirectories(report.getParent());
         Files.writeString(report, evaluation.toMarkdown(model + ", 피드백 예시 없는 기본 프롬프트"));
+        // 모델끼리 짝지어 비교하려면 닉네임별 판정이 필요하다(scripts/compare_models.py)
+        Files.writeString(report.resolveSibling(reportName + ".tsv"), evaluation.toRowsTsv());
         log.info("골든셋 리포트: {}", report.toAbsolutePath());
         // 리포트를 먼저 써 두고 판정한다. 실패한 회차도 무엇이 비었는지 리포트로 남는다
         assertThat(evaluation.missingByRun())
@@ -83,12 +89,16 @@ class NicknameAuditGoldenTest {
         return value == null || value.isBlank() ? defaultValue : Integer.parseInt(value.trim());
     }
 
-    private static GeminiNicknameAuditor 검열기(NicknameAuditProperties properties) {
+    private static GeminiNicknameAuditor 검열기(NicknameAuditProperties properties, int httpAttempts) {
+        final HttpOptions.Builder httpOptions = HttpOptions.builder()
+                .timeout(Math.toIntExact(properties.requestTimeout().toMillis()));
+        if (httpAttempts > 0) {
+            httpOptions.retryOptions(
+                    HttpRetryOptions.builder().attempts(httpAttempts).build());
+        }
         final Client client = Client.builder()
                 .apiKey(properties.geminiApiKey())
-                .httpOptions(HttpOptions.builder()
-                        .timeout(Math.toIntExact(properties.requestTimeout().toMillis()))
-                        .build())
+                .httpOptions(httpOptions.build())
                 .build();
         final ObjectMapper objectMapper = new ObjectMapper();
         // 목 저장소는 빈 목록을 돌려준다. 피드백 예시가 붙지 않아 기본 프롬프트만 잰다

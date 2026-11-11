@@ -5,6 +5,7 @@ import static coffeeshout.profanity.fixture.NicknameGoldenSetFixture.욕설;
 import static coffeeshout.profanity.fixture.NicknameGoldenSetFixture.우회;
 import static coffeeshout.profanity.fixture.NicknameGoldenSetFixture.정상;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import coffeeshout.profanity.domain.TextNormalizer;
@@ -16,6 +17,7 @@ import coffeeshout.profanity.eval.GoldenItem.Expected;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.RunRow;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
 import coffeeshout.profanity.fixture.NicknameGoldenSetFixture;
@@ -259,6 +261,33 @@ class NicknameAuditEvaluatorTest {
                 evaluator.evaluate(List.of(정상("첫째닉", "일반닉네임"), 정상("둘째닉", "일반닉네임")), 검열기, 1, 1);
 
         assertThat(결과.confusion().get(Expected.CLEAN)).containsEntry(Predicted.CLEAN, 2);
+    }
+
+    @Test
+    void 회차마다_닉네임별_판정을_행으로_남긴다() {
+        // 둘째닉은 응답에서 빠진다
+        final NicknameAuditor 검열기 = 고정_검열기(Map.of(
+                "첫째닉",
+                new NicknameAuditResult(
+                        "첫째닉", NicknameAuditStatus.FLAGGED, AiConfidence.of(0.9), "욕설\t포함\n확실", List.of())));
+
+        final NicknameAuditEvaluation 결과 =
+                evaluator.evaluate(List.of(욕설("첫째닉", "직접욕설", "첫째"), 정상("둘째닉", "일반닉네임")), 검열기, 1, 2);
+
+        assertSoftly(softly -> {
+            softly.assertThat(결과.rows())
+                    .extracting(RunRow::nickname, RunRow::run, RunRow::batch, RunRow::predicted)
+                    .containsExactly(
+                            tuple("첫째닉", 1, 1, Predicted.FLAGGED),
+                            tuple("둘째닉", 1, 2, Predicted.MISSING),
+                            tuple("첫째닉", 2, 1, Predicted.FLAGGED),
+                            tuple("둘째닉", 2, 2, Predicted.MISSING));
+            // 사유의 탭과 줄바꿈이 열과 행을 깨지 않는다
+            softly.assertThat(결과.toRowsTsv().lines())
+                    .hasSize(5)
+                    .allSatisfy(line -> assertThat(line.split("\t", -1)).hasSize(8))
+                    .anySatisfy(line -> assertThat(line).endsWith("\t욕설 포함 확실"));
+        });
     }
 
     @Test

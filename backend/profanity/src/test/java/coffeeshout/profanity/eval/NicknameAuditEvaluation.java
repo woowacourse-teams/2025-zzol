@@ -20,6 +20,7 @@ import java.util.stream.Stream;
  * @param termAccuracy 욕설을 FLAGGED로 잡은 건 중 채택된 조각이 정답 조각과 정규화 기준으로 같은 비율
  * @param instability  회차마다 판정이 달라진 닉네임 비율. 두 회차 이상 판정을 받은 닉네임만 센다
  * @param mismatches   이상적인 판정과 다른 닉네임. 욕설은 FLAGGED, 경계는 PENDING, 정상은 CLEAN이 이상적이다
+ * @param rows        모든 회차의 닉네임별 판정. 모델끼리 짝지어 비교할 때 쓴다
  */
 public record NicknameAuditEvaluation(
         int itemCount,
@@ -35,7 +36,8 @@ public record NicknameAuditEvaluation(
         Rate ambiguousCapture,
         Rate termAccuracy,
         Rate instability,
-        List<Mismatch> mismatches) {
+        List<Mismatch> mismatches,
+        List<RunRow> rows) {
 
     public enum Predicted {
         CLEAN,
@@ -64,6 +66,39 @@ public record NicknameAuditEvaluation(
     public record Scores(Rate positivePrecision, Rate positiveRecall, Rate blockPrecision, Rate blockRecall) {}
 
     public record Mismatch(String nickname, String category, Expected expected, Predicted predicted, String reason) {}
+
+    /**
+     * 한 회차에서 닉네임 하나가 받은 판정.
+     *
+     * @param batch        회차 안에서 몇 번째 배치였는지. 1부터 센다
+     * @param batchLatency 이 닉네임이 실린 배치 호출에 걸린 시간
+     */
+    public record RunRow(
+            String nickname,
+            Expected expected,
+            String category,
+            int run,
+            int batch,
+            Predicted predicted,
+            String reason,
+            Duration batchLatency) {}
+
+    /** 행 단위 판정을 탭으로 나눠 적는다. 모델이 쓴 사유의 탭과 줄바꿈은 공백으로 바꾼다. */
+    public String toRowsTsv() {
+        return rows.stream()
+                .map(row -> String.join(
+                        "\t",
+                        row.nickname(),
+                        row.expected().name(),
+                        row.category(),
+                        String.valueOf(row.run()),
+                        String.valueOf(row.batch()),
+                        row.predicted().name(),
+                        String.valueOf(row.batchLatency().toMillis()),
+                        row.reason().replaceAll("\\s+", " ")))
+                .collect(Collectors.joining(
+                        "\n", "nickname\texpected\tcategory\trun\tbatch\tpredicted\tbatch_latency_ms\treason\n", "\n"));
+    }
 
     /**
      * @param subject 무엇을 평가했는지. 모델명과 프롬프트 조건처럼 결과만으로는 알 수 없는 것을 적는다.

@@ -35,7 +35,8 @@ import org.junit.jupiter.api.Test;
  * 실제 Gemini로 골든셋을 돌려 리포트를 쓴다. 기본 test 태스크에서 빠지고 {@code :profanity:goldenTest}로만 돈다.
  *
  * <p>환경변수로 조건을 바꾼다. {@code NICKNAME_AUDIT_MODEL}, {@code NICKNAME_AUDIT_BATCH_SIZE}(기본 100),
- * {@code NICKNAME_AUDIT_REPEATS}(기본 3), {@code NICKNAME_AUDIT_TIMEOUT_SECONDS}(기본 120).
+ * {@code NICKNAME_AUDIT_REPEATS}(기본 3), {@code NICKNAME_AUDIT_TIMEOUT_SECONDS}(기본 120),
+ * {@code NICKNAME_GOLDEN_SET}(기본 {@code golden}, 어려운 표본만 돌리려면 {@code hard}).
  *
  * <p>재시도는 SDK 기본 재시도(408·429·5xx, 5회)만 쓴다. 운영 {@code geminiAudit} 재시도는
  * {@code InfrastructureException}을 무시하는데 검열기가 모든 호출 오류를 그 예외로 감싸므로 운영에서도 돌지 않는다.
@@ -56,21 +57,23 @@ class NicknameAuditGoldenTest {
         final int batchSize = 정수_환경변수("NICKNAME_AUDIT_BATCH_SIZE", 100);
         final int repeats = 정수_환경변수("NICKNAME_AUDIT_REPEATS", 3);
         final Duration timeout = Duration.ofSeconds(정수_환경변수("NICKNAME_AUDIT_TIMEOUT_SECONDS", 120));
+        final String goldenSet = NicknameGoldenSetFixture.세트_이름();
         final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.모델(apiKey, model, timeout);
 
         final NicknameAuditEvaluation evaluation = new NicknameAuditEvaluator(
                         new TextNormalizer(), properties.minTermLength())
-                .evaluate(NicknameGoldenSetFixture.골든셋(), 간격을_두고_한도_초과면_멈추는(검열기(properties)), batchSize, repeats);
+                .evaluate(NicknameGoldenSetFixture.골든셋(goldenSet), 간격을_두고_한도_초과면_멈추는(검열기(properties)), batchSize, repeats);
 
         final Path report = Path.of(
                 "build/reports/golden",
-                "%s-%s-b%d.md"
+                "%s-%s-%s-b%d.md"
                         .formatted(
                                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")),
+                                goldenSet,
                                 model,
                                 batchSize));
         Files.createDirectories(report.getParent());
-        Files.writeString(report, evaluation.toMarkdown(model + ", 피드백 예시 없는 기본 프롬프트"));
+        Files.writeString(report, evaluation.toMarkdown(model + ", " + goldenSet + " 세트, 피드백 예시 없는 기본 프롬프트"));
         log.info("골든셋 리포트: {}", report.toAbsolutePath());
         // 리포트를 먼저 써 두고 판정한다. 실패한 회차도 무엇이 비었는지 리포트로 남는다
         assertThat(evaluation.missingByRun())

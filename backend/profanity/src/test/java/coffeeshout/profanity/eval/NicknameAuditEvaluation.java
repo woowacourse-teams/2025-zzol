@@ -12,7 +12,8 @@ import java.util.stream.Stream;
  * 비율 지표는 판정을 받은 닉네임만 분모에 넣는다. 판정을 못 받은 건수는 {@code missingByRun}과 혼동행렬에서 본다.
  *
  * @param missingByRun 회차마다 판정을 못 받은(MISSING) 닉네임 수
- * @param batchLatencies 모든 회차의 배치 호출마다 걸린 시간. 호출 간격 대기와 SDK 재시도가 포함된다
+ * @param shuffleSeed 회차마다 닉네임 순서를 섞은 시드. 회차 n은 {@code shuffleSeed + n}을 쓴다. null이면 섞지 않았다
+ * @param calls       모든 회차의 배치 호출 기록. 걸린 시간에는 호출 간격 대기와 SDK 재시도가 포함된다
  * @param confusion   정답 4종 × 판정 4종 건수
  * @param cleanFalsePositive 정상 닉네임을 걸러낸(FLAGGED 또는 PENDING) 비율
  * @param positiveMiss 욕설(PROFANE·EVASION)을 CLEAN으로 넘긴 비율
@@ -27,7 +28,8 @@ public record NicknameAuditEvaluation(
         int repeats,
         int batchSize,
         List<Integer> missingByRun,
-        List<Duration> batchLatencies,
+        Long shuffleSeed,
+        List<CallRecord> calls,
         Scores overall,
         Map<String, Scores> byCategory,
         Map<Expected, Map<Predicted, Integer>> confusion,
@@ -71,6 +73,9 @@ public record NicknameAuditEvaluation(
      * 한 회차에서 닉네임 하나가 받은 판정.
      *
      * @param batch        회차 안에서 몇 번째 배치였는지. 1부터 센다
+     * @param position     회차 안에서 몇 번째로 보냈는지. 1부터 센다
+     * @param flagged      모델이 낸 flagged 원값. 판정을 못 받았으면 빈 문자열이다
+     * @param confidence   모델이 낸 confidence를 소수 둘째 자리로 반올림한 값. 판정을 못 받았으면 빈 문자열이다
      * @param batchLatency 이 닉네임이 실린 배치 호출에 걸린 시간
      */
     public record RunRow(
@@ -79,9 +84,53 @@ public record NicknameAuditEvaluation(
             String category,
             int run,
             int batch,
+            int position,
             Predicted predicted,
+            String flagged,
+            String confidence,
             String reason,
             Duration batchLatency) {}
+
+    /** 호출 한 번의 토큰 사용량. 응답에 값이 없으면 0이다. */
+    public record TokenUsage(int prompt, int candidates, int cached, int thoughts, int total) {
+
+        public static final TokenUsage NONE = new TokenUsage(0, 0, 0, 0, 0);
+    }
+
+    /**
+     * 배치 호출 한 번.
+     *
+     * @param failure 실패 원인. 성공했으면 빈 문자열이다
+     */
+    public record CallRecord(int run, int batch, int size, Duration latency, TokenUsage usage, String failure) {
+
+        public boolean succeeded() {
+            return failure.isEmpty();
+        }
+    }
+
+    /** 호출 단위 기록을 탭으로 나눠 적는다. */
+    public String toCallsTsv() {
+        return calls.stream()
+                .map(call -> String.join(
+                        "\t",
+                        String.valueOf(call.run()),
+                        String.valueOf(call.batch()),
+                        String.valueOf(call.size()),
+                        String.valueOf(call.succeeded()),
+                        String.valueOf(call.latency().toMillis()),
+                        String.valueOf(call.usage().prompt()),
+                        String.valueOf(call.usage().candidates()),
+                        String.valueOf(call.usage().cached()),
+                        String.valueOf(call.usage().thoughts()),
+                        String.valueOf(call.usage().total()),
+                        call.failure()))
+                .collect(Collectors.joining(
+                        "\n",
+                        "run\tbatch\tsize\tsucceeded\tlatency_ms\tprompt_tokens\tcandidates_tokens"
+                                + "\tcached_tokens\tthoughts_tokens\ttotal_tokens\tfailure\n",
+                        "\n"));
+    }
 
     /** 행 단위 판정을 탭으로 나눠 적는다. 모델이 쓴 사유의 탭과 줄바꿈은 공백으로 바꾼다. */
     public String toRowsTsv() {
@@ -93,11 +142,17 @@ public record NicknameAuditEvaluation(
                         row.category(),
                         String.valueOf(row.run()),
                         String.valueOf(row.batch()),
+                        String.valueOf(row.position()),
                         row.predicted().name(),
+                        row.flagged(),
+                        row.confidence(),
                         String.valueOf(row.batchLatency().toMillis()),
                         row.reason().replaceAll("\\s+", " ")))
                 .collect(Collectors.joining(
-                        "\n", "nickname\texpected\tcategory\trun\tbatch\tpredicted\tbatch_latency_ms\treason\n", "\n"));
+                        "\n",
+                        "nickname\texpected\tcategory\trun\tbatch\tposition\tpredicted\tflagged\tconfidence"
+                                + "\tbatch_latency_ms\treason\n",
+                        "\n"));
     }
 
     /**
@@ -110,6 +165,7 @@ public record NicknameAuditEvaluation(
                 "",
                 "- 대상: " + subject,
                 "- 항목 %d건, 배치 %d건, %d회 반복. 흔들림을 뺀 지표는 첫 회차 기준이다".formatted(itemCount, batchSize, repeats),
+                "- 닉네임 순서: " + (shuffleSeed == null ? "골든셋 순서 그대로" : "회차마다 섞음(시드 %d + 회차)".formatted(shuffleSeed)),
                 "- 비율 지표는 판정을 받은 닉네임만 센다. 판정을 못 받은 건수는 회차별 MISSING에 있다",
                 "",
                 summarySection(),
@@ -127,7 +183,14 @@ public record NicknameAuditEvaluation(
                 "| --- | --- |",
                 "| 회차별 MISSING | " + missingByRun.stream().map(String::valueOf).collect(Collectors.joining(" / "))
                         + " |",
-                "| 배치 응답 시간 (평균 / 최대) | " + latencySummary() + " |",
+                "| 성공한 호출 응답 시간 (평균 / 최대) | " + latencySummary() + " |",
+                "| 실패한 호출 | "
+                        + new Rate(
+                                Math.toIntExact(calls.stream()
+                                        .filter(call -> !call.succeeded())
+                                        .count()),
+                                calls.size())
+                        + " |",
                 "| 걸러냄 정밀도 (FLAGGED+PENDING) | " + overall.positivePrecision() + " |",
                 "| 걸러냄 재현율 (FLAGGED+PENDING) | " + overall.positiveRecall() + " |",
                 "| 자동 차단 정밀도 (FLAGGED) | " + overall.blockPrecision() + " |",
@@ -141,12 +204,17 @@ public record NicknameAuditEvaluation(
     }
 
     private String latencySummary() {
-        if (batchLatencies.isEmpty()) {
+        // 실패한 호출은 타임아웃까지 기다렸거나 곧바로 끊겨서 모델 응답 시간이 아니다
+        final List<Duration> succeeded = calls.stream()
+                .filter(CallRecord::succeeded)
+                .map(CallRecord::latency)
+                .toList();
+        if (succeeded.isEmpty()) {
             return "n/a";
         }
-        final Duration total = batchLatencies.stream().reduce(Duration.ZERO, Duration::plus);
-        final Duration max = batchLatencies.stream().max(Duration::compareTo).orElseThrow();
-        return "%.1fs / %.1fs".formatted(total.toMillis() / 1000.0 / batchLatencies.size(), max.toMillis() / 1000.0);
+        final Duration total = succeeded.stream().reduce(Duration.ZERO, Duration::plus);
+        final Duration max = succeeded.stream().max(Duration::compareTo).orElseThrow();
+        return "%.1fs / %.1fs".formatted(total.toMillis() / 1000.0 / succeeded.size(), max.toMillis() / 1000.0);
     }
 
     private String confusionSection() {

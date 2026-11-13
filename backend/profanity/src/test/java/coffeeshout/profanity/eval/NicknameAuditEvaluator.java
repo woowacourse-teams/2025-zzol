@@ -6,21 +6,26 @@ import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import coffeeshout.profanity.eval.GoldenItem.Expected;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.CallRecord;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.RunRow;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.TokenUsage;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +41,29 @@ public class NicknameAuditEvaluator {
     private final TextNormalizer textNormalizer;
     private final int minTermLength;
 
+    /** 닉네임을 골든셋 순서 그대로 보내고 토큰 사용량은 재지 않는다. */
     public NicknameAuditEvaluation evaluate(
             List<GoldenItem> items, NicknameAuditor auditor, int batchSize, int repeats) {
-        final List<Duration> batchLatencies = new ArrayList<>();
+        return evaluate(items, auditor, batchSize, repeats, null, () -> TokenUsage.NONE);
+    }
+
+    /**
+     * @param shuffleSeed     null이 아니면 회차마다 {@code shuffleSeed + 회차}를 시드로 닉네임 순서를 섞는다.
+     *                        배치 안 위치가 판정에 주는 영향을 회차끼리 다르게 한다
+     * @param usageOfLastCall 방금 성공한 호출의 토큰 사용량. 배치 호출이 성공할 때마다 한 번 부른다
+     */
+    public NicknameAuditEvaluation evaluate(
+            List<GoldenItem> items,
+            NicknameAuditor auditor,
+            int batchSize,
+            int repeats,
+            Long shuffleSeed,
+            Supplier<TokenUsage> usageOfLastCall) {
+        final List<CallRecord> calls = new ArrayList<>();
         final List<RunRow> rows = new ArrayList<>();
-        final List<Map<String, NicknameAuditResult>> runs = IntStream.range(0, repeats)
-                .mapToObj(i -> runOnce(items, auditor, batchSize, batchLatencies, i + 1, rows))
+        final List<Map<String, NicknameAuditResult>> runs = IntStream.rangeClosed(1, repeats)
+                .mapToObj(run -> runOnce(
+                        ordered(items, shuffleSeed, run), auditor, batchSize, usageOfLastCall, calls, run, rows))
                 .toList();
         final List<Judged> judged = items.stream()
                 .map(item -> new Judged(item, runs.getFirst().get(item.nickname())))
@@ -56,7 +78,8 @@ public class NicknameAuditEvaluator {
                 repeats,
                 batchSize,
                 runs.stream().map(run -> missingCount(items, run)).toList(),
-                batchLatencies,
+                shuffleSeed,
+                calls,
                 scores(answered),
                 answered.stream()
                         .collect(Collectors.groupingBy(
@@ -81,7 +104,8 @@ public class NicknameAuditEvaluator {
             List<GoldenItem> items,
             NicknameAuditor auditor,
             int batchSize,
-            List<Duration> batchLatencies,
+            Supplier<TokenUsage> usageOfLastCall,
+            List<CallRecord> calls,
             int run,
             List<RunRow> rows) {
         final Map<String, NicknameAuditResult> byNickname = new HashMap<>();
@@ -93,38 +117,71 @@ public class NicknameAuditEvaluator {
             // HashSet이라 모델이 nickname을 null로 돌려줘도 contains가 터지지 않는다
             final Set<String> requested = new HashSet<>(batch);
             final long startedAt = System.nanoTime();
-            final List<NicknameAuditResult> results = auditBatch(auditor, batch);
+            List<NicknameAuditResult> results = List.of();
+            String failure = "";
+            try {
+                results = auditor.audit(batch);
+            } catch (RuntimeException e) {
+                // 한 배치 실패로 평가 전체를 버리지 않는다. 결과를 못 받은 닉네임은 MISSING으로 센다.
+                log.warn("[GoldenEval] 배치 검열 실패. {}건을 MISSING으로 센다", batch.size(), e);
+                failure = failureLabel(e);
+            }
             final Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
-            batchLatencies.add(latency);
+            final int batchNumber = from / batchSize + 1;
+            calls.add(new CallRecord(
+                    run,
+                    batchNumber,
+                    batch.size(),
+                    latency,
+                    failure.isEmpty() ? usageOfLastCall.get() : TokenUsage.NONE,
+                    failure));
             results.stream()
                     .filter(result -> requested.contains(result.nickname()))
                     .forEach(result -> byNickname.putIfAbsent(result.nickname(), result));
-            final int batchNumber = from / batchSize + 1;
-            batchItems.forEach(item -> rows.add(row(item, run, batchNumber, byNickname.get(item.nickname()), latency)));
+            for (int i = 0; i < batchItems.size(); i++) {
+                final GoldenItem item = batchItems.get(i);
+                rows.add(row(item, run, batchNumber, from + i + 1, byNickname.get(item.nickname()), latency));
+            }
         }
         return byNickname;
     }
 
-    private static RunRow row(GoldenItem item, int run, int batch, NicknameAuditResult result, Duration latency) {
+    private static List<GoldenItem> ordered(List<GoldenItem> items, Long shuffleSeed, int run) {
+        if (shuffleSeed == null) {
+            return items;
+        }
+        final List<GoldenItem> shuffled = new ArrayList<>(items);
+        Collections.shuffle(shuffled, new Random(shuffleSeed + run));
+        return shuffled;
+    }
+
+    private static RunRow row(
+            GoldenItem item, int run, int batch, int position, NicknameAuditResult result, Duration latency) {
+        final Predicted predicted = predict(result);
+        final boolean answered = predicted != Predicted.MISSING;
         return new RunRow(
                 item.nickname(),
                 item.expected(),
                 item.category(),
                 run,
                 batch,
-                predict(result),
+                position,
+                predicted,
+                // CLEAN은 flagged=false일 때만, FLAGGED와 PENDING은 flagged=true일 때만 나온다(NicknameAuditResult.of)
+                answered ? String.valueOf(predicted != Predicted.CLEAN) : "",
+                answered ? result.confidence().value().toPlainString() : "",
                 result == null ? "" : String.valueOf(result.reason()),
                 latency);
     }
 
-    private List<NicknameAuditResult> auditBatch(NicknameAuditor auditor, List<String> batch) {
-        try {
-            return auditor.audit(batch);
-        } catch (RuntimeException e) {
-            // 한 배치 실패로 평가 전체를 버리지 않는다. 결과를 못 받은 닉네임은 MISSING으로 센다.
-            log.warn("[GoldenEval] 배치 검열 실패. {}건을 MISSING으로 센다", batch.size(), e);
-            return List.of();
+    /** 실패 원인을 예외 사슬의 맨 안쪽 타입과 메시지 앞머리로 줄여 적는다. */
+    private static String failureLabel(Throwable e) {
+        Throwable root = e;
+        while (root.getCause() != null) {
+            root = root.getCause();
         }
+        final String message = String.valueOf(root.getMessage()).replaceAll("\\s+", " ");
+        return root.getClass().getSimpleName() + ": " + message.substring(0, Math.min(message.length(), 60));
     }
 
     private Scores scores(List<Judged> judged) {

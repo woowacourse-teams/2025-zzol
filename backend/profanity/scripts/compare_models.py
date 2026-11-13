@@ -3,13 +3,17 @@
 
 사용:
     python3 compare_models.py <기준 모델 이름> <기준.tsv> <비교 모델 이름> <비교.tsv>
+    python3 compare_models.py --single <모델 이름> <판정.tsv>
     python3 compare_models.py --self-check
+
+--single 은 모델 하나의 지표, 표본별 판정 수, 배치 안 위치별 정답률, 틀리거나 뒤집힌 표본을 낸다.
 
 TSV 는 NicknameAuditGoldenTest 가 build/reports/golden/ 에 쓴다.
 표준 라이브러리만 쓴다. 결과는 마크다운으로 표준 출력에 나온다.
 """
 
 import csv
+import os
 import sys
 from collections import Counter, defaultdict
 from itertools import combinations, product
@@ -17,21 +21,44 @@ from math import comb, sqrt
 
 VERDICTS = ["CLEAN", "FLAGGED", "PENDING"]
 CAUGHT = {"FLAGGED", "PENDING"}
+TOKENS = ["prompt", "candidates", "cached", "thoughts"]
+# 운영 설정 flagged-threshold. flagged=true 인데 confidence 가 이보다 낮으면 PENDING 이 된다
+THRESHOLD = 0.85
 # 비열등 한계. 정답률 차이가 이보다 작으면 운영에서 구분하지 않기로 미리 정한 값이다
 MARGIN = 0.02
 
 
 def load(path):
-    """닉네임 -> {expected, category, runs: {회차: 판정}} 과 배치 응답 시간(ms) 목록을 돌려준다."""
-    items, latencies = {}, {}
+    """닉네임 -> {expected, category, runs: {회차: 판정}, obs: [(flagged, confidence)]} 과 호출 기록을 돌려준다.
+
+    호출 기록은 옆에 있는 <이름>.calls.tsv 에서 읽는다. 없으면(순서를 섞기 전 측정) 행에서 되살린다.
+    그때는 배치 전체가 MISSING 이면 실패한 호출로 본다.
+    """
+    items, batches = {}, {}
     with open(path, encoding="utf-8", newline="") as f:
         for row in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE):
             item = items.setdefault(
-                row["nickname"], {"expected": row["expected"], "category": row["category"], "runs": {}}
+                row["nickname"],
+                {"expected": row["expected"], "category": row["category"], "runs": {}, "obs": [], "detail": {}},
             )
             item["runs"][int(row["run"])] = row["predicted"]
-            latencies[(row["run"], row["batch"])] = int(row["batch_latency_ms"])
-    return items, list(latencies.values())
+            seen = batches.get((row["run"], row["batch"]), {}).get("n", 0)
+            # 배치 안에서 몇 번째였는지. 행은 보낸 순서대로 적혀 있다
+            item["detail"][int(row["run"])] = (int(row["batch"]), seen + 1, row.get("confidence", ""))
+            if row.get("confidence"):
+                item["obs"].append((row["flagged"] == "true", float(row["confidence"]), row["predicted"]))
+            batch = batches.setdefault((row["run"], row["batch"]), {"ok": False, "ms": int(row["batch_latency_ms"])})
+            batch["ok"] |= row["predicted"] != "MISSING"
+            batch["n"] = seen + 1
+    calls_path = path[: -len(".tsv")] + ".calls.tsv"
+    if not os.path.exists(calls_path):
+        return items, list(batches.values())
+    with open(calls_path, encoding="utf-8", newline="") as f:
+        return items, [
+            {"ok": row["succeeded"] == "true", "ms": int(row["latency_ms"]), "failure": row["failure"],
+             **{key: int(row[key + "_tokens"]) for key in TOKENS}}
+            for row in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
+        ]
 
 
 def majority(runs):
@@ -90,7 +117,7 @@ def pair_disagreement(runs_a, runs_b, same_model):
     return sum(rates) / len(rates) if rates else float("nan")
 
 
-def model_summary(items, latencies):
+def model_summary(items, calls):
     major = {n: majority(i["runs"]) for n, i in items.items()}
     by_expected = defaultdict(list)
     for n, i in items.items():
@@ -119,10 +146,56 @@ def model_summary(items, latencies):
         "회차별 MISSING": " / ".join(
             str(sum(i["runs"].get(r, "MISSING") == "MISSING" for i in items.values())) for r in run_ids
         ),
-        "배치 응답 시간 평균 / 최대": f"{sum(latencies) / len(latencies) / 1000:.1f}s / {max(latencies) / 1000:.1f}s"
-        f" ({len(latencies)}회 호출)",
+        "성공한 호출 응답 시간 평균 / 최대": latency(calls),
+        "실패한 호출": rate(sum(not c["ok"] for c in calls), len(calls)),
+        "호출당 토큰 평균 (입력 / 출력 / 캐시 / 생각)": tokens(calls),
         "반복 간 판정 뒤집힘": rate(flipped, len(comparable)),
     }
+
+
+def latency(calls):
+    # 실패한 호출은 타임아웃까지 기다렸거나 곧바로 끊겨서 모델 응답 시간이 아니다
+    ok = [c["ms"] for c in calls if c["ok"]]
+    return f"{sum(ok) / len(ok) / 1000:.1f}s / {max(ok) / 1000:.1f}s ({len(ok)}회)" if ok else "n/a"
+
+
+def tokens(calls):
+    ok = [c for c in calls if c["ok"] and "prompt" in c]
+    return " / ".join(f"{sum(c[key] for c in ok) / len(ok):.0f}" for key in TOKENS) if ok else "기록 없음"
+
+
+def confidence_sections(name, items):
+    """모델 하나의 confidence 분포. 다수결이 아니라 판정을 받은 모든 회차의 행을 센다."""
+    obs = [(i["expected"], flagged, conf, correct(i["expected"], verdict))
+           for i in items.values() for flagged, conf, verdict in i["obs"]]
+    if not obs:
+        return [f"### {name}", "", "confidence 열이 없는 측정이다."]
+
+    def low(pool):
+        return rate(sum(conf < THRESHOLD for conf in pool), len(pool))
+
+    def mean(pool):
+        return f"{sum(pool) / len(pool):.3f}" if pool else "n/a"
+
+    out = [f"### {name}", "", "| confidence 구간 | flagged=true | flagged=false |", "| --- | --- | --- |"]
+    # 0.05 폭 구간. 1.00 은 마지막 구간에 넣는다
+    bins = Counter((min(int(round(conf * 100)) // 5, 19), flagged) for _, flagged, conf, _ in obs)
+    for b in range(20):
+        if bins[(b, True)] or bins[(b, False)]:
+            upper = "1.00" if b == 19 else f"{(b + 1) * 0.05:.2f} 미만"
+            out.append(f"| {b * 0.05:.2f} 이상 {upper} | {bins[(b, True)]} | {bins[(b, False)]} |")
+    out += ["", f"| 묶음 | 행 수 | flagged=true | confidence 평균 | {THRESHOLD} 미만 |"
+            f" flagged=true 중 {THRESHOLD} 미만 |", "| --- | --- | --- | --- | --- | --- |"]
+    groups = [("전체", lambda e, c: True)]
+    groups += [(e, lambda x, c, e=e: x == e) for e in ("PROFANE", "EVASION", "AMBIGUOUS", "CLEAN")]
+    groups += [("정답 맞음", lambda e, c: c), ("정답 틀림", lambda e, c: not c)]
+    for label, keep in groups:
+        pool = [(flagged, conf) for e, flagged, conf, c in obs if keep(e, c)]
+        confs = [conf for _, conf in pool]
+        flagged_confs = [conf for flagged, conf in pool if flagged]
+        out.append(f"| {label} | {len(pool)} | {len(flagged_confs)} | {mean(confs)} | {low(confs)} |"
+                   f" {low(flagged_confs)} |")
+    return out
 
 
 def category_rows(name_a, items_a, name_b, items_b):
@@ -141,6 +214,57 @@ def category_rows(name_a, items_a, name_b, items_b):
         pending = [f"{vs.count('PENDING')}/{len(vs)}" for vs in (va, vb)]
         out.append(f"| {category} | {expected} | {caught[0]} | {caught[1]} | {pending[0]} | {pending[1]} |")
     return out
+
+
+def single(name, items, calls):
+    out = [f"## {name} 지표 (다수결 기준)", "", "| 지표 | 값 |", "| --- | --- |"]
+    out += [f"| {key} | {value} |" for key, value in model_summary(items, calls).items()]
+
+    votes = Counter(sum(v != "MISSING" for v in i["runs"].values()) for i in items.values())
+    out += ["", "## 표본별 판정 수", "", "| 판정을 받은 회차 수 | 표본 수 |", "| --- | --- |"]
+    out += [f"| {n} | {votes[n]} |" for n in sorted(votes, reverse=True)]
+
+    groups = defaultdict(list)
+    for i in items.values():
+        verdict = majority(i["runs"])
+        if verdict is not None:
+            groups[(i["category"], i["expected"])].append(verdict)
+    out += ["", "## 카테고리별", "", "걸러냄은 FLAGGED 와 PENDING 을 합친 비율이다. 욕설·우회 행에서는 재현율이고 정상 행에서는 오탐률이다.", "",
+            "| 카테고리 | expected | 걸러냄 | CLEAN / FLAGGED / PENDING |", "| --- | --- | --- | --- |"]
+    for (category, expected), vs in groups.items():
+        out.append(f"| {category} | {expected} | {rate(sum(v in CAUGHT for v in vs), len(vs))} |"
+                   f" {' / '.join(str(vs.count(v)) for v in VERDICTS)} |")
+
+    # 배치 안 위치가 판정에 영향을 주는지 본다. 경계는 정답이 PENDING 이라 거의 다 틀리므로 뺀다
+    by_position = defaultdict(lambda: [0, 0])
+    for i in items.values():
+        for run, verdict in i["runs"].items():
+            if verdict != "MISSING" and i["expected"] != "AMBIGUOUS":
+                bucket = by_position[(i["detail"][run][1] - 1) // 50]
+                bucket[0] += not correct(i["expected"], verdict)
+                bucket[1] += 1
+    out += ["", "## 배치 안 위치별 오답률", "", "경계(AMBIGUOUS)를 뺀 모든 회차의 행을 센다.", "",
+            "| 배치 안 위치 | 오답 |", "| --- | --- |"]
+    out += [f"| {b * 50 + 1}~{b * 50 + 50} | {rate(*by_position[b])} |" for b in sorted(by_position)]
+
+    out += ["", "## confidence 분포", "", "판정을 받은 모든 회차의 행을 센다. confidence 는 소수 둘째 자리로 반올림한 값이다.", ""]
+    out += confidence_sections(name, items)
+
+    out += ["", "## 부록: 다수결이 틀렸거나 회차마다 판정이 갈린 표본", "",
+            "회차별 칸은 판정, 배치 번호와 배치 안 위치, confidence 순이다. 경계 표본은 PENDING 이 아니면 틀린 것으로 센다.", "",
+            "| 닉네임 | expected | 카테고리 | 다수결 | " + " | ".join(f"{r}회차" for r in sorted(next(iter(items.values()))["runs"])) + " |",
+            "| --- | --- | --- | --- |" + " --- |" * len(next(iter(items.values()))["runs"])]
+    for n, i in items.items():
+        verdict = majority(i["runs"])
+        answered = {v for v in i["runs"].values() if v != "MISSING"}
+        if verdict is None or (correct(i["expected"], verdict) and len(answered) == 1):
+            continue
+        cells = []
+        for run in sorted(i["runs"]):
+            batch, position, conf = i["detail"][run]
+            cells.append("MISSING" if i["runs"][run] == "MISSING" else f"{i['runs'][run]} ({batch}-{position}, {conf or '기록 없음'})")
+        out.append(f"| {n.replace('|', '¦')} | {i['expected']} | {i['category']} | {verdict} | " + " | ".join(cells) + " |")
+    return "\n".join(out) + "\n"
 
 
 def paired(items_a, items_b, include):
@@ -165,9 +289,9 @@ def paired(items_a, items_b, include):
             "p": mcnemar_exact(b, c), "diff": diff, "lower": lower, "upper": 3 / n if b + c == 0 else diff + half}
 
 
-def report(name_a, items_a, lat_a, name_b, items_b, lat_b):
+def report(name_a, items_a, calls_a, name_b, items_b, calls_b):
     out = []
-    sum_a, sum_b = model_summary(items_a, lat_a), model_summary(items_b, lat_b)
+    sum_a, sum_b = model_summary(items_a, calls_a), model_summary(items_b, calls_b)
     out += ["## 모델별 지표 (3회 다수결 기준)", "", f"| 지표 | {name_a} | {name_b} |", "| --- | --- | --- |"]
     out += [f"| {key} | {sum_a[key]} | {sum_b[key]} |" for key in sum_a]
 
@@ -209,6 +333,10 @@ def report(name_a, items_a, lat_a, name_b, items_b, lat_b):
 
     out += ["", "## 카테고리별", ""] + category_rows(name_a, items_a, name_b, items_b)
 
+    out += ["", "## confidence 분포", "",
+            "판정을 받은 모든 회차의 행을 센다. confidence 는 소수 둘째 자리로 반올림한 값이다.", ""]
+    out += confidence_sections(name_a, items_a) + [""] + confidence_sections(name_b, items_b)
+
     out += ["", "## 부록: 다수결 판정이 엇갈린 표본", "",
             f"| 닉네임 | expected | 카테고리 | {name_a} (회차별) | {name_b} (회차별) |", "| --- | --- | --- | --- | --- |"]
     for n, a in items_a.items():
@@ -237,15 +365,27 @@ def self_check():
     assert rate(0, 300) == "0.0% (0/300), 상한 1.0%"
     same = {"가": {1: "CLEAN", 2: "CLEAN"}, "나": {1: "CLEAN", 2: "FLAGGED"}}
     assert pair_disagreement(same, same, True) == 0.5
+    calls = [{"ok": False, "ms": 120000}, {"ok": True, "ms": 10000}, {"ok": True, "ms": 20000}]
+    assert latency(calls) == "15.0s / 20.0s (2회)" and tokens(calls) == "기록 없음"
+    items = {"가": {"expected": "AMBIGUOUS", "category": "경계", "runs": {1: "FLAGGED", 2: "MISSING", 3: "PENDING"},
+                   "detail": {1: (1, 3, "0.90"), 2: (1, 9, ""), 3: (2, 51, "0.60")},
+                   "obs": [(True, 0.9, "FLAGGED"), (True, 0.6, "PENDING"), (False, 1.0, "CLEAN")]}}
+    text = single("모델", items, calls)
+    assert "| 2 | 1 |" in text and "| 가 | AMBIGUOUS | 경계 | FLAGGED | FLAGGED (1-3, 0.90) | MISSING | PENDING (2-51, 0.60) |" in text, text
+    lines = confidence_sections("모델", items)
+    assert "| 0.60 이상 0.65 미만 | 1 | 0 |" in lines and "| 0.95 이상 1.00 | 0 | 1 |" in lines, lines
+    assert "| 정답 맞음 | 1 | 1 | 0.600 | 100.0% (1/1) | 100.0% (1/1) |" in lines, lines
     print("self-check ok")
 
 
 if __name__ == "__main__":
     if sys.argv[1:] == ["--self-check"]:
         self_check()
+    elif len(sys.argv) == 4 and sys.argv[1] == "--single":
+        sys.stdout.write(single(sys.argv[2], *load(sys.argv[3])))
     elif len(sys.argv) == 5:
-        a, lat_a = load(sys.argv[2])
-        b, lat_b = load(sys.argv[4])
-        sys.stdout.write(report(sys.argv[1], a, lat_a, sys.argv[3], b, lat_b))
+        a, calls_a = load(sys.argv[2])
+        b, calls_b = load(sys.argv[4])
+        sys.stdout.write(report(sys.argv[1], a, calls_a, sys.argv[3], b, calls_b))
     else:
         sys.exit(__doc__)

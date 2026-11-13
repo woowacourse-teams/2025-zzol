@@ -4,8 +4,10 @@
 사용:
     python3 compare_models.py <기준 모델 이름> <기준.tsv> <비교 모델 이름> <비교.tsv>
     python3 compare_models.py --single <모델 이름> <판정.tsv>
+    python3 compare_models.py --fill <판정.tsv> <다시 잰 판정.tsv>
     python3 compare_models.py --self-check
 
+--fill 은 실패해서 비었던 배치를 NICKNAME_AUDIT_ONLY_CALLS 로 다시 잰 결과로 채운다. 판정.tsv 와 .calls.tsv 를 고쳐 쓴다.
 --single 은 모델 하나의 지표, 표본별 판정 수, 배치 안 위치별 정답률, 틀리거나 뒤집힌 표본을 낸다.
 
 TSV 는 NicknameAuditGoldenTest 가 build/reports/golden/ 에 쓴다.
@@ -59,6 +61,39 @@ def load(path):
              **{key: int(row[key + "_tokens"]) for key in TOKENS}}
             for row in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
         ]
+
+
+def fill(base_path, patch_path):
+    """base 의 실패한 배치 행을 patch 의 같은 회차·배치 행으로 바꾼다. 닉네임 구성이 같아야 한다."""
+    def read(path):
+        with open(path, encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
+            return reader.fieldnames, list(reader)
+
+    def write(path, fields, rows):
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fields, delimiter="\t", quoting=csv.QUOTE_NONE, quotechar=None,
+                                    lineterminator="\n")
+            writer.writeheader()
+            writer.writerows(rows)
+
+    calls = lambda path: path[: -len(".tsv")] + ".calls.tsv"  # noqa: E731
+    call_fields, base_calls = read(calls(base_path))
+    _, patch_calls = read(calls(patch_path))
+    filled = {(c["run"], c["batch"]): c for c in patch_calls if c["succeeded"] == "true"}
+    failed = {(c["run"], c["batch"]) for c in base_calls if c["succeeded"] != "true"}
+    targets = filled.keys() & failed
+    row_fields, base_rows = read(base_path)
+    patch_rows = {(r["run"], r["batch"], r["position"]): r for r in read(patch_path)[1]}
+    for i, row in enumerate(base_rows):
+        if (row["run"], row["batch"]) in targets:
+            new = patch_rows[(row["run"], row["batch"], row["position"])]
+            assert new["nickname"] == row["nickname"], "배치 구성이 다르다. 시드와 배치 크기를 확인한다"
+            base_rows[i] = new
+    write(base_path, row_fields, base_rows)
+    write(calls(base_path), call_fields, [filled.get((c["run"], c["batch"]), c) if (c["run"], c["batch"]) in targets
+                                           else c for c in base_calls])
+    print(f"채운 배치: {sorted(targets)}")
 
 
 def majority(runs):
@@ -381,6 +416,8 @@ def self_check():
 if __name__ == "__main__":
     if sys.argv[1:] == ["--self-check"]:
         self_check()
+    elif len(sys.argv) == 4 and sys.argv[1] == "--fill":
+        fill(sys.argv[2], sys.argv[3])
     elif len(sys.argv) == 4 and sys.argv[1] == "--single":
         sys.stdout.write(single(sys.argv[2], *load(sys.argv[3])))
     elif len(sys.argv) == 5:

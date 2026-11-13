@@ -11,6 +11,7 @@ import static org.mockito.Mockito.spy;
 import coffeeshout.profanity.application.port.NicknameFeedbackRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.TextNormalizer;
+import coffeeshout.profanity.domain.audit.NicknameAuditResult;
 import coffeeshout.profanity.domain.audit.NicknameAuditor;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation;
 import coffeeshout.profanity.eval.NicknameAuditEvaluation.TokenUsage;
@@ -34,9 +35,14 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -49,7 +55,9 @@ import org.springframework.test.util.ReflectionTestUtils;
  * {@code NICKNAME_AUDIT_REPEATS}(기본 3), {@code NICKNAME_AUDIT_TIMEOUT_SECONDS}(기본 120),
  * {@code NICKNAME_AUDIT_HTTP_ATTEMPTS}(기본은 SDK 기본 재시도. 1이면 재시도를 꺼서 배치 하나가 HTTP 요청 하나가 된다),
  * {@code NICKNAME_GOLDEN_SET}(기본 {@code golden}, 어려운 표본만 돌리려면 {@code hard}),
- * {@code NICKNAME_AUDIT_SHUFFLE_SEED}(기본 1907. 회차 n은 이 값에 n을 더한 시드로 닉네임 순서를 섞는다).
+ * {@code NICKNAME_AUDIT_SHUFFLE_SEED}(기본 1907. 회차 n은 이 값에 n을 더한 시드로 닉네임 순서를 섞는다),
+ * {@code NICKNAME_AUDIT_ONLY_CALLS}(기본은 전부. {@code 1,5}처럼 적으면 그 순번의 배치 호출만 보낸다. 실패한 배치만 다시 잴 때 쓴다),
+ * {@code NICKNAME_AUDIT_ABORT_AFTER_LEADING_FAILURES}(기본 0으로 꺼짐. 2면 첫 두 호출이 연달아 실패할 때 남은 호출을 보내지 않는다).
  *
  * <p>재시도는 SDK 기본 재시도(408·429·5xx, 5회)만 쓴다. 운영 {@code geminiAudit} 재시도는
  * {@code InfrastructureException}을 무시하는데 검열기가 모든 호출 오류를 그 예외로 감싸므로 운영에서도 돌지 않는다.
@@ -168,17 +176,35 @@ class NicknameAuditGoldenTest {
                         .limitRefreshPeriod(호출_간격)
                         .timeoutDuration(Duration.ofMinutes(1))
                         .build());
-        final AtomicBoolean quotaExhausted = new AtomicBoolean();
+        final Set<Integer> onlyCalls = Arrays.stream(
+                        Objects.requireNonNullElse(System.getenv("NICKNAME_AUDIT_ONLY_CALLS"), "")
+                                .split(","))
+                .filter(number -> !number.isBlank())
+                .map(number -> Integer.parseInt(number.trim()))
+                .collect(Collectors.toSet());
+        final int abortAfter = 정수_환경변수("NICKNAME_AUDIT_ABORT_AFTER_LEADING_FAILURES", 0);
+        final AtomicInteger callNumber = new AtomicInteger();
+        final AtomicInteger leadingFailures = new AtomicInteger();
+        final AtomicBoolean succeededOnce = new AtomicBoolean();
+        final AtomicBoolean stopped = new AtomicBoolean();
         return nicknames -> {
-            if (quotaExhausted.get()) {
-                throw new IllegalStateException("429를 받아서 호출하지 않는다");
+            final int number = callNumber.incrementAndGet();
+            if (stopped.get()) {
+                throw new IllegalStateException("429를 받았거나 첫 호출들이 연달아 실패해서 호출하지 않는다");
+            }
+            if (!onlyCalls.isEmpty() && !onlyCalls.contains(number)) {
+                throw new IllegalStateException("NICKNAME_AUDIT_ONLY_CALLS에 없는 호출이라 건너뛴다");
             }
             try {
-                return RateLimiter.decorateSupplier(rateLimiter, () -> auditor.audit(nicknames))
+                final List<NicknameAuditResult> results = RateLimiter.decorateSupplier(
+                                rateLimiter, () -> auditor.audit(nicknames))
                         .get();
+                succeededOnce.set(true);
+                return results;
             } catch (RuntimeException e) {
-                if (일일_할당량_초과(e)) {
-                    quotaExhausted.set(true);
+                final boolean leadingFailure = !succeededOnce.get() && leadingFailures.incrementAndGet() == abortAfter;
+                if (일일_할당량_초과(e) || leadingFailure) {
+                    stopped.set(true);
                 }
                 throw e;
             }

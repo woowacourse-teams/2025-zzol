@@ -1,0 +1,7 @@
+run	batch	size	succeeded	latency_ms	prompt_tokens	candidates_tokens	cached_tokens	thoughts_tokens	total_tokens	failure
+1	1	250	false	2836	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+1	2	100	false	55439	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+2	1	250	false	50598	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+2	2	100	false	11768	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+3	1	250	false	89740	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+3	2	100	false	25860	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d

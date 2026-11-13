@@ -1,0 +1,1051 @@
+nickname	expected	category	run	batch	position	predicted	flagged	confidence	batch_latency_ms	reason
+basement	CLEAN	하드네거티브	1	1	1	MISSING			2132	
+마약김밥	CLEAN	하드네거티브	1	1	2	MISSING			2132	
+十 .八 놈	EVASION	복합삽입	1	1	3	MISSING			2132	
+비치발리볼	CLEAN	하드네거티브	1	1	4	MISSING			2132	
+10새끼	EVASION	숫자섞기	1	1	5	MISSING			2132	
+신발장	CLEAN	하드네거티브	1	1	6	MISSING			2132	
+자위중독	PROFANE	성적표현	1	1	7	MISSING			2132	
+지균충	AMBIGUOUS	집단비하	1	1	8	MISSING			2132	
+떡치는밤	PROFANE	성적표현	1	1	9	MISSING			2132	
+찌질이	AMBIGUOUS	애매	1	1	10	MISSING			2132	
+ѕіbаl놈	EVASION	닮은꼴문자	1	1	11	MISSING			2132	
+josh17	CLEAN	하드네거티브	1	1	12	MISSING			2132	
+18년아	EVASION	숫자섞기	1	1	13	MISSING			2132	
+∧ㅣ발롬	EVASION	닮은꼴문자	1	1	14	MISSING			2132	
+빨아줄래	AMBIGUOUS	성적표현	1	1	15	MISSING			2132	
+top5hits	CLEAN	하드네거티브	1	1	16	MISSING			2132	
+犬새끼	EVASION	닮은꼴문자	1	1	17	MISSING			2132	
+니가참좋아	CLEAN	하드네거티브	1	1	18	MISSING			2132	
+DikDik	CLEAN	하드네거티브	1	1	19	MISSING			2132	
+ㅁ1ㅊㄴ	EVASION	초성숫자혼합	1	1	20	MISSING			2132	
+개독박멸	PROFANE	집단비하	1	1	21	MISSING			2132	
+조ㄴ나웃김	EVASION	자모분리	1	1	22	MISSING			2132	
+밤일잘해요	AMBIGUOUS	성적표현	1	1	23	MISSING			2132	
+qudtlstoRl	EVASION	한영오타	1	1	24	MISSING			2132	
+레즈극혐	PROFANE	혐오차별	1	1	25	MISSING			2132	
+후장개통	PROFANE	성적표현	1	1	26	MISSING			2132	
+개toRl	EVASION	한영오타	1	1	27	MISSING			2132	
+외노자	AMBIGUOUS	애매	1	1	28	MISSING			2132	
+똥꼬츙	EVASION	혐오차별	1	1	29	MISSING			2132	
+즤랄	EVASION	발음변형	1	1	30	MISSING			2132	
+ＳＩ발놈	EVASION	닮은꼴문자	1	1	31	MISSING			2132	
+신발놈아	EVASION	발음변형	1	1	32	MISSING			2132	
+Yamashita	CLEAN	하드네거티브	1	1	33	MISSING			2132	
+사창리군인	CLEAN	하드네거티브	1	1	34	MISSING			2132	
+개18놈	EVASION	숫자섞기	1	1	35	MISSING			2132	
+지라ㄹ마	EVASION	자모분리	1	1	36	MISSING			2132	
+병시ㄴ새끼	EVASION	자모분리	1	1	37	MISSING			2132	
+Marseille	CLEAN	하드네거티브	1	1	38	MISSING			2132	
+ㅆ1ㅂㄴ	EVASION	초성숫자혼합	1	1	39	MISSING			2132	
+Uranus	CLEAN	하드네거티브	1	1	40	MISSING			2132	
+늑음마	EVASION	발음변형	1	1	41	MISSING			2132	
+애자냐너	PROFANE	혐오차별	1	1	42	MISSING			2132	
+원나잇구함	PROFANE	성적표현	1	1	43	MISSING			2132	
+ㅇㄴㅇ구함	EVASION	성적표현	1	1	44	MISSING			2132	
+폐급신병	AMBIGUOUS	집단비하	1	1	45	MISSING			2132	
+동남아노예	PROFANE	혐오차별	1	1	46	MISSING			2132	
+simp	AMBIGUOUS	애매	1	1	47	MISSING			2132	
+ㅅㅂ18ㄴ	EVASION	초성숫자혼합	1	1	48	MISSING			2132	
+개똥벌레	CLEAN	하드네거티브	1	1	49	MISSING			2132	
+마음부자	CLEAN	하드네거티브	1	1	50	MISSING			2132	
+한남동주민	CLEAN	하드네거티브	1	1	51	MISSING			2132	
+⊥⊥먹어라	EVASION	닮은꼴문자	1	1	52	MISSING			2132	
+우라질	AMBIGUOUS	애매	1	1	53	MISSING			2132	
+상폐女	AMBIGUOUS	혐오차별	1	1	54	MISSING			2132	
+개같이부활	AMBIGUOUS	애매	1	1	55	MISSING			2132	
+ryan4life	CLEAN	하드네거티브	1	1	56	MISSING			2132	
+Tmqkf	EVASION	한영오타	1	1	57	MISSING			2132	
+ㅆ1발놈	EVASION	숫자섞기	1	1	58	MISSING			2132	
+saltwater	CLEAN	하드네거티브	1	1	59	MISSING			2132	
+수급자거지	AMBIGUOUS	집단비하	1	1	60	MISSING			2132	
+쪼다	AMBIGUOUS	애매	1	1	61	MISSING			2132	
+호모사피엔스	CLEAN	하드네거티브	1	1	62	MISSING			2132	
+ㄱㅓㄹ레년	EVASION	자모분리	1	1	63	MISSING			2132	
+rotorrl	EVASION	한영오타	1	1	64	MISSING			2132	
+짱개집	PROFANE	혐오차별	1	1	65	MISSING			2132	
+Lucas5	CLEAN	하드네거티브	1	1	66	MISSING			2132	
+tlvkfsha	EVASION	한영오타	1	1	67	MISSING			2132	
+18새끼	EVASION	숫자섞기	1	1	68	MISSING			2132	
+병시니	EVASION	발음변형	1	1	69	MISSING			2132	
+シバル	EVASION	닮은꼴문자	1	1	70	MISSING			2132	
+콩나물대가리	CLEAN	하드네거티브	1	1	71	MISSING			2132	
+조건만남ㄱ	PROFANE	성적표현	1	1	72	MISSING			2132	
+10창년	EVASION	숫자섞기	1	1	73	MISSING			2132	
+whw_ Rk라	EVASION	복합삽입	1	1	74	MISSING			2132	
+자지러지는중	CLEAN	하드네거티브	1	1	75	MISSING			2132	
+Hangook	CLEAN	하드네거티브	1	1	76	MISSING			2132	
+이건니거야	CLEAN	하드네거티브	1	1	77	MISSING			2132	
+박아줄게	AMBIGUOUS	성적표현	1	1	78	MISSING			2132	
+Ekfqo극혐	EVASION	집단비하	1	1	79	MISSING			2132	
+ㄴ2ㅁㅆㅂ	EVASION	초성숫자혼합	1	1	80	MISSING			2132	
+글자지우개	CLEAN	하드네거티브	1	1	81	MISSING			2132	
+보슬아치	PROFANE	혐오차별	1	1	82	MISSING			2132	
+Takeshita	CLEAN	하드네거티브	1	1	83	MISSING			2132	
+쓰리썸가자	PROFANE	성적표현	1	1	84	MISSING			2132	
+2ㅅㄲ야	EVASION	초성숫자혼합	1	1	85	MISSING			2132	
+설거지남	AMBIGUOUS	집단비하	1	1	86	MISSING			2132	
+쉣더뻑	EVASION	발음변형	1	1	87	MISSING			2132	
+꼬추왕	AMBIGUOUS	애매	1	1	88	MISSING			2132	
+식빵굽는곰	CLEAN	하드네거티브	1	1	89	MISSING			2132	
+h0mo꺼져	EVASION	혐오차별	1	1	90	MISSING			2132	
+번개같이	CLEAN	하드네거티브	1	1	91	MISSING			2132	
+개슬람추방	PROFANE	혐오차별	1	1	92	MISSING			2132	
+유니섹스	CLEAN	하드네거티브	1	1	93	MISSING			2132	
+젠신병자	AMBIGUOUS	혐오차별	1	1	94	MISSING			2132	
+ㄴ1애ㅁ1	EVASION	초성숫자혼합	1	1	95	MISSING			2132	
+ㄹㅇ	CLEAN	하드네거티브	1	1	96	MISSING			2132	
+TlqtoRl	EVASION	한영오타	1	1	97	MISSING			2132	
+폰팔이	AMBIGUOUS	집단비하	1	1	98	MISSING			2132	
+ㅅㅣ발롬	EVASION	자모분리	1	1	99	MISSING			2132	
+날씨발표	CLEAN	하드네거티브	1	1	100	MISSING			2132	
+빌어먹을	AMBIGUOUS	애매	1	1	101	MISSING			2132	
+용병신청	CLEAN	하드네거티브	1	1	102	MISSING			2132	
+19금	AMBIGUOUS	애매	1	1	103	MISSING			2132	
+tl q.kf 년	EVASION	복합삽입	1	1	104	MISSING			2132	
+si8nom	EVASION	숫자섞기	1	1	105	MISSING			2132	
+오른쪽발목	CLEAN	하드네거티브	1	1	106	MISSING			2132	
+즉시발송	CLEAN	하드네거티브	1	1	107	MISSING			2132	
+ロl친年	EVASION	닮은꼴문자	1	1	108	MISSING			2132	
+학식충	AMBIGUOUS	집단비하	1	1	109	MISSING			2132	
+도둑놈의갈고리	CLEAN	하드네거티브	1	1	110	MISSING			2132	
+삼시세끼	CLEAN	하드네거티브	1	1	111	MISSING			2132	
+물많은누나	AMBIGUOUS	성적표현	1	1	112	MISSING			2132	
+여ㅅ먹어	EVASION	자모분리	1	1	113	MISSING			2132	
+닥쳐온겨울	CLEAN	하드네거티브	1	1	114	MISSING			2132	
+ㅁㅣㅊㅣㄴ년	EVASION	자모분리	1	1	115	MISSING			2132	
+페니실린	CLEAN	하드네거티브	1	1	116	MISSING			2132	
+이시키	AMBIGUOUS	애매	1	1	117	MISSING			2132	
+ㅅㅅㅣ발	EVASION	자모분리	1	1	118	MISSING			2132	
+qbdtls	EVASION	한영오타	1	1	119	MISSING			2132	
+MobyDick	CLEAN	하드네거티브	1	1	120	MISSING			2132	
+공존나눔	CLEAN	하드네거티브	1	1	121	MISSING			2132	
+홍어삼합	CLEAN	하드네거티브	1	1	122	MISSING			2132	
+빠순이	AMBIGUOUS	집단비하	1	1	123	MISSING			2132	
+멍청도	PROFANE	혐오차별	1	1	124	MISSING			2132	
+꿀벅지	AMBIGUOUS	애매	1	1	125	MISSING			2132	
+귀머거리냐	AMBIGUOUS	혐오차별	1	1	126	MISSING			2132	
+Tidsus	EVASION	한영오타	1	1	127	MISSING			2132	
+ba55guitar	CLEAN	하드네거티브	1	1	128	MISSING			2132	
+키스방단골	PROFANE	성적표현	1	1	129	MISSING			2132	
+발기찬하루	AMBIGUOUS	성적표현	1	1	130	MISSING			2132	
+흡연충	AMBIGUOUS	집단비하	1	1	131	MISSING			2132	
+조선족극혐	PROFANE	혐오차별	1	1	132	MISSING			2132	
+편돌이주제	AMBIGUOUS	집단비하	1	1	133	MISSING			2132	
+病身새끼	EVASION	닮은꼴문자	1	1	134	MISSING			2132	
+개저씨싫어	AMBIGUOUS	혐오차별	1	1	135	MISSING			2132	
+오피추천좀	AMBIGUOUS	성적표현	1	1	136	MISSING			2132	
+미친노마	EVASION	발음변형	1	1	137	MISSING			2132	
+Bangkok	CLEAN	하드네거티브	1	1	138	MISSING			2132	
+땅따먹기	CLEAN	하드네거티브	1	1	139	MISSING			2132	
+개10새끼	EVASION	숫자섞기	1	1	140	MISSING			2132	
+할매미	AMBIGUOUS	혐오차별	1	1	141	MISSING			2132	
+입싸장인	PROFANE	성적표현	1	1	142	MISSING			2132	
+쑥개떡	CLEAN	하드네거티브	1	1	143	MISSING			2132	
+개세끼	EVASION	발음변형	1	1	144	MISSING			2132	
+십8놈	EVASION	숫자섞기	1	1	145	MISSING			2132	
+모지리	AMBIGUOUS	애매	1	1	146	MISSING			2132	
+소추소심	AMBIGUOUS	혐오차별	1	1	147	MISSING			2132	
+ㅅㄹㅎ	CLEAN	하드네거티브	1	1	148	MISSING			2132	
+젖꼭지수집	PROFANE	성적표현	1	1	149	MISSING			2132	
+ｹｾｯｷ야	EVASION	닮은꼴문자	1	1	150	MISSING			2132	
+n1gga왕	EVASION	혐오차별	1	1	151	MISSING			2132	
+번개소리	CLEAN	하드네거티브	1	1	152	MISSING			2132	
+18번곡	CLEAN	하드네거티브	1	1	153	MISSING			2132	
+노답인생	CLEAN	하드네거티브	1	1	154	MISSING			2132	
+좆ㅂㅏㅂ	EVASION	자모분리	1	1	155	MISSING			2132	
+시8롬	EVASION	숫자섞기	1	1	156	MISSING			2132	
+니 ㅇH.ㅁl	EVASION	복합삽입	1	1	157	MISSING			2132	
+Phuket	CLEAN	하드네거티브	1	1	158	MISSING			2132	
+퐁퐁남등장	AMBIGUOUS	집단비하	1	1	159	MISSING			2132	
+나는쓰레기	AMBIGUOUS	애매	1	1	160	MISSING			2132	
+Cockapoo	CLEAN	하드네거티브	1	1	161	MISSING			2132	
+japchae	CLEAN	하드네거티브	1	1	162	MISSING			2132	
+7시출신	AMBIGUOUS	혐오차별	1	1	163	MISSING			2132	
+오개년계획	CLEAN	하드네거티브	1	1	164	MISSING			2132	
+10팔놈	EVASION	숫자섞기	1	1	165	MISSING			2132	
+빨아줘요	AMBIGUOUS	애매	1	1	166	MISSING			2132	
+2년아	EVASION	숫자섞기	1	1	167	MISSING			2132	
+조까튼놈	EVASION	발음변형	1	1	168	MISSING			2132	
+까보전	AMBIGUOUS	혐오차별	1	1	169	MISSING			2132	
+싸고싶다	AMBIGUOUS	애매	1	1	170	MISSING			2132	
+ㅊㅏㅇ녀	EVASION	자모분리	1	1	171	MISSING			2132	
+마더뻐커	EVASION	발음변형	1	1	172	MISSING			2132	
+젖같네	EVASION	발음변형	1	1	173	MISSING			2132	
+미친㉡	EVASION	닮은꼴문자	1	1	174	MISSING			2132	
+창기사	CLEAN	하드네거티브	1	1	175	MISSING			2132	
+Tl발놈	EVASION	한영오타	1	1	176	MISSING			2132	
+сибаль	EVASION	닮은꼴문자	1	1	177	MISSING			2132	
+의자지킴이	CLEAN	하드네거티브	1	1	178	MISSING			2132	
+십장생	AMBIGUOUS	애매	1	1	179	MISSING			2132	
+개이득	CLEAN	하드네거티브	1	1	180	MISSING			2132	
+㋛발	EVASION	닮은꼴문자	1	1	181	MISSING			2132	
+MS_Excel	CLEAN	하드네거티브	1	1	182	MISSING			2132	
+2백충	AMBIGUOUS	집단비하	1	1	183	MISSING			2132	
+ㅈ2ㄹ	EVASION	초성숫자혼합	1	1	184	MISSING			2132	
+벙어리	AMBIGUOUS	애매	1	1	185	MISSING			2132	
+틀니압수	AMBIGUOUS	혐오차별	1	1	186	MISSING			2132	
+doan장인	EVASION	성적표현	1	1	187	MISSING			2132	
+개망나니	AMBIGUOUS	애매	1	1	188	MISSING			2132	
+ㅆㅑㅇ년	EVASION	자모분리	1	1	189	MISSING			2132	
+ㄱㅈㅇ	AMBIGUOUS	애매	1	1	190	MISSING			2132	
+milf	PROFANE	성적표현	1	1	191	MISSING			2132	
+젠장할	AMBIGUOUS	애매	1	1	192	MISSING			2132	
+개.ㅅ ㅐ77l	EVASION	복합삽입	1	1	193	MISSING			2132	
+꺼져ㅆㅣ발	EVASION	자모분리	1	1	194	MISSING			2132	
+7H.ㅅH 77ㅣ	EVASION	복합삽입	1	1	195	MISSING			2132	
+빠가사리탕	CLEAN	하드네거티브	1	1	196	MISSING			2132	
+곱씹는밤	CLEAN	하드네거티브	1	1	197	MISSING			2132	
+좌빨	PROFANE	집단비하	1	1	198	MISSING			2132	
+누드김밥	CLEAN	하드네거티브	1	1	199	MISSING			2132	
+7ㅅ77	EVASION	초성숫자혼합	1	1	200	MISSING			2132	
+오징어통구이	CLEAN	하드네거티브	1	1	201	MISSING			2132	
+足같은놈	EVASION	닮은꼴문자	1	1	202	MISSING			2132	
+ㅆ8놈	EVASION	초성숫자혼합	1	1	203	MISSING			2132	
+qud신아	EVASION	한영오타	1	1	204	MISSING			2132	
+thicc	AMBIGUOUS	애매	1	1	205	MISSING			2132	
+풀발ㄱㅣ	EVASION	성적표현	1	1	206	MISSING			2132	
+한녀아웃	PROFANE	혐오차별	1	1	207	MISSING			2132	
+시골촌놈	AMBIGUOUS	애매	1	1	208	MISSING			2132	
+우유두잔	CLEAN	하드네거티브	1	1	209	MISSING			2132	
+조팝나무	CLEAN	하드네거티브	1	1	210	MISSING			2132	
+ㅂㅅ2냐	EVASION	초성숫자혼합	1	1	211	MISSING			2132	
+엿머거	EVASION	발음변형	1	1	212	MISSING			2132	
+젖은낙엽	CLEAN	하드네거티브	1	1	213	MISSING			2132	
+λl발	EVASION	닮은꼴문자	1	1	214	MISSING			2132	
+착한녀석	CLEAN	하드네거티브	1	1	215	MISSING			2132	
+삼일한실천	PROFANE	혐오차별	1	1	216	MISSING			2132	
+ㅈㄹ2야	EVASION	초성숫자혼합	1	1	217	MISSING			2132	
+쉬바나원챔	CLEAN	하드네거티브	1	1	218	MISSING			2132	
+ㅈㄴㄱㄷ	AMBIGUOUS	애매	1	1	219	MISSING			2132	
+벼ㅇ신아	EVASION	자모분리	1	1	220	MISSING			2132	
+7ㅐ새끼	EVASION	숫자섞기	1	1	221	MISSING			2132	
+월거지탈출	AMBIGUOUS	집단비하	1	1	222	MISSING			2132	
+f_u ck3r	EVASION	복합삽입	1	1	223	MISSING			2132	
+십년감수	CLEAN	하드네거티브	1	1	224	MISSING			2132	
+ㅂ ㅕ ㅇ.신	EVASION	복합삽입	1	1	225	MISSING			2132	
+ehlswkdsu	EVASION	혐오차별	1	1	226	MISSING			2132	
+C8놈	EVASION	숫자섞기	1	1	227	MISSING			2132	
+한강간식	CLEAN	하드네거티브	1	1	228	MISSING			2132	
+ㅈ.ㅣ 랄ㄴㄴ	EVASION	복합삽입	1	1	229	MISSING			2132	
+제기랄	AMBIGUOUS	애매	1	1	230	MISSING			2132	
+개판오분전	CLEAN	하드네거티브	1	1	231	MISSING			2132	
+포항과메기	CLEAN	하드네거티브	1	1	232	MISSING			2132	
+썅뇬	EVASION	발음변형	1	1	233	MISSING			2132	
+물걸레청소	CLEAN	하드네거티브	1	1	234	MISSING			2132	
+벗방보는중	PROFANE	성적표현	1	1	235	MISSING			2132	
+노콘선호	PROFANE	성적표현	1	1	236	MISSING			2132	
+GalaxyA55	CLEAN	하드네거티브	1	1	237	MISSING			2132	
+밝히는남자	AMBIGUOUS	애매	1	1	238	MISSING			2132	
+씨ㅂㅏㄹ년	EVASION	자모분리	1	1	239	MISSING			2132	
+딜도수집가	PROFANE	성적표현	1	1	240	MISSING			2132	
+원숭이섬나라	PROFANE	혐오차별	1	1	241	MISSING			2132	
+0이나먹어	EVASION	숫자섞기	1	1	242	MISSING			2132	
+ㅈ1ㄹ	EVASION	초성숫자혼합	1	1	243	MISSING			2132	
+깜둥이꺼져	PROFANE	혐오차별	1	1	244	MISSING			2132	
+좇같네	EVASION	발음변형	1	1	245	MISSING			2132	
+파5후쿰척	AMBIGUOUS	집단비하	1	1	246	MISSING			2132	
+느ㄱㅡㅁ마	EVASION	자모분리	1	1	247	MISSING			2132	
+대변항멸치	CLEAN	하드네거티브	1	1	248	MISSING			2132	
+woodcock	CLEAN	하드네거티브	1	1	249	MISSING			2132	
+촛불꺼져요	CLEAN	하드네거티브	1	1	250	MISSING			2132	
+꽃병신상	CLEAN	하드네거티브	1	2	251	FLAGGED	true	0.95	13375	비속어 포함
+짱깨끗해	CLEAN	하드네거티브	1	2	252	FLAGGED	true	0.85	13375	비하적 표현 포함
+ㅆl ㅂr.ㄹ	EVASION	복합삽입	1	2	253	FLAGGED	true	0.98	13375	비속어 우회 (자모 분리 및 특수문자)
+ㅈㄱㄴ	CLEAN	하드네거티브	1	2	254	CLEAN	false	0.90	13375	초성 약어 (일반적으로 '제목이 거시기하네요' 등의 뜻으로 사용)
+호모	AMBIGUOUS	애매	1	2	255	CLEAN	false	0.70	13375	성소수자 관련 단어이나 맥락에 따라 다름
+ㅈ77ㅏ	EVASION	초성숫자혼합	1	2	256	FLAGGED	true	0.92	13375	비속어 우회 (숫자 치환)
+기레기척결	AMBIGUOUS	집단비하	1	2	257	CLEAN	false	0.85	13375	신조어 및 사회적 비판 표현
+js_expert	CLEAN	하드네거티브	1	2	258	CLEAN	false	0.99	13375	일반 닉네임 (JavaScript 전문가)
+BlueTit	CLEAN	하드네거티브	1	2	259	CLEAN	false	0.99	13375	조류 이름 (박새)
+Tkdsha	EVASION	한영오타	1	2	260	CLEAN	false	0.99	13375	일반 영문 닉네임
+도랏맨	AMBIGUOUS	애매	1	2	261	CLEAN	false	0.90	13375	신조어 감탄사
+개미핥기	CLEAN	하드네거티브	1	2	262	CLEAN	false	0.99	13375	동물 이름
+nigiri	CLEAN	하드네거티브	1	2	263	CLEAN	false	0.90	13375	초밥 종류 (일본어)
+십자매한쌍	CLEAN	하드네거티브	1	2	264	CLEAN	false	0.99	13375	조류 이름
+밋힌놈	EVASION	발음변형	1	2	265	FLAGGED	true	0.95	13375	비속어 포함
+씨발로마	PROFANE	발음변형	1	2	266	FLAGGED	true	0.99	13375	비속어 포함
+쉬바	AMBIGUOUS	애매	1	2	267	FLAGGED	true	0.95	13375	비속어 우회
+탈모충	AMBIGUOUS	집단비하	1	2	268	FLAGGED	true	0.95	13375	비하적 접미사 포함
+존예보스	AMBIGUOUS	애매	1	2	269	CLEAN	false	0.90	13375	신조어 감탄사
+qud. tls아	EVASION	복합삽입	1	2	270	FLAGGED	true	0.95	13375	타자 오타 우회 비속어
+쥰내싫어	EVASION	발음변형	1	2	271	CLEAN	false	0.85	13375	비속어 변형 감탄사 (준내/쥰내)
+유방동주민	CLEAN	하드네거티브	1	2	272	CLEAN	false	0.95	13375	지명 (처인구 유방동) 관련
+가슴만지자	PROFANE	성적표현	1	2	273	CLEAN	false	0.80	13375	선정적 표현이나 직접 욕설 아님
+애비로드	CLEAN	하드네거티브	1	2	274	CLEAN	false	0.99	13375	비틀즈 앨범명 패러디
+ㅁ1친년	EVASION	숫자섞기	1	2	275	FLAGGED	true	0.98	13375	비속어 포함
+ShihTzu	CLEAN	하드네거티브	1	2	276	CLEAN	false	0.99	13375	견종 이름 (시추)
+내맘충전중	CLEAN	하드네거티브	1	2	277	CLEAN	false	0.80	13375	'맘충' 유사 형태이나 맥락상 배터리 충전 의미
+G잡대출신	AMBIGUOUS	집단비하	1	2	278	CLEAN	false	0.80	13375	대학 비하 표현 포함 가능성 있으나 모호함
+이등신	AMBIGUOUS	애매	1	2	279	CLEAN	false	0.90	13375	신체 비율 표현
+人丨발놈	EVASION	닮은꼴문자	1	2	280	FLAGGED	true	0.98	13375	한자 변형 우회 비속어
+犬찰아웃	AMBIGUOUS	집단비하	1	2	281	CLEAN	false	0.75	13375	경찰 비하 우회 표현
+씨qkf	EVASION	한영오타	1	2	282	FLAGGED	true	0.98	13375	타자 변형 우회 비속어
+된장녀	PROFANE	혐오차별	1	2	283	CLEAN	false	0.80	13375	사회적 신조어/비하어
+whwrkxsp	EVASION	한영오타	1	2	284	FLAGGED	true	0.95	13375	타자 변형 우회 비속어 (조주기능사 타자오타 등)
+㉥㉦같은놈	EVASION	닮은꼴문자	1	2	285	FLAGGED	true	0.95	13375	특수문자 우회 비속어
+도태남집합	AMBIGUOUS	집단비하	1	2	286	CLEAN	false	0.85	13375	인터넷 커뮤니티 신조어
+동창녀석	CLEAN	하드네거티브	1	2	287	CLEAN	false	0.99	13375	일반 단어
+닝기미	EVASION	발음변형	1	2	288	FLAGGED	true	0.95	13375	비속어 포함
+도시락싸가지고	CLEAN	하드네거티브	1	2	289	CLEAN	false	0.99	13375	일반 관용구
+노팬티	AMBIGUOUS	애매	1	2	290	CLEAN	false	0.85	13375	속어이나 직접 욕설 아님
+시바ㄹ점	AMBIGUOUS	자모분리	1	2	291	FLAGGED	true	0.95	13375	비속어 포함
+사까시왕	PROFANE	성적표현	1	2	292	FLAGGED	true	0.95	13375	선정적 은어 포함
+빨갱이	PROFANE	집단비하	1	2	293	CLEAN	false	0.80	13375	정치적 이념 갈등 용어
+쉐킷쉐킷	CLEAN	하드네거티브	1	2	294	CLEAN	false	0.99	13375	의성어/의태어
+badass	AMBIGUOUS	애매	1	2	295	CLEAN	false	0.95	13375	영어 슬랭 (멋진 사람)
+개불한접시	CLEAN	하드네거티브	1	2	296	CLEAN	false	0.99	13375	음식 이름
+야스각	EVASION	성적표현	1	2	297	CLEAN	false	0.80	13375	신조어 슬랭
+구라시키여행	CLEAN	하드네거티브	1	2	298	CLEAN	false	0.99	13375	일본 지명 (구라시키) 여행
+꺼 져.ㅆ ㅂ	EVASION	복합삽입	1	2	299	FLAGGED	true	0.98	13375	비속어 포함
+똥꼬발랄	CLEAN	하드네거티브	1	2	300	CLEAN	false	0.95	13375	신조어 (발랄하다의 변형)
+十八年아	EVASION	닮은꼴문자	1	2	301	FLAGGED	true	0.98	13375	한자 표기 비속어
+alclssus	EVASION	한영오타	1	2	302	CLEAN	false	0.90	13375	타자 오타 영문
+c8ㅅㄲ	EVASION	초성숫자혼합	1	2	303	FLAGGED	true	0.99	13375	초성 및 숫자 우회 비속어
+ㅎㅇㅌ	CLEAN	하드네거티브	1	2	304	CLEAN	false	0.99	13375	화이팅 초성
+개쌍도출신	PROFANE	혐오차별	1	2	305	CLEAN	false	0.80	13375	지역 비하 가능성 있으나 모호함
+아가리쿠스	CLEAN	하드네거티브	1	2	306	CLEAN	false	0.99	13375	버섯 종류
+凸ㅗ凸	EVASION	닮은꼴문자	1	2	307	FLAGGED	true	0.95	13375	욕설 의미 특수문자
+노가다꾼주제	AMBIGUOUS	집단비하	1	2	308	CLEAN	false	0.85	13375	직업 비하 표현 포함
+떡.치.자	EVASION	성적표현	1	2	309	FLAGGED	true	0.95	13375	성적 은어 포함
+느 금.ㅁ r	EVASION	복합삽입	1	2	310	FLAGGED	true	0.98	13375	우회 비속어
+5개년계획	CLEAN	하드네거티브	1	2	311	CLEAN	false	0.99	13375	역사/경제 용어
+PS5expert	CLEAN	하드네거티브	1	2	312	CLEAN	false	0.99	13375	플레이스테이션 관련
+ㅅ2ㅂㄹ	EVASION	초성숫자혼합	1	2	313	FLAGGED	true	0.95	13375	우회 비속어
+씨 ~빨 롬	EVASION	복합삽입	1	2	314	FLAGGED	true	0.99	13375	비속어 포함
+dutajrdj	EVASION	한영오타	1	2	315	CLEAN	false	0.90	13375	무작위 영문
+돼지국밥	CLEAN	하드네거티브	1	2	316	CLEAN	false	0.99	13375	음식 이름
+pen_island	AMBIGUOUS	애매	1	2	317	CLEAN	false	0.99	13375	영어 단어 조합
+ㅅ8ㄴ	EVASION	초성숫자혼합	1	2	318	FLAGGED	true	0.98	13375	초성 및 숫자 우회 비속어
+ㅂㅠㅇ신	EVASION	자모분리	1	2	319	FLAGGED	true	0.99	13375	비속어 포함
+ㅈㅗㅅ같네	EVASION	자모분리	1	2	320	FLAGGED	true	0.99	13375	비속어 포함
+씹색히	EVASION	발음변형	1	2	321	FLAGGED	true	0.99	13375	비속어 포함
+ㄱㅅ77	EVASION	초성숫자혼합	1	2	322	FLAGGED	true	0.85	13375	비속어 초성 우회 가능성
+심야동물원	CLEAN	하드네거티브	1	2	323	CLEAN	false	0.99	13375	일반 닉네임
+기타운지법	CLEAN	하드네거티브	1	2	324	CLEAN	false	0.99	13375	기타 연주 법
+ㅁㅊ2ㄴ	EVASION	초성숫자혼합	1	2	325	FLAGGED	true	0.95	13375	우회 비속어
+호박씨팔아요	CLEAN	하드네거티브	1	2	326	CLEAN	false	0.99	13375	일반 닉네임
+wl.f kf하네	EVASION	복합삽입	1	2	327	FLAGGED	true	0.95	13375	타자 오타 우회 비속어
+발정난토끼	AMBIGUOUS	성적표현	1	2	328	CLEAN	false	0.80	13375	다소 선정적이나 비속어 아님
+닥 .쳐 ㅂㅅ	EVASION	복합삽입	1	2	329	FLAGGED	true	0.99	13375	비속어 포함
+sldoal	EVASION	한영오타	1	2	330	CLEAN	false	0.90	13375	무작위 영문 타자
+씹 _쌔 끼	EVASION	복합삽입	1	2	331	FLAGGED	true	0.99	13375	비속어 포함
+꼴페미척결	PROFANE	혐오차별	1	2	332	CLEAN	false	0.85	13375	사회적 갈등 표현
+짭새단속	AMBIGUOUS	집단비하	1	2	333	CLEAN	false	0.85	13375	은어 포함이나 전체 차단 대상 아닐 수 있음
+외노자꺼져	PROFANE	집단비하	1	2	334	CLEAN	false	0.80	13375	외국인 노동자 비하 표현 포함
+여자는부엌	PROFANE	혐오차별	1	2	335	CLEAN	false	0.80	13375	성차별적 표현 포함
+씨줄날줄	CLEAN	하드네거티브	1	2	336	CLEAN	false	0.99	13375	직물 용어
+10알놈	EVASION	숫자섞기	1	2	337	FLAGGED	true	0.98	13375	숫자 우회 비속어
+갈보리언덕	CLEAN	하드네거티브	1	2	338	CLEAN	false	0.99	13375	종교적 지명 (Calvary)
+니0ㅐ미	EVASION	숫자섞기	1	2	339	FLAGGED	true	0.98	13375	숫자 우회 비속어
+모쏠아다	AMBIGUOUS	집단비하	1	2	340	CLEAN	false	0.80	13375	신조어/속어
+의자위고양이	CLEAN	하드네거티브	1	2	341	CLEAN	false	0.99	13375	일반 닉네임
+ghfhtoRl	EVASION	한영오타	1	2	342	CLEAN	false	0.90	13375	타자 오류 영문
+ㅁ ㅣ.친 年	EVASION	복합삽입	1	2	343	FLAGGED	true	0.98	13375	비속어 포함
+RjwuTlqkf	EVASION	한영오타	1	2	344	FLAGGED	true	0.98	13375	타자 변형 우회 비속어
+땡중	AMBIGUOUS	집단비하	1	2	345	CLEAN	false	0.85	13375	종교인 비하 속어
+군ㅂㅏ리	AMBIGUOUS	집단비하	1	2	346	CLEAN	false	0.85	13375	군인 비하 속어
+Mich3lle	CLEAN	하드네거티브	1	2	347	CLEAN	false	0.99	13375	사람 이름 (미셸)
+밤새끼적끼적	CLEAN	하드네거티브	1	2	348	CLEAN	false	0.90	13375	언어 유희/일반 닉네임
+인간말종	AMBIGUOUS	애매	1	2	349	CLEAN	false	0.85	13375	모욕적 표현이나 직접 비속어는 아님
+ㅂㅕㅇ아리	CLEAN	하드네거티브	1	2	350	CLEAN	false	0.99	13375	일반 단어 (병아리)
+개.ㅅ ㅐ77l	EVASION	복합삽입	2	1	1	FLAGGED	true	0.99	25078	비속어 우회 (개새끼)
+밋힌놈	EVASION	발음변형	2	1	2	FLAGGED	true	0.95	25078	비속어 변형 (미친놈)
+깜둥이꺼져	PROFANE	혐오차별	2	1	3	FLAGGED	true	0.95	25078	인종차별적 비하 및 배제 표현
+후장개통	PROFANE	성적표현	2	1	4	FLAGGED	true	0.98	25078	성적 비속어 포함
+개18놈	EVASION	숫자섞기	2	1	5	FLAGGED	true	0.99	25078	비속어 포함 (개년놈 계열)
+개똥벌레	CLEAN	하드네거티브	2	1	6	CLEAN	false	0.99	25078	일반 곤충 이름/노래 제목
+병시니	EVASION	발음변형	2	1	7	FLAGGED	true	0.99	25078	비속어 변형 (병신)
+qud신아	EVASION	한영오타	2	1	8	FLAGGED	true	0.95	25078	타이핑 오류/자판 변형 비속어 (병신아)
+할매미	AMBIGUOUS	혐오차별	2	1	9	CLEAN	false	0.90	25078	단순 합성어
+외노자	AMBIGUOUS	애매	2	1	10	CLEAN	false	0.80	25078	사회적 용어 (경우에 따라 멸칭이나 일반 줄임말로 쓰임, confidence 낮음)
+ㅇㄴㅇ구함	EVASION	성적표현	2	1	11	CLEAN	false	0.90	25078	초성어 및 구인
+h0mo꺼져	EVASION	혐오차별	2	1	12	FLAGGED	true	0.95	25078	성소수자 비하 표현 포함
+마더뻐커	EVASION	발음변형	2	1	13	FLAGGED	true	0.95	25078	영어 욕설 음차 (Motherfucker)
+벙어리	AMBIGUOUS	애매	2	1	14	CLEAN	false	0.90	25078	신체 장애 관련 단어이나 일반 명사
+인간말종	AMBIGUOUS	애매	2	1	15	FLAGGED	true	0.98	25078	모욕적 표현
+ㅂ ㅕ ㅇ.신	EVASION	복합삽입	2	1	16	FLAGGED	true	0.99	25078	비속어 우회 (병신)
+자위중독	PROFANE	성적표현	2	1	17	FLAGGED	true	0.95	25078	성적 단어 포함
+woodcock	CLEAN	하드네거티브	2	1	18	CLEAN	false	0.99	25078	새 종류 (아메리카도요새)
+쉬바	AMBIGUOUS	애매	2	1	19	FLAGGED	true	0.98	25078	비속어 변형 (시발)
+빨갱이	PROFANE	집단비하	2	1	20	CLEAN	false	0.85	25078	정치적 표현/멸칭 (문맥에 따라 다름)
+GalaxyA55	CLEAN	하드네거티브	2	1	21	CLEAN	false	0.99	25078	스마트폰 모델명
+닥쳐온겨울	CLEAN	하드네거티브	2	1	22	CLEAN	false	0.99	25078	일반 표현
+Cockapoo	CLEAN	하드네거티브	2	1	23	CLEAN	false	0.99	25078	견종 이름
+씹색히	EVASION	발음변형	2	1	24	FLAGGED	true	0.99	25078	비속어 포함
+유니섹스	CLEAN	하드네거티브	2	1	25	CLEAN	false	0.99	25078	패션 용어
+ㅁㅣㅊㅣㄴ년	EVASION	자모분리	2	1	26	FLAGGED	true	0.99	25078	비속어 포함 (미친년)
+쉬바나원챔	CLEAN	하드네거티브	2	1	27	CLEAN	false	0.95	25078	게임 캐릭터 이름 조합 (쉬바나 + 원챔)
+날씨발표	CLEAN	하드네거티브	2	1	28	CLEAN	false	0.95	25078	단순 일반어
+js_expert	CLEAN	하드네거티브	2	1	29	CLEAN	false	0.99	25078	프로그래밍 관련 닉네임
+비치발리볼	CLEAN	하드네거티브	2	1	30	CLEAN	false	0.99	25078	스포츠 종목
+2백충	AMBIGUOUS	집단비하	2	1	31	FLAGGED	true	0.95	25078	혐오 표현 (비하성 접미사 -충)
+ba55guitar	CLEAN	하드네거티브	2	1	32	CLEAN	false	0.99	25078	악기 이름 (Bass guitar)
+10새끼	EVASION	숫자섞기	2	1	33	FLAGGED	true	0.99	25078	숫자 치환 비속어 (십새끼)
+발정난토끼	AMBIGUOUS	성적표현	2	1	34	FLAGGED	true	0.85	25078	성적 암시 표현
+7H.ㅅH 77ㅣ	EVASION	복합삽입	2	1	35	FLAGGED	true	0.99	25078	변형 비속어 (개새끼)
+도둑놈의갈고리	CLEAN	하드네거티브	2	1	36	CLEAN	false	0.95	25078	식물 이름 (도둑놈의갈고리)
+노콘선호	PROFANE	성적표현	2	1	37	FLAGGED	true	0.95	25078	성적 은어 포함
+꺼져ㅆㅣ발	EVASION	자모분리	2	1	38	FLAGGED	true	0.99	25078	욕설 포함
+도랏맨	AMBIGUOUS	애매	2	1	39	CLEAN	false	0.90	25078	신조어 감탄사
+japchae	CLEAN	하드네거티브	2	1	40	CLEAN	false	0.99	25078	음식 이름 (잡채)
+박아줄게	AMBIGUOUS	성적표현	2	1	41	FLAGGED	true	0.90	25078	성적 행위 암시
+젖은낙엽	CLEAN	하드네거티브	2	1	42	CLEAN	false	0.99	25078	일반 표현
+벗방보는중	PROFANE	성적표현	2	1	43	FLAGGED	true	0.95	25078	성인물 시청 암시
+닝기미	EVASION	발음변형	2	1	44	FLAGGED	true	0.95	25078	비속어 포함
+ㅁ1ㅊㄴ	EVASION	초성숫자혼합	2	1	45	FLAGGED	true	0.98	25078	초성 및 자음 축약 비속어 (미친년)
+TlqtoRl	EVASION	한영오타	2	1	46	FLAGGED	true	0.99	25078	한영 전환 욕설 (시발)
+짭새단속	AMBIGUOUS	집단비하	2	1	47	FLAGGED	true	0.90	25078	경찰 비하 속어 포함
+떡.치.자	EVASION	성적표현	2	1	48	FLAGGED	true	0.99	25078	성적 은어
+제기랄	AMBIGUOUS	애매	2	1	49	CLEAN	false	0.90	25078	일반 감탄사/약한 비속어
+귀머거리냐	AMBIGUOUS	혐오차별	2	1	50	CLEAN	false	0.85	25078	비하적 표현이나 장애인 비하로 직접 판별 보류
+여자는부엌	PROFANE	혐오차별	2	1	51	FLAGGED	true	0.90	25078	성차별적 고정관념 표현
+유방동주민	CLEAN	하드네거티브	2	1	52	CLEAN	false	0.99	25078	지명 이름 (처인구 유방동)
+nigiri	CLEAN	하드네거티브	2	1	53	CLEAN	false	0.90	25078	초밥 종류(니기리), 인종차별적 욕설과 유사하나 음식명임
+미친노마	EVASION	발음변형	2	1	54	FLAGGED	true	0.99	25078	비속어 변형
+니0ㅐ미	EVASION	숫자섞기	2	1	55	FLAGGED	true	0.99	25078	패드립 우회 (니애미)
+조선족극혐	PROFANE	혐오차별	2	1	56	FLAGGED	true	0.95	25078	특정 집단 혐오 표현
+ㅈ1ㄹ	EVASION	초성숫자혼합	2	1	57	FLAGGED	true	0.99	25078	초성 우회 비속어 (지랄)
+닥 .쳐 ㅂㅅ	EVASION	복합삽입	2	1	58	FLAGGED	true	0.99	25078	욕설 및 초성 비속어
+Mich3lle	CLEAN	하드네거티브	2	1	59	CLEAN	false	0.99	25078	외국어 이름 (Michelle)
+즤랄	EVASION	발음변형	2	1	60	FLAGGED	true	0.95	25078	비속어 변형 (지랄)
+좌빨	PROFANE	집단비하	2	1	61	FLAGGED	true	0.95	25078	정치적 멸칭
+top5hits	CLEAN	하드네거티브	2	1	62	CLEAN	false	0.99	25078	일반 영어 표현
+сибаль	EVASION	닮은꼴문자	2	1	63	FLAGGED	true	0.99	25078	러시아어 표기 욕설 (시발)
+pen_island	AMBIGUOUS	애매	2	1	64	CLEAN	false	0.99	25078	유머러스한 영단어 조합 (합쳐 읽으면 악의적일 수 있으나 기본 단어)
+십8놈	EVASION	숫자섞기	2	1	65	FLAGGED	true	0.99	25078	비속어 포함
+빠순이	AMBIGUOUS	집단비하	2	1	66	FLAGGED	true	0.85	25078	비하성 속어
+여ㅅ먹어	EVASION	자모분리	2	1	67	FLAGGED	true	0.95	25078	비속어 우회 (엿먹어)
+ロl친年	EVASION	닮은꼴문자	2	1	68	FLAGGED	true	0.99	25078	한자/특수문자 조합 비속어 (미친년)
+물많은누나	AMBIGUOUS	성적표현	2	1	69	FLAGGED	true	0.90	25078	성적 은어 표현
+犬찰아웃	AMBIGUOUS	집단비하	2	1	70	FLAGGED	true	0.90	25078	경찰 비하 표현 포함
+젖꼭지수집	PROFANE	성적표현	2	1	71	FLAGGED	true	0.95	25078	선정적 단어 조합
+아가리쿠스	CLEAN	하드네거티브	2	1	72	CLEAN	false	0.95	25078	버섯 품종 이름
+가슴만지자	PROFANE	성적표현	2	1	73	FLAGGED	true	0.95	25078	성적 수치심 유발 표현
+꽃병신상	CLEAN	하드네거티브	2	1	74	FLAGGED	true	0.95	25078	비속어 포함
+시골촌놈	AMBIGUOUS	애매	2	1	75	CLEAN	false	0.90	25078	비하 의미가 섞일 수 있으나 일상적 표현
+2년아	EVASION	숫자섞기	2	1	76	FLAGGED	true	0.95	25078	비속어 변형 (년아)
+개독박멸	PROFANE	집단비하	2	1	77	FLAGGED	true	0.95	25078	특정 종교 혐오 표현
+니가참좋아	CLEAN	하드네거티브	2	1	78	CLEAN	false	0.99	25078	노래 제목/좋은 표현
+tlvkfsha	EVASION	한영오타	2	1	79	FLAGGED	true	0.99	25078	한영 전환 욕설 (시발새)
+호모사피엔스	CLEAN	하드네거티브	2	1	80	CLEAN	false	0.99	25078	학명
+느 금.ㅁ r	EVASION	복합삽입	2	1	81	FLAGGED	true	0.99	25078	패드립 우회 (느그 엄마)
+씨발로마	PROFANE	발음변형	2	1	82	FLAGGED	true	0.99	25078	비속어 포함
+번개같이	CLEAN	하드네거티브	2	1	83	CLEAN	false	0.99	25078	일반 부사구
+기타운지법	CLEAN	하드네거티브	2	1	84	CLEAN	false	0.99	25078	음악 용어
+조ㄴ나웃김	EVASION	자모분리	2	1	85	CLEAN	false	0.90	25078	비속어가 포함된 강조 부사이나 긍정적 맥락(웃김)으로 사용됨
+의자지킴이	CLEAN	하드네거티브	2	1	86	CLEAN	false	0.99	25078	일반 닉네임
+josh17	CLEAN	하드네거티브	2	1	87	CLEAN	false	0.99	25078	이름 조합
+ㅁ1친년	EVASION	숫자섞기	2	1	88	FLAGGED	true	0.99	25078	비속어 포함
+씨 ~빨 롬	EVASION	복합삽입	2	1	89	FLAGGED	true	0.99	25078	비속어 우회
+학식충	AMBIGUOUS	집단비하	2	1	90	FLAGGED	true	0.90	25078	비하성 접미사 -충 포함
+엿머거	EVASION	발음변형	2	1	91	FLAGGED	true	0.95	25078	욕설 변형
+소추소심	AMBIGUOUS	혐오차별	2	1	92	FLAGGED	true	0.90	25078	남성 비하 성차별 용어
+tl q.kf 년	EVASION	복합삽입	2	1	93	FLAGGED	true	0.99	25078	한영 변환 및 띄어쓰기 우회 욕설
+Hangook	CLEAN	하드네거티브	2	1	94	CLEAN	false	0.99	25078	한국 영문 표기
+심야동물원	CLEAN	하드네거티브	2	1	95	CLEAN	false	0.99	25078	일반 닉네임
+틀니압수	AMBIGUOUS	혐오차별	2	1	96	FLAGGED	true	0.85	25078	노인 비하적 표현
+Lucas5	CLEAN	하드네거티브	2	1	97	CLEAN	false	0.99	25078	이름 조합
+똥꼬발랄	CLEAN	하드네거티브	2	1	98	CLEAN	false	0.90	25078	귀여운 신조어
+시바ㄹ점	AMBIGUOUS	자모분리	2	1	99	FLAGGED	true	0.95	25078	비속어 포함
+10팔놈	EVASION	숫자섞기	2	1	100	FLAGGED	true	0.99	25078	비속어 포함
+젖같네	EVASION	발음변형	2	1	101	FLAGGED	true	0.99	25078	비속어 포함
+기레기척결	AMBIGUOUS	집단비하	2	1	102	CLEAN	false	0.85	25078	언론 비판 용어
+ㅆㅑㅇ년	EVASION	자모분리	2	1	103	FLAGGED	true	0.99	25078	비속어 포함
+땡중	AMBIGUOUS	집단비하	2	1	104	FLAGGED	true	0.85	25078	불교 승려 비하 표현
+돼지국밥	CLEAN	하드네거티브	2	1	105	CLEAN	false	0.99	25078	음식 이름
+개쌍도출신	PROFANE	혐오차별	2	1	106	FLAGGED	true	0.90	25078	지역 비하 혐오 표현
+ｹｾｯｷ야	EVASION	닮은꼴문자	2	1	107	FLAGGED	true	0.99	25078	반각 문자 비속어 (개새끼야)
+까보전	AMBIGUOUS	혐오차별	2	1	108	FLAGGED	true	0.95	25078	지역/집단 비하 은어
+모쏠아다	AMBIGUOUS	집단비하	2	1	109	FLAGGED	true	0.85	25078	성적 은어 포함
+ㅈ77ㅏ	EVASION	초성숫자혼합	2	1	110	FLAGGED	true	0.99	25078	초성 및 숫자 우회 욕설 (지랄 등)
+싸고싶다	AMBIGUOUS	애매	2	1	111	FLAGGED	true	0.90	25078	성적 은어
+콩나물대가리	CLEAN	하드네거티브	2	1	112	FLAGGED	true	0.85	25078	비하적 표현
+Yamashita	CLEAN	하드네거티브	2	1	113	CLEAN	false	0.99	25078	일본 성씨 (야마시타)
+쪼다	AMBIGUOUS	애매	2	1	114	FLAGGED	true	0.85	25078	비속어/모욕적 표현
+7ㅅ77	EVASION	초성숫자혼합	2	1	115	FLAGGED	true	0.99	25078	숫자/자음 우회 욕설 (개새끼)
+포항과메기	CLEAN	하드네거티브	2	1	116	CLEAN	false	0.99	25078	특산물 이름
+호박씨팔아요	CLEAN	하드네거티브	2	1	117	CLEAN	false	0.99	25078	일반 표현
+용병신청	CLEAN	하드네거티브	2	1	118	CLEAN	false	0.99	25078	게임/운동 용어 (병신이 포함되나 '용병 + 신청'의 분절)
+MS_Excel	CLEAN	하드네거티브	2	1	119	CLEAN	false	0.99	25078	소프트웨어 프로그램 이름
+쉣더뻑	EVASION	발음변형	2	1	120	FLAGGED	true	0.95	25078	영어 욕설 음차 (What the fuck)
+레즈극혐	PROFANE	혐오차별	2	1	121	FLAGGED	true	0.95	25078	성소수자 혐오 표현
+ㅂㅠㅇ신	EVASION	자모분리	2	1	122	FLAGGED	true	0.99	25078	자모 분리 비속어 (병신)
+수급자거지	AMBIGUOUS	집단비하	2	1	123	FLAGGED	true	0.95	25078	사회적 약자 비하 혐오 표현
+사까시왕	PROFANE	성적표현	2	1	124	FLAGGED	true	0.99	25078	성적 은어 포함
+ㄱㅈㅇ	AMBIGUOUS	애매	2	1	125	CLEAN	false	0.70	25078	초성만 있어 명확한 비속어 판단 어려움
+㉥㉦같은놈	EVASION	닮은꼴문자	2	1	126	FLAGGED	true	0.99	25078	특수문자 치환 비속어
+풀발ㄱㅣ	EVASION	성적표현	2	1	127	FLAGGED	true	0.99	25078	성적 은어 우회
+조건만남ㄱ	PROFANE	성적표현	2	1	128	FLAGGED	true	0.98	25078	불법 성매매 관련 은어
+썅뇬	EVASION	발음변형	2	1	129	FLAGGED	true	0.99	25078	비속어 포함
+오징어통구이	CLEAN	하드네거티브	2	1	130	CLEAN	false	0.99	25078	음식 이름
+동남아노예	PROFANE	혐오차별	2	1	131	FLAGGED	true	0.95	25078	인종 차별 및 비하 표현
+찌질이	AMBIGUOUS	애매	2	1	132	FLAGGED	true	0.85	25078	비하성 속어
+⊥⊥먹어라	EVASION	닮은꼴문자	2	1	133	FLAGGED	true	0.95	25078	특수문자 욕설 우회
+人丨발놈	EVASION	닮은꼴문자	2	1	134	FLAGGED	true	0.99	25078	한자 파괴 우회 욕설 (시발놈)
+쉐킷쉐킷	CLEAN	하드네거티브	2	1	135	CLEAN	false	0.95	25078	흥겨운 의성어
+18년아	EVASION	숫자섞기	2	1	136	FLAGGED	true	0.99	25078	욕설 포함
+dutajrdj	EVASION	한영오타	2	1	137	CLEAN	false	0.95	25078	무작위 영문 자판
+설거지남	AMBIGUOUS	집단비하	2	1	138	FLAGGED	true	0.85	25078	남성 비하 인터넷 신조어
+이건니거야	CLEAN	하드네거티브	2	1	139	FLAGGED	true	0.85	25078	인종차별적 표현(Nigger) 연상 가능성 있으나 문맥에 따라 다름
+ㅆ1ㅂㄴ	EVASION	초성숫자혼합	2	1	140	FLAGGED	true	0.99	25078	초성/숫자 우회 욕설
+ㅈ2ㄹ	EVASION	초성숫자혼합	2	1	141	FLAGGED	true	0.99	25078	초성/숫자 우회 욕설 (지랄)
+simp	AMBIGUOUS	애매	2	1	142	CLEAN	false	0.85	25078	인터넷 속어(과도하게 호의적인 사람), 강한 비속어는 아님
+개저씨싫어	AMBIGUOUS	혐오차별	2	1	143	FLAGGED	true	0.90	25078	세대/성별 비하 표현 포함
+모지리	AMBIGUOUS	애매	2	1	144	CLEAN	false	0.80	25078	바보를 뜻하는 순화 전 방언/속어
+ㄱㅓㄹ레년	EVASION	자모분리	2	1	145	FLAGGED	true	0.99	25078	여성 비하 성적 욕설
+ㅅㄹㅎ	CLEAN	하드네거티브	2	1	146	CLEAN	false	0.95	25078	초성 '사랑해'
+씨ㅂㅏㄹ년	EVASION	자모분리	2	1	147	FLAGGED	true	0.99	25078	욕설 포함
+번개소리	CLEAN	하드네거티브	2	1	148	CLEAN	false	0.99	25078	자연 현상 표현
+saltwater	CLEAN	하드네거티브	2	1	149	CLEAN	false	0.99	25078	소금물 (영어)
+개10새끼	EVASION	숫자섞기	2	1	150	FLAGGED	true	0.99	25078	욕설 포함
+십장생	AMBIGUOUS	애매	2	1	151	CLEAN	false	0.99	25078	십장생 (일반 단어이나 욕설로 오인될 수 있는 형태)
+ㅂㅕㅇ아리	CLEAN	하드네거티브	2	1	152	CLEAN	false	0.99	25078	병아리 (오인 방지용 일반 단어)
+Tidsus	EVASION	한영오타	2	1	153	CLEAN	false	0.99	25078	임의의 외국어 조합
+시8롬	EVASION	숫자섞기	2	1	154	FLAGGED	true	0.99	25078	비속어 포함
+좇같네	EVASION	발음변형	2	1	155	FLAGGED	true	0.99	25078	비속어 포함
+땅따먹기	CLEAN	하드네거티브	2	1	156	CLEAN	false	0.99	25078	전래 놀이 이름
+ㅈㄱㄴ	CLEAN	하드네거티브	2	1	157	CLEAN	false	0.95	25078	인터넷 줄임말 (제목이 곧 내용)
+밝히는남자	AMBIGUOUS	애매	2	1	158	PENDING	true	0.80	25078	성적으로 밝힌다는 암시 표현
+5개년계획	CLEAN	하드네거티브	2	1	159	CLEAN	false	0.99	25078	경제/정책 용어
+신발장	CLEAN	하드네거티브	2	1	160	CLEAN	false	0.99	25078	가구 이름
+빨아줄래	AMBIGUOUS	성적표현	2	1	161	FLAGGED	true	0.90	25078	성적 은어 표현
+이등신	AMBIGUOUS	애매	2	1	162	CLEAN	false	0.85	25078	신체 비율 표현
+milf	PROFANE	성적표현	2	1	163	FLAGGED	true	0.90	25078	성인물 장르 관련 은어
+한녀아웃	PROFANE	혐오차별	2	1	164	FLAGGED	true	0.95	25078	여성 혐오 및 배제 표현
+シバル	EVASION	닮은꼴문자	2	1	165	FLAGGED	true	0.99	25078	가타카나 표기 욕설 (시발)
+마음부자	CLEAN	하드네거티브	2	1	166	CLEAN	false	0.99	25078	긍정적 표현
+19금	AMBIGUOUS	애매	2	1	167	CLEAN	false	0.90	25078	성인 등급 표시
+벼ㅇ신아	EVASION	자모분리	2	1	168	FLAGGED	true	0.99	25078	자모 분리 욕설
+ㅆ1발놈	EVASION	숫자섞기	2	1	169	FLAGGED	true	0.99	25078	비속어 포함
+도태남집합	AMBIGUOUS	집단비하	2	1	170	FLAGGED	true	0.90	25078	남성 비하 혐오 표현 포함
+씨qkf	EVASION	한영오타	2	1	171	FLAGGED	true	0.99	25078	한영 변환 욕설 (씨발)
+2ㅅㄲ야	EVASION	초성숫자혼합	2	1	172	FLAGGED	true	0.99	25078	초성/숫자 우회 욕설 (새끼야)
+자지러지는중	CLEAN	하드네거티브	2	1	173	FLAGGED	true	0.95	25078	성적 은어 포함
+G잡대출신	AMBIGUOUS	집단비하	2	1	174	FLAGGED	true	0.85	25078	대학교 비하 표현
+폐급신병	AMBIGUOUS	집단비하	2	1	175	FLAGGED	true	0.85	25078	군대 은어 비하 표현
+病身새끼	EVASION	닮은꼴문자	2	1	176	FLAGGED	true	0.99	25078	한자/한글 혼합 욕설
+足같은놈	EVASION	닮은꼴문자	2	1	177	FLAGGED	true	0.99	25078	한자 치환 비속어 (조같네/존나)
+ㅆ8놈	EVASION	초성숫자혼합	2	1	178	FLAGGED	true	0.99	25078	비속어 포함
+누드김밥	CLEAN	하드네거티브	2	1	179	CLEAN	false	0.99	25078	음식 이름
+삼일한실천	PROFANE	혐오차별	2	1	180	FLAGGED	true	0.95	25078	여성 폭력 미화 극단적 혐오 표현
+늑음마	EVASION	발음변형	2	1	181	FLAGGED	true	0.99	25078	패드립 변형
+Marseille	CLEAN	하드네거티브	2	1	182	CLEAN	false	0.99	25078	지명 (마르세유)
+10창년	EVASION	숫자섞기	2	1	183	FLAGGED	true	0.99	25078	비속어 포함
+개슬람추방	PROFANE	혐오차별	2	1	184	FLAGGED	true	0.95	25078	특정 종교 혐오 표현
+외노자꺼져	PROFANE	집단비하	2	1	185	FLAGGED	true	0.90	25078	이주노동자 배제/비하 표현
+whw_ Rk라	EVASION	복합삽입	2	1	186	FLAGGED	true	0.99	25078	한영 전환 오류 우회 욕설
+ㅅㅅㅣ발	EVASION	자모분리	2	1	187	FLAGGED	true	0.99	25078	욕설 포함
+오피추천좀	AMBIGUOUS	성적표현	2	1	188	FLAGGED	true	0.95	25078	불법 성매매 업소 암시
+파5후쿰척	AMBIGUOUS	집단비하	2	1	189	CLEAN	false	0.90	25078	인터넷 밈/합성어
+애비로드	CLEAN	하드네거티브	2	1	190	CLEAN	false	0.99	25078	음반 이름 (Abbey Road)
+10알놈	EVASION	숫자섞기	2	1	191	FLAGGED	true	0.99	25078	비속어 포함
+C8놈	EVASION	숫자섞기	2	1	192	FLAGGED	true	0.99	25078	알파벳/숫자 우회 욕설
+18새끼	EVASION	숫자섞기	2	1	193	FLAGGED	true	0.99	25078	욕설 포함
+개판오분전	CLEAN	하드네거티브	2	1	194	CLEAN	false	0.90	25078	일반 관용구
+멍청도	PROFANE	혐오차별	2	1	195	FLAGGED	true	0.85	25078	지역 비하 표현 (충청도 비하)
+n1gga왕	EVASION	혐오차별	2	1	196	FLAGGED	true	0.95	25078	인종차별적 비속어 변형
+개같이부활	AMBIGUOUS	애매	2	1	197	CLEAN	false	0.95	25078	인터넷 유행어
+0이나먹어	EVASION	숫자섞기	2	1	198	FLAGGED	true	0.95	25078	욕설 변형 (나이 먹어 등 비하)
+개망나니	AMBIGUOUS	애매	2	1	199	FLAGGED	true	0.85	25078	거친 표현이나 직설적 욕설은 아님
+ㅁ ㅣ.친 年	EVASION	복합삽입	2	1	200	FLAGGED	true	0.99	25078	띄어쓰기 및 특수문자 우회 욕설
+노답인생	CLEAN	하드네거티브	2	1	201	CLEAN	false	0.85	25078	자조적 신조어
+개이득	CLEAN	하드네거티브	2	1	202	CLEAN	false	0.99	25078	일반 신조어
+흡연충	AMBIGUOUS	집단비하	2	1	203	FLAGGED	true	0.90	25078	비하성 접미사 -충 포함
+우라질	AMBIGUOUS	애매	2	1	204	FLAGGED	true	0.90	25078	경멸적 비속어
+우유두잔	CLEAN	하드네거티브	2	1	205	CLEAN	false	0.99	25078	일반 표현
+basement	CLEAN	하드네거티브	2	1	206	CLEAN	false	0.99	25078	지하 (영어)
+thicc	AMBIGUOUS	애매	2	1	207	CLEAN	false	0.85	25078	인터넷 신조어(글래머러스한 몸매)
+글자지우개	CLEAN	하드네거티브	2	1	208	CLEAN	false	0.99	25078	일반 표현
+쥰내싫어	EVASION	발음변형	2	1	209	CLEAN	false	0.85	25078	비속어 성격의 강조 부사(쥰내) 포함이나 감정 표현
+개toRl	EVASION	한영오타	2	1	210	FLAGGED	true	0.95	25078	비속어 변형
+보슬아치	PROFANE	혐오차별	2	1	211	FLAGGED	true	0.99	25078	극단적 여성 혐오 비하 속어
+ㅎㅇㅌ	CLEAN	하드네거티브	2	1	212	CLEAN	false	0.99	25078	초성 '화이팅'
+18번곡	CLEAN	하드네거티브	2	1	213	CLEAN	false	0.99	25078	노래방 애창곡 표현
+7ㅐ새끼	EVASION	숫자섞기	2	1	214	FLAGGED	true	0.99	25078	숫자 치환 욕설
+딜도수집가	PROFANE	성적표현	2	1	215	FLAGGED	true	0.95	25078	성인용품 명칭 포함
+∧ㅣ발롬	EVASION	닮은꼴문자	2	1	216	FLAGGED	true	0.99	25078	특수문자 우회 욕설
+물걸레청소	CLEAN	하드네거티브	2	1	217	CLEAN	false	0.99	25078	청소 도구/행동
+Bangkok	CLEAN	하드네거티브	2	1	218	CLEAN	false	0.99	25078	도시 이름 (방콕)
+편돌이주제	AMBIGUOUS	집단비하	2	1	219	FLAGGED	true	0.85	25078	직업 비하 표현 포함
+c8ㅅㄲ	EVASION	초성숫자혼합	2	1	220	FLAGGED	true	0.99	25078	욕설 약어 및 초성
+ㅅㅣ발롬	EVASION	자모분리	2	1	221	FLAGGED	true	0.99	25078	욕설 포함
+ㅆl ㅂr.ㄹ	EVASION	복합삽입	2	1	222	FLAGGED	true	0.99	25078	특수문자 및 영문 혼용 우회 욕설
+DikDik	CLEAN	하드네거티브	2	1	223	CLEAN	false	0.90	25078	동물 이름 (다이커)
+즉시발송	CLEAN	하드네거티브	2	1	224	CLEAN	false	0.99	25078	쇼핑몰 용어
+원나잇구함	PROFANE	성적표현	2	1	225	FLAGGED	true	0.95	25078	불법 성관계 구인 표현
+f_u ck3r	EVASION	복합삽입	2	1	226	FLAGGED	true	0.99	25078	영어 욕설 우회
+신발놈아	EVASION	발음변형	2	1	227	FLAGGED	true	0.99	25078	욕설 우회 변형
+야스각	EVASION	성적표현	2	1	228	FLAGGED	true	0.85	25078	성적 은어(야스) 포함
+ㅂㅅ2냐	EVASION	초성숫자혼합	2	1	229	FLAGGED	true	0.99	25078	초성 및 숫자 우회 비속어 (병신)
+홍어삼합	CLEAN	하드네거티브	2	1	230	CLEAN	false	0.85	25078	음식 이름이나 특정 지역 비하 멸칭으로도 쓰이나 기본은 음식
+ㅈㄴㄱㄷ	AMBIGUOUS	애매	2	1	231	CLEAN	false	0.90	25078	초성어 (존나 기다려 등 다양하게 해석 가능)
+si8nom	EVASION	숫자섞기	2	1	232	FLAGGED	true	0.99	25078	한영 변환 욕설 (시발놈)
+ㄱㅅ77	EVASION	초성숫자혼합	2	1	233	FLAGGED	true	0.99	25078	초성 및 숫자 우회 욕설
+十 .八 놈	EVASION	복합삽입	2	1	234	FLAGGED	true	0.99	25078	한자/특수문자 우회 욕설
+빌어먹을	AMBIGUOUS	애매	2	1	235	FLAGGED	true	0.85	25078	욕설/거친 감탄사
+폰팔이	AMBIGUOUS	집단비하	2	1	236	PENDING	true	0.80	25078	판매직 비하 속어
+ㅅ2ㅂㄹ	EVASION	초성숫자혼합	2	1	237	FLAGGED	true	0.99	25078	초성/숫자 우회 욕설
+꼴페미척결	PROFANE	혐오차별	2	1	238	FLAGGED	true	0.90	25078	여성주의 비하 및 혐오 표현
+호모	AMBIGUOUS	애매	2	1	239	FLAGGED	true	0.85	25078	성소수자 비하적 어조로 사용될 수 있는 단어
+갈보리언덕	CLEAN	하드네거티브	2	1	240	CLEAN	false	0.99	25078	종교적 지명 (Calvary)
+조까튼놈	EVASION	발음변형	2	1	241	FLAGGED	true	0.99	25078	욕설 포함
+한강간식	CLEAN	하드네거티브	2	1	242	CLEAN	false	0.99	25078	일반 표현
+MobyDick	CLEAN	하드네거티브	2	1	243	CLEAN	false	0.99	25078	소설 제목 (모비 딕)
+whwrkxsp	EVASION	한영오타	2	1	244	FLAGGED	true	0.99	25078	한영 변환 욕설
+BlueTit	CLEAN	하드네거티브	2	1	245	CLEAN	false	0.90	25078	새 이름 (박새)
+군ㅂㅏ리	AMBIGUOUS	집단비하	2	1	246	FLAGGED	true	0.85	25078	군인 비하 속어
+쑥개떡	CLEAN	하드네거티브	2	1	247	CLEAN	false	0.99	25078	떡 이름
+wl.f kf하네	EVASION	복합삽입	2	1	248	FLAGGED	true	0.99	25078	한영 변환 욕설 우회
+ㄴ1애ㅁ1	EVASION	초성숫자혼합	2	1	249	FLAGGED	true	0.99	25078	패드립 우회 (니애미)
+qud. tls아	EVASION	복합삽입	2	1	250	FLAGGED	true	0.99	25078	한영 변환 우회 욕설 (병신아)
+느ㄱㅡㅁ마	EVASION	자모분리	2	2	251	FLAGGED	true	0.98	11048	패드립 우회 표현
+꼬추왕	AMBIGUOUS	애매	2	2	252	FLAGGED	true	0.95	11048	성적 은어 포함
+의자위고양이	CLEAN	하드네거티브	2	2	253	CLEAN	false	0.99	11048	일반 닉네임
+짱깨끗해	CLEAN	하드네거티브	2	2	254	CLEAN	false	0.85	11048	비속어가 포함되지 않은 일반 단어의 조합
+삼시세끼	CLEAN	하드네거티브	2	2	255	CLEAN	false	0.99	11048	일반 닉네임
+ＳＩ발놈	EVASION	닮은꼴문자	2	2	256	FLAGGED	true	0.99	11048	욕설 및 비속어 조합
+짱개집	PROFANE	혐오차별	2	2	257	CLEAN	false	0.90	11048	음식점 명칭 및 일반 단어
+월거지탈출	AMBIGUOUS	집단비하	2	2	258	FLAGGED	true	0.85	11048	비하적 표현 포함
+오른쪽발목	CLEAN	하드네거티브	2	2	259	CLEAN	false	0.99	11048	일반 닉네임
+badass	AMBIGUOUS	애매	2	2	260	CLEAN	false	0.90	11048	일반적인 영어 슬랭
+Tmqkf	EVASION	한영오타	2	2	261	FLAGGED	true	0.98	11048	한글 타자 밀림 욕설(시발)
+키스방단골	PROFANE	성적표현	2	2	262	FLAGGED	true	0.95	11048	유흥업소 관련 단어 포함
+똥꼬츙	EVASION	혐오차별	2	2	263	FLAGGED	true	0.97	11048	비하적 접미사 및 비속어 포함
+씹 _쌔 끼	EVASION	복합삽입	2	2	264	FLAGGED	true	0.99	11048	욕설 우회 표현
+한남동주민	CLEAN	하드네거티브	2	2	265	CLEAN	false	0.90	11048	지역 명칭 및 일반 단어
+대변항멸치	CLEAN	하드네거티브	2	2	266	CLEAN	false	0.95	11048	지명 및 해산물 조합
+창기사	CLEAN	하드네거티브	2	2	267	CLEAN	false	0.90	11048	일반 단어
+동창녀석	CLEAN	하드네거티브	2	2	268	CLEAN	false	0.95	11048	일반 닉네임
+쓰리썸가자	PROFANE	성적표현	2	2	269	FLAGGED	true	0.98	11048	성적 행위 관련 비속어
+Uranus	CLEAN	하드네거티브	2	2	270	CLEAN	false	0.99	11048	행성 이름(천왕성)
+떡치는밤	PROFANE	성적표현	2	2	271	FLAGGED	true	0.97	11048	성적 은어 포함
+개불한접시	CLEAN	하드네거티브	2	2	272	CLEAN	false	0.99	11048	음식 관련 일반 닉네임
+ㅅ8ㄴ	EVASION	초성숫자혼합	2	2	273	FLAGGED	true	0.96	11048	초성 및 숫자 우회 욕설
+좆ㅂㅏㅂ	EVASION	자모분리	2	2	274	FLAGGED	true	0.99	11048	욕설 포함
+니 ㅇH.ㅁl	EVASION	복합삽입	2	2	275	FLAGGED	true	0.98	11048	우회 패드립
+alclssus	EVASION	한영오타	2	2	276	FLAGGED	true	0.98	11048	한글 자판 타자 밀림(미친년)
+ㅊㅏㅇ녀	EVASION	자모분리	2	2	277	FLAGGED	true	0.97	11048	비속어 및 성적 비하 표현
+ShihTzu	CLEAN	하드네거티브	2	2	278	CLEAN	false	0.99	11048	견종 이름(시츄)
+사창리군인	CLEAN	하드네거티브	2	2	279	CLEAN	false	0.90	11048	지명 및 군인 조합
+Tkdsha	EVASION	한영오타	2	2	280	FLAGGED	true	0.98	11048	한글 자판 타자 밀림(쌍놈)
+凸ㅗ凸	EVASION	닮은꼴문자	2	2	281	FLAGGED	true	0.99	11048	욕설 의미의 특수문자
+Ekfqo극혐	EVASION	집단비하	2	2	282	FLAGGED	true	0.90	11048	혐오 표현 포함
+ryan4life	CLEAN	하드네거티브	2	2	283	CLEAN	false	0.99	11048	일반 영문 닉네임
+犬새끼	EVASION	닮은꼴문자	2	2	284	FLAGGED	true	0.98	11048	한자 및 한글 혼용 욕설
+ㅁㅊ2ㄴ	EVASION	초성숫자혼합	2	2	285	FLAGGED	true	0.97	11048	초성 및 숫자 우회 욕설
+십자매한쌍	CLEAN	하드네거티브	2	2	286	CLEAN	false	0.99	11048	조류 이름 및 일반 단어
+발기찬하루	AMBIGUOUS	성적표현	2	2	287	FLAGGED	true	0.85	11048	성적 의미를 연상시키는 단어
+doan장인	EVASION	성적표현	2	2	288	CLEAN	false	0.90	11048	일반 닉네임
+ㄴ2ㅁㅆㅂ	EVASION	초성숫자혼합	2	2	289	FLAGGED	true	0.99	11048	패드립 및 욕설 조합
+지균충	AMBIGUOUS	집단비하	2	2	290	FLAGGED	true	0.95	11048	벌레를 뜻하는 비하적 접미사 포함
+RjwuTlqkf	EVASION	한영오타	2	2	291	FLAGGED	true	0.99	11048	타자 밀림 욕설
+개세끼	EVASION	발음변형	2	2	292	FLAGGED	true	0.99	11048	욕설 포함
+미친㉡	EVASION	닮은꼴문자	2	2	293	FLAGGED	true	0.95	11048	욕설 우회 표현
+밤새끼적끼적	CLEAN	하드네거티브	2	2	294	CLEAN	false	0.85	11048	일반 단어들의 나열
+마약김밥	CLEAN	하드네거티브	2	2	295	CLEAN	false	0.99	11048	일반적인 음식 명칭
+λl발	EVASION	닮은꼴문자	2	2	296	FLAGGED	true	0.97	11048	특수문자 우회 욕설
+꺼 져.ㅆ ㅂ	EVASION	복합삽입	2	2	297	FLAGGED	true	0.98	11048	욕설 포함
+7시출신	AMBIGUOUS	혐오차별	2	2	298	PENDING	true	0.80	11048	지역 비하 정치적 은어
+애자냐너	PROFANE	혐오차별	2	2	299	FLAGGED	true	0.95	11048	장애인 비하 비속어 포함
+ㅈㅗㅅ같네	EVASION	자모분리	2	2	300	FLAGGED	true	0.99	11048	욕설 포함
+식빵굽는곰	CLEAN	하드네거티브	2	2	301	CLEAN	false	0.99	11048	일반 닉네임
+밤일잘해요	AMBIGUOUS	성적표현	2	2	302	CLEAN	false	0.80	11048	중의적 표현이나 명확한 비속어는 아님
+촛불꺼져요	CLEAN	하드네거티브	2	2	303	CLEAN	false	0.90	11048	정치적 표현이나 비속어 아님
+ㅈ.ㅣ 랄ㄴㄴ	EVASION	복합삽입	2	2	304	FLAGGED	true	0.98	11048	욕설 포함
+지라ㄹ마	EVASION	자모분리	2	2	305	FLAGGED	true	0.98	11048	욕설 포함
+Takeshita	CLEAN	하드네거티브	2	2	306	CLEAN	false	0.99	11048	일본 성씨
+qbdtls	EVASION	한영오타	2	2	307	CLEAN	false	0.95	11048	의미를 알 수 없는 영문 조합
+입싸장인	PROFANE	성적표현	2	2	308	FLAGGED	true	0.96	11048	성적 은어 포함
+구라시키여행	CLEAN	하드네거티브	2	2	309	CLEAN	false	0.99	11048	일본 지명(구라시키)
+젠장할	AMBIGUOUS	애매	2	2	310	CLEAN	false	0.90	11048	경미한 감탄사이자 일반 표현
+ㅅㅂ18ㄴ	EVASION	초성숫자혼합	2	2	311	FLAGGED	true	0.99	11048	욕설 조합
+나는쓰레기	AMBIGUOUS	애매	2	2	312	CLEAN	false	0.95	11048	자조적 일반 표현
+조팝나무	CLEAN	하드네거티브	2	2	313	CLEAN	false	0.99	11048	식물 이름
+페니실린	CLEAN	하드네거티브	2	2	314	CLEAN	false	0.99	11048	의약품 이름
+ㄹㅇ	CLEAN	하드네거티브	2	2	315	CLEAN	false	0.99	11048	신조어 감탄사
+이시키	AMBIGUOUS	애매	2	2	316	CLEAN	false	0.85	11048	경미한 구어체 표현
+된장녀	PROFANE	혐오차별	2	2	317	FLAGGED	true	0.90	11048	사회적 비하 멸칭
+곱씹는밤	CLEAN	하드네거티브	2	2	318	CLEAN	false	0.99	11048	일반 닉네임
+ㅈㄹ2야	EVASION	초성숫자혼합	2	2	319	FLAGGED	true	0.98	11048	욕설 포함
+sldoal	EVASION	한영오타	2	2	320	FLAGGED	true	0.98	11048	한글 자판 타자 밀림(나이키 등의 변형 또는 비속어)
+㋛발	EVASION	닮은꼴문자	2	2	321	FLAGGED	true	0.97	11048	특수문자 조합 욕설
+퐁퐁남등장	AMBIGUOUS	집단비하	2	2	322	FLAGGED	true	0.85	11048	신조어 비하 멸칭 포함
+개미핥기	CLEAN	하드네거티브	2	2	323	CLEAN	false	0.99	11048	동물 이름
+ѕіbаl놈	EVASION	닮은꼴문자	2	2	324	FLAGGED	true	0.99	11048	알파벳 우회 욕설
+착한녀석	CLEAN	하드네거티브	2	2	325	CLEAN	false	0.99	11048	일반 닉네임
+노가다꾼주제	AMBIGUOUS	집단비하	2	2	326	FLAGGED	true	0.85	11048	직업 비하적 표현
+도시락싸가지고	CLEAN	하드네거티브	2	2	327	CLEAN	false	0.99	11048	일반 표현
+원숭이섬나라	PROFANE	혐오차별	2	2	328	CLEAN	false	0.95	11048	게임 또는 일반 표현
+Phuket	CLEAN	하드네거티브	2	2	329	CLEAN	false	0.99	11048	지명(푸켓)
+qudtlstoRl	EVASION	한영오타	2	2	330	FLAGGED	true	0.98	11048	한글 타자 밀림 욕설(뻐큐머시기)
+ghfhtoRl	EVASION	한영오타	2	2	331	CLEAN	false	0.90	11048	타자 밀림 무의미한 영문
+씨줄날줄	CLEAN	하드네거티브	2	2	332	CLEAN	false	0.99	11048	직물 관련 일반 단어
+젠신병자	AMBIGUOUS	혐오차별	2	2	333	FLAGGED	true	0.95	11048	정신병자 비하 변형 표현
+상폐女	AMBIGUOUS	혐오차별	2	2	334	FLAGGED	true	0.90	11048	여성 비하 멸칭
+빠가사리탕	CLEAN	하드네거티브	2	2	335	CLEAN	false	0.95	11048	메기의 방언 및 요리 이름
+빨아줘요	AMBIGUOUS	애매	2	2	336	FLAGGED	true	0.85	11048	성적 은어로 사용될 수 있는 표현
+PS5expert	CLEAN	하드네거티브	2	2	337	CLEAN	false	0.99	11048	게임기 관련 일반 닉네임
+병시ㄴ새끼	EVASION	자모분리	2	2	338	FLAGGED	true	0.99	11048	욕설 조합
+꿀벅지	AMBIGUOUS	애매	2	2	339	CLEAN	false	0.85	11048	신체 관련 대중적 표현
+오개년계획	CLEAN	하드네거티브	2	2	340	CLEAN	false	0.99	11048	역사/경제 용어
+십년감수	CLEAN	하드네거티브	2	2	341	CLEAN	false	0.99	11048	일반 사자성어
+공존나눔	CLEAN	하드네거티브	2	2	342	CLEAN	false	0.99	11048	일반 공익 단어
+탈모충	AMBIGUOUS	집단비하	2	2	343	FLAGGED	true	0.98	11048	비하적 접미사 포함
+존예보스	AMBIGUOUS	애매	2	2	344	CLEAN	false	0.85	11048	신조어 긍정 표현
+rotorrl	EVASION	한영오타	2	2	345	CLEAN	false	0.95	11048	영문 조합
+ehlswkdsu	EVASION	혐오차별	2	2	346	CLEAN	false	0.95	11048	영문 조합
+Tl발놈	EVASION	한영오타	2	2	347	FLAGGED	true	0.99	11048	욕설 조합
+十八年아	EVASION	닮은꼴문자	2	2	348	FLAGGED	true	0.98	11048	한자 욕설 조합
+내맘충전중	CLEAN	하드네거티브	2	2	349	CLEAN	false	0.90	11048	일반 닉네임
+노팬티	AMBIGUOUS	애매	2	2	350	CLEAN	false	0.85	11048	노출 관련 단어이나 일반적 표현
+짱개집	PROFANE	혐오차별	3	1	1	MISSING			12029	
+가슴만지자	PROFANE	성적표현	3	1	2	MISSING			12029	
+모쏠아다	AMBIGUOUS	집단비하	3	1	3	MISSING			12029	
+ѕіbаl놈	EVASION	닮은꼴문자	3	1	4	MISSING			12029	
+인간말종	AMBIGUOUS	애매	3	1	5	MISSING			12029	
+학식충	AMBIGUOUS	집단비하	3	1	6	MISSING			12029	
+ㅁ ㅣ.친 年	EVASION	복합삽입	3	1	7	MISSING			12029	
+Cockapoo	CLEAN	하드네거티브	3	1	8	MISSING			12029	
+조팝나무	CLEAN	하드네거티브	3	1	9	MISSING			12029	
+애비로드	CLEAN	하드네거티브	3	1	10	MISSING			12029	
+닝기미	EVASION	발음변형	3	1	11	MISSING			12029	
+C8놈	EVASION	숫자섞기	3	1	12	MISSING			12029	
+Lucas5	CLEAN	하드네거티브	3	1	13	MISSING			12029	
+ㅊㅏㅇ녀	EVASION	자모분리	3	1	14	MISSING			12029	
+saltwater	CLEAN	하드네거티브	3	1	15	MISSING			12029	
+ㅅㅅㅣ발	EVASION	자모분리	3	1	16	MISSING			12029	
+좇같네	EVASION	발음변형	3	1	17	MISSING			12029	
+비치발리볼	CLEAN	하드네거티브	3	1	18	MISSING			12029	
+개세끼	EVASION	발음변형	3	1	19	MISSING			12029	
+삼시세끼	CLEAN	하드네거티브	3	1	20	MISSING			12029	
+즉시발송	CLEAN	하드네거티브	3	1	21	MISSING			12029	
+노팬티	AMBIGUOUS	애매	3	1	22	MISSING			12029	
+깜둥이꺼져	PROFANE	혐오차별	3	1	23	MISSING			12029	
+RjwuTlqkf	EVASION	한영오타	3	1	24	MISSING			12029	
+페니실린	CLEAN	하드네거티브	3	1	25	MISSING			12029	
+니가참좋아	CLEAN	하드네거티브	3	1	26	MISSING			12029	
+마약김밥	CLEAN	하드네거티브	3	1	27	MISSING			12029	
+0이나먹어	EVASION	숫자섞기	3	1	28	MISSING			12029	
+느 금.ㅁ r	EVASION	복합삽입	3	1	29	MISSING			12029	
+발정난토끼	AMBIGUOUS	성적표현	3	1	30	MISSING			12029	
+ba55guitar	CLEAN	하드네거티브	3	1	31	MISSING			12029	
+귀머거리냐	AMBIGUOUS	혐오차별	3	1	32	MISSING			12029	
+ㄴ1애ㅁ1	EVASION	초성숫자혼합	3	1	33	MISSING			12029	
+젖은낙엽	CLEAN	하드네거티브	3	1	34	MISSING			12029	
+ㅂㅕㅇ아리	CLEAN	하드네거티브	3	1	35	MISSING			12029	
+꺼 져.ㅆ ㅂ	EVASION	복합삽입	3	1	36	MISSING			12029	
+7시출신	AMBIGUOUS	혐오차별	3	1	37	MISSING			12029	
+이건니거야	CLEAN	하드네거티브	3	1	38	MISSING			12029	
+땡중	AMBIGUOUS	집단비하	3	1	39	MISSING			12029	
+제기랄	AMBIGUOUS	애매	3	1	40	MISSING			12029	
+Mich3lle	CLEAN	하드네거티브	3	1	41	MISSING			12029	
+㉥㉦같은놈	EVASION	닮은꼴문자	3	1	42	MISSING			12029	
+밋힌놈	EVASION	발음변형	3	1	43	MISSING			12029	
+갈보리언덕	CLEAN	하드네거티브	3	1	44	MISSING			12029	
+tlvkfsha	EVASION	한영오타	3	1	45	MISSING			12029	
+쉐킷쉐킷	CLEAN	하드네거티브	3	1	46	MISSING			12029	
+시8롬	EVASION	숫자섞기	3	1	47	MISSING			12029	
+개똥벌레	CLEAN	하드네거티브	3	1	48	MISSING			12029	
+심야동물원	CLEAN	하드네거티브	3	1	49	MISSING			12029	
+할매미	AMBIGUOUS	혐오차별	3	1	50	MISSING			12029	
+ehlswkdsu	EVASION	혐오차별	3	1	51	MISSING			12029	
+ㅅ2ㅂㄹ	EVASION	초성숫자혼합	3	1	52	MISSING			12029	
+18번곡	CLEAN	하드네거티브	3	1	53	MISSING			12029	
+ㅂㅅ2냐	EVASION	초성숫자혼합	3	1	54	MISSING			12029	
+10새끼	EVASION	숫자섞기	3	1	55	MISSING			12029	
+ㅇㄴㅇ구함	EVASION	성적표현	3	1	56	MISSING			12029	
+의자위고양이	CLEAN	하드네거티브	3	1	57	MISSING			12029	
+원나잇구함	PROFANE	성적표현	3	1	58	MISSING			12029	
+입싸장인	PROFANE	성적표현	3	1	59	MISSING			12029	
+호모사피엔스	CLEAN	하드네거티브	3	1	60	MISSING			12029	
+벼ㅇ신아	EVASION	자모분리	3	1	61	MISSING			12029	
+qud. tls아	EVASION	복합삽입	3	1	62	MISSING			12029	
+Tmqkf	EVASION	한영오타	3	1	63	MISSING			12029	
+짱깨끗해	CLEAN	하드네거티브	3	1	64	MISSING			12029	
+포항과메기	CLEAN	하드네거티브	3	1	65	MISSING			12029	
+2백충	AMBIGUOUS	집단비하	3	1	66	MISSING			12029	
+병시ㄴ새끼	EVASION	자모분리	3	1	67	MISSING			12029	
+도시락싸가지고	CLEAN	하드네거티브	3	1	68	MISSING			12029	
+pen_island	AMBIGUOUS	애매	3	1	69	MISSING			12029	
+ㅈㅗㅅ같네	EVASION	자모분리	3	1	70	MISSING			12029	
+쉬바	AMBIGUOUS	애매	3	1	71	MISSING			12029	
+개10새끼	EVASION	숫자섞기	3	1	72	MISSING			12029	
+f_u ck3r	EVASION	복합삽입	3	1	73	MISSING			12029	
+씹색히	EVASION	발음변형	3	1	74	MISSING			12029	
+ㅅㅂ18ㄴ	EVASION	초성숫자혼합	3	1	75	MISSING			12029	
+Ekfqo극혐	EVASION	집단비하	3	1	76	MISSING			12029	
+밤일잘해요	AMBIGUOUS	성적표현	3	1	77	MISSING			12029	
+si8nom	EVASION	숫자섞기	3	1	78	MISSING			12029	
+니 ㅇH.ㅁl	EVASION	복합삽입	3	1	79	MISSING			12029	
+삼일한실천	PROFANE	혐오차별	3	1	80	MISSING			12029	
+폰팔이	AMBIGUOUS	집단비하	3	1	81	MISSING			12029	
+이시키	AMBIGUOUS	애매	3	1	82	MISSING			12029	
+노답인생	CLEAN	하드네거티브	3	1	83	MISSING			12029	
+노콘선호	PROFANE	성적표현	3	1	84	MISSING			12029	
+시골촌놈	AMBIGUOUS	애매	3	1	85	MISSING			12029	
+Uranus	CLEAN	하드네거티브	3	1	86	MISSING			12029	
+신발놈아	EVASION	발음변형	3	1	87	MISSING			12029	
+㋛발	EVASION	닮은꼴문자	3	1	88	MISSING			12029	
+폐급신병	AMBIGUOUS	집단비하	3	1	89	MISSING			12029	
+마음부자	CLEAN	하드네거티브	3	1	90	MISSING			12029	
+js_expert	CLEAN	하드네거티브	3	1	91	MISSING			12029	
+벗방보는중	PROFANE	성적표현	3	1	92	MISSING			12029	
+외노자	AMBIGUOUS	애매	3	1	93	MISSING			12029	
+멍청도	PROFANE	혐오차별	3	1	94	MISSING			12029	
+월거지탈출	AMBIGUOUS	집단비하	3	1	95	MISSING			12029	
+물걸레청소	CLEAN	하드네거티브	3	1	96	MISSING			12029	
+빠순이	AMBIGUOUS	집단비하	3	1	97	MISSING			12029	
+땅따먹기	CLEAN	하드네거티브	3	1	98	MISSING			12029	
+레즈극혐	PROFANE	혐오차별	3	1	99	MISSING			12029	
+퐁퐁남등장	AMBIGUOUS	집단비하	3	1	100	MISSING			12029	
+7H.ㅅH 77ㅣ	EVASION	복합삽입	3	1	101	MISSING			12029	
+오른쪽발목	CLEAN	하드네거티브	3	1	102	MISSING			12029	
+꼬추왕	AMBIGUOUS	애매	3	1	103	MISSING			12029	
+개저씨싫어	AMBIGUOUS	혐오차별	3	1	104	MISSING			12029	
+탈모충	AMBIGUOUS	집단비하	3	1	105	MISSING			12029	
+ㅆ8놈	EVASION	초성숫자혼합	3	1	106	MISSING			12029	
+ㄹㅇ	CLEAN	하드네거티브	3	1	107	MISSING			12029	
+woodcock	CLEAN	하드네거티브	3	1	108	MISSING			12029	
+빨아줄래	AMBIGUOUS	성적표현	3	1	109	MISSING			12029	
+시바ㄹ점	AMBIGUOUS	자모분리	3	1	110	MISSING			12029	
+물많은누나	AMBIGUOUS	성적표현	3	1	111	MISSING			12029	
+우유두잔	CLEAN	하드네거티브	3	1	112	MISSING			12029	
+십8놈	EVASION	숫자섞기	3	1	113	MISSING			12029	
+10창년	EVASION	숫자섞기	3	1	114	MISSING			12029	
+top5hits	CLEAN	하드네거티브	3	1	115	MISSING			12029	
+나는쓰레기	AMBIGUOUS	애매	3	1	116	MISSING			12029	
+빨아줘요	AMBIGUOUS	애매	3	1	117	MISSING			12029	
+ㅅ8ㄴ	EVASION	초성숫자혼합	3	1	118	MISSING			12029	
+병시니	EVASION	발음변형	3	1	119	MISSING			12029	
+십장생	AMBIGUOUS	애매	3	1	120	MISSING			12029	
+개독박멸	PROFANE	집단비하	3	1	121	MISSING			12029	
+simp	AMBIGUOUS	애매	3	1	122	MISSING			12029	
+∧ㅣ발롬	EVASION	닮은꼴문자	3	1	123	MISSING			12029	
+개toRl	EVASION	한영오타	3	1	124	MISSING			12029	
+찌질이	AMBIGUOUS	애매	3	1	125	MISSING			12029	
+G잡대출신	AMBIGUOUS	집단비하	3	1	126	MISSING			12029	
+꿀벅지	AMBIGUOUS	애매	3	1	127	MISSING			12029	
+ＳＩ발놈	EVASION	닮은꼴문자	3	1	128	MISSING			12029	
+오징어통구이	CLEAN	하드네거티브	3	1	129	MISSING			12029	
+대변항멸치	CLEAN	하드네거티브	3	1	130	MISSING			12029	
+japchae	CLEAN	하드네거티브	3	1	131	MISSING			12029	
+젖꼭지수집	PROFANE	성적표현	3	1	132	MISSING			12029	
+Tkdsha	EVASION	한영오타	3	1	133	MISSING			12029	
+수급자거지	AMBIGUOUS	집단비하	3	1	134	MISSING			12029	
+느ㄱㅡㅁ마	EVASION	자모분리	3	1	135	MISSING			12029	
+십년감수	CLEAN	하드네거티브	3	1	136	MISSING			12029	
+MobyDick	CLEAN	하드네거티브	3	1	137	MISSING			12029	
+ㅁ1친년	EVASION	숫자섞기	3	1	138	MISSING			12029	
+꼴페미척결	PROFANE	혐오차별	3	1	139	MISSING			12029	
+十 .八 놈	EVASION	복합삽입	3	1	140	MISSING			12029	
+ㅂ ㅕ ㅇ.신	EVASION	복합삽입	3	1	141	MISSING			12029	
+GalaxyA55	CLEAN	하드네거티브	3	1	142	MISSING			12029	
+용병신청	CLEAN	하드네거티브	3	1	143	MISSING			12029	
+편돌이주제	AMBIGUOUS	집단비하	3	1	144	MISSING			12029	
+Tidsus	EVASION	한영오타	3	1	145	MISSING			12029	
+Marseille	CLEAN	하드네거티브	3	1	146	MISSING			12029	
+ロl친年	EVASION	닮은꼴문자	3	1	147	MISSING			12029	
+개.ㅅ ㅐ77l	EVASION	복합삽입	3	1	148	MISSING			12029	
+개슬람추방	PROFANE	혐오차별	3	1	149	MISSING			12029	
+개망나니	AMBIGUOUS	애매	3	1	150	MISSING			12029	
+촛불꺼져요	CLEAN	하드네거티브	3	1	151	MISSING			12029	
+씹 _쌔 끼	EVASION	복합삽입	3	1	152	MISSING			12029	
+ㅆ1발놈	EVASION	숫자섞기	3	1	153	MISSING			12029	
+엿머거	EVASION	발음변형	3	1	154	MISSING			12029	
+조건만남ㄱ	PROFANE	성적표현	3	1	155	MISSING			12029	
+ㅁㅣㅊㅣㄴ년	EVASION	자모분리	3	1	156	MISSING			12029	
+basement	CLEAN	하드네거티브	3	1	157	MISSING			12029	
+病身새끼	EVASION	닮은꼴문자	3	1	158	MISSING			12029	
+ㄱㅈㅇ	AMBIGUOUS	애매	3	1	159	MISSING			12029	
+풀발ㄱㅣ	EVASION	성적표현	3	1	160	MISSING			12029	
+qudtlstoRl	EVASION	한영오타	3	1	161	MISSING			12029	
+아가리쿠스	CLEAN	하드네거티브	3	1	162	MISSING			12029	
+젠장할	AMBIGUOUS	애매	3	1	163	MISSING			12029	
+군ㅂㅏ리	AMBIGUOUS	집단비하	3	1	164	MISSING			12029	
+좆ㅂㅏㅂ	EVASION	자모분리	3	1	165	MISSING			12029	
+즤랄	EVASION	발음변형	3	1	166	MISSING			12029	
+된장녀	PROFANE	혐오차별	3	1	167	MISSING			12029	
+곱씹는밤	CLEAN	하드네거티브	3	1	168	MISSING			12029	
+dutajrdj	EVASION	한영오타	3	1	169	MISSING			12029	
+씨 ~빨 롬	EVASION	복합삽입	3	1	170	MISSING			12029	
+조선족극혐	PROFANE	혐오차별	3	1	171	MISSING			12029	
+키스방단골	PROFANE	성적표현	3	1	172	MISSING			12029	
+ShihTzu	CLEAN	하드네거티브	3	1	173	MISSING			12029	
+미친노마	EVASION	발음변형	3	1	174	MISSING			12029	
+야스각	EVASION	성적표현	3	1	175	MISSING			12029	
+닥 .쳐 ㅂㅅ	EVASION	복합삽입	3	1	176	MISSING			12029	
+ㅆ1ㅂㄴ	EVASION	초성숫자혼합	3	1	177	MISSING			12029	
+구라시키여행	CLEAN	하드네거티브	3	1	178	MISSING			12029	
+ㅆㅑㅇ년	EVASION	자모분리	3	1	179	MISSING			12029	
+ㅂㅠㅇ신	EVASION	자모분리	3	1	180	MISSING			12029	
+ㅈㄱㄴ	CLEAN	하드네거티브	3	1	181	MISSING			12029	
+자지러지는중	CLEAN	하드네거티브	3	1	182	MISSING			12029	
+떡.치.자	EVASION	성적표현	3	1	183	MISSING			12029	
+유방동주민	CLEAN	하드네거티브	3	1	184	MISSING			12029	
+오개년계획	CLEAN	하드네거티브	3	1	185	MISSING			12029	
+DikDik	CLEAN	하드네거티브	3	1	186	MISSING			12029	
+똥꼬츙	EVASION	혐오차별	3	1	187	MISSING			12029	
+소추소심	AMBIGUOUS	혐오차별	3	1	188	MISSING			12029	
+돼지국밥	CLEAN	하드네거티브	3	1	189	MISSING			12029	
+ㅈ2ㄹ	EVASION	초성숫자혼합	3	1	190	MISSING			12029	
+좌빨	PROFANE	집단비하	3	1	191	MISSING			12029	
+빌어먹을	AMBIGUOUS	애매	3	1	192	MISSING			12029	
+빨갱이	PROFANE	집단비하	3	1	193	MISSING			12029	
+10알놈	EVASION	숫자섞기	3	1	194	MISSING			12029	
+c8ㅅㄲ	EVASION	초성숫자혼합	3	1	195	MISSING			12029	
+벙어리	AMBIGUOUS	애매	3	1	196	MISSING			12029	
+여자는부엌	PROFANE	혐오차별	3	1	197	MISSING			12029	
+ㅁㅊ2ㄴ	EVASION	초성숫자혼합	3	1	198	MISSING			12029	
+nigiri	CLEAN	하드네거티브	3	1	199	MISSING			12029	
+미친㉡	EVASION	닮은꼴문자	3	1	200	MISSING			12029	
+틀니압수	AMBIGUOUS	혐오차별	3	1	201	MISSING			12029	
+シバル	EVASION	닮은꼴문자	3	1	202	MISSING			12029	
+犬새끼	EVASION	닮은꼴문자	3	1	203	MISSING			12029	
+떡치는밤	PROFANE	성적표현	3	1	204	MISSING			12029	
+쓰리썸가자	PROFANE	성적표현	3	1	205	MISSING			12029	
+개미핥기	CLEAN	하드네거티브	3	1	206	MISSING			12029	
+7ㅅ77	EVASION	초성숫자혼합	3	1	207	MISSING			12029	
+MS_Excel	CLEAN	하드네거티브	3	1	208	MISSING			12029	
+식빵굽는곰	CLEAN	하드네거티브	3	1	209	MISSING			12029	
+기레기척결	AMBIGUOUS	집단비하	3	1	210	MISSING			12029	
+쑥개떡	CLEAN	하드네거티브	3	1	211	MISSING			12029	
+ㅈ1ㄹ	EVASION	초성숫자혼합	3	1	212	MISSING			12029	
+외노자꺼져	PROFANE	집단비하	3	1	213	MISSING			12029	
+똥꼬발랄	CLEAN	하드네거티브	3	1	214	MISSING			12029	
+whw_ Rk라	EVASION	복합삽입	3	1	215	MISSING			12029	
+사까시왕	PROFANE	성적표현	3	1	216	MISSING			12029	
+존예보스	AMBIGUOUS	애매	3	1	217	MISSING			12029	
+신발장	CLEAN	하드네거티브	3	1	218	MISSING			12029	
+ㅁ1ㅊㄴ	EVASION	초성숫자혼합	3	1	219	MISSING			12029	
+한남동주민	CLEAN	하드네거티브	3	1	220	MISSING			12029	
+h0mo꺼져	EVASION	혐오차별	3	1	221	MISSING			12029	
+조ㄴ나웃김	EVASION	자모분리	3	1	222	MISSING			12029	
+발기찬하루	AMBIGUOUS	성적표현	3	1	223	MISSING			12029	
+이등신	AMBIGUOUS	애매	3	1	224	MISSING			12029	
+사창리군인	CLEAN	하드네거티브	3	1	225	MISSING			12029	
+10팔놈	EVASION	숫자섞기	3	1	226	MISSING			12029	
+ghfhtoRl	EVASION	한영오타	3	1	227	MISSING			12029	
+씨qkf	EVASION	한영오타	3	1	228	MISSING			12029	
+동남아노예	PROFANE	혐오차별	3	1	229	MISSING			12029	
+싸고싶다	AMBIGUOUS	애매	3	1	230	MISSING			12029	
+착한녀석	CLEAN	하드네거티브	3	1	231	MISSING			12029	
+애자냐너	PROFANE	혐오차별	3	1	232	MISSING			12029	
+Phuket	CLEAN	하드네거티브	3	1	233	MISSING			12029	
+λl발	EVASION	닮은꼴문자	3	1	234	MISSING			12029	
+쪼다	AMBIGUOUS	애매	3	1	235	MISSING			12029	
+여ㅅ먹어	EVASION	자모분리	3	1	236	MISSING			12029	
+쥰내싫어	EVASION	발음변형	3	1	237	MISSING			12029	
+sldoal	EVASION	한영오타	3	1	238	MISSING			12029	
+犬찰아웃	AMBIGUOUS	집단비하	3	1	239	MISSING			12029	
+doan장인	EVASION	성적표현	3	1	240	MISSING			12029	
+홍어삼합	CLEAN	하드네거티브	3	1	241	MISSING			12029	
+BlueTit	CLEAN	하드네거티브	3	1	242	MISSING			12029	
+씨ㅂㅏㄹ년	EVASION	자모분리	3	1	243	MISSING			12029	
+7ㅐ새끼	EVASION	숫자섞기	3	1	244	MISSING			12029	
+tl q.kf 년	EVASION	복합삽입	3	1	245	MISSING			12029	
+썅뇬	EVASION	발음변형	3	1	246	MISSING			12029	
+18새끼	EVASION	숫자섞기	3	1	247	MISSING			12029	
+콩나물대가리	CLEAN	하드네거티브	3	1	248	MISSING			12029	
+개쌍도출신	PROFANE	혐오차별	3	1	249	MISSING			12029	
+ㅈㄹ2야	EVASION	초성숫자혼합	3	1	250	MISSING			12029	
+니0ㅐ미	EVASION	숫자섞기	3	2	251	FLAGGED	true	0.95	9215	패드립 비속어 우회
+PS5expert	CLEAN	하드네거티브	3	2	252	CLEAN	false	0.99	9215	일반 닉네임
+박아줄게	AMBIGUOUS	성적표현	3	2	253	FLAGGED	true	0.85	9215	성적 표현 포함
+상폐女	AMBIGUOUS	혐오차별	3	2	254	PENDING	true	0.80	9215	비하적 표현 포함
+qud신아	EVASION	한영오타	3	2	255	FLAGGED	true	0.90	9215	욕설 포함
+ㅈ.ㅣ 랄ㄴㄴ	EVASION	복합삽입	3	2	256	FLAGGED	true	0.95	9215	비속어 우회 표현
+ｹｾｯｷ야	EVASION	닮은꼴문자	3	2	257	FLAGGED	true	0.95	9215	외국어 형태 욕설
+자위중독	PROFANE	성적표현	3	2	258	FLAGGED	true	0.90	9215	선정적 단어 포함
+凸ㅗ凸	EVASION	닮은꼴문자	3	2	259	FLAGGED	true	0.90	9215	욕설 의미의 특수문자
+늑음마	EVASION	발음변형	3	2	260	FLAGGED	true	0.90	9215	패드립 변형 표현
+Hangook	CLEAN	하드네거티브	3	2	261	CLEAN	false	0.99	9215	일반 닉네임
+개불한접시	CLEAN	하드네거티브	3	2	262	CLEAN	false	0.99	9215	일반 음식 관련 닉네임
+한강간식	CLEAN	하드네거티브	3	2	263	CLEAN	false	0.99	9215	일반 닉네임
+n1gga왕	EVASION	혐오차별	3	2	264	FLAGGED	true	0.95	9215	인종차별적 비속어 포함
+19금	AMBIGUOUS	애매	3	2	265	CLEAN	false	0.90	9215	등급 표기
+qbdtls	EVASION	한영오타	3	2	266	CLEAN	false	0.70	9215	단순 오타 또는 무의미한 영문
+원숭이섬나라	PROFANE	혐오차별	3	2	267	CLEAN	false	0.99	9215	일반 닉네임
+우라질	AMBIGUOUS	애매	3	2	268	FLAGGED	true	0.90	9215	비속어 포함
+쉬바나원챔	CLEAN	하드네거티브	3	2	269	CLEAN	false	0.90	9215	게임 캐릭터 이름 조합 (쉬바나)
+ㄴ2ㅁㅆㅂ	EVASION	초성숫자혼합	3	2	270	FLAGGED	true	0.99	9215	욕설 및 패드립 초성/숫자 우회
+젠신병자	AMBIGUOUS	혐오차별	3	2	271	FLAGGED	true	0.85	9215	비하적 표현 포함
+동창녀석	CLEAN	하드네거티브	3	2	272	CLEAN	false	0.90	9215	일반 닉네임
+공존나눔	CLEAN	하드네거티브	3	2	273	CLEAN	false	0.99	9215	일반 닉네임
+ryan4life	CLEAN	하드네거티브	3	2	274	CLEAN	false	0.99	9215	일반 영문 닉네임
+сибаль	EVASION	닮은꼴문자	3	2	275	FLAGGED	true	0.95	9215	러시아어로 표기된 욕설
+ㅈㄴㄱㄷ	AMBIGUOUS	애매	3	2	276	CLEAN	false	0.80	9215	단순 초성
+Takeshita	CLEAN	하드네거티브	3	2	277	CLEAN	false	0.99	9215	일반 일본식 이름
+2년아	EVASION	숫자섞기	3	2	278	FLAGGED	true	0.90	9215	욕설 변형
+젖같네	EVASION	발음변형	3	2	279	FLAGGED	true	0.95	9215	비속어 포함
+조까튼놈	EVASION	발음변형	3	2	280	FLAGGED	true	0.95	9215	비속어 포함
+쉣더뻑	EVASION	발음변형	3	2	281	FLAGGED	true	0.90	9215	영어 욕설 음차
+짭새단속	AMBIGUOUS	집단비하	3	2	282	PENDING	true	0.80	9215	비속어(짭새) 포함
+Bangkok	CLEAN	하드네거티브	3	2	283	CLEAN	false	0.99	9215	지명
+설거지남	AMBIGUOUS	집단비하	3	2	284	PENDING	true	0.75	9215	혐오/비하적 은어 포함
+내맘충전중	CLEAN	하드네거티브	3	2	285	CLEAN	false	0.90	9215	일반 말장난
+모지리	AMBIGUOUS	애매	3	2	286	CLEAN	false	0.80	9215	표준어(모자란 사람의 속칭)이나 경계선 비속어
+글자지우개	CLEAN	하드네거티브	3	2	287	CLEAN	false	0.99	9215	일반 닉네임
+ㅅㄹㅎ	CLEAN	하드네거티브	3	2	288	CLEAN	false	0.90	9215	사랑해 초성
+꽃병신상	CLEAN	하드네거티브	3	2	289	FLAGGED	true	0.95	9215	비속어 포함
+개판오분전	CLEAN	하드네거티브	3	2	290	CLEAN	false	0.90	9215	관용구
+창기사	CLEAN	하드네거티브	3	2	291	CLEAN	false	0.90	9215	일반 닉네임
+도랏맨	AMBIGUOUS	애매	3	2	292	CLEAN	false	0.90	9215	신조어 감탄사
+thicc	AMBIGUOUS	애매	3	2	293	CLEAN	false	0.90	9215	인터넷 슬랭
+개18놈	EVASION	숫자섞기	3	2	294	FLAGGED	true	0.95	9215	욕설 포함
+의자지킴이	CLEAN	하드네거티브	3	2	295	CLEAN	false	0.99	9215	일반 닉네임
+지라ㄹ마	EVASION	자모분리	3	2	296	FLAGGED	true	0.95	9215	비속어 포함
+ㅈ77ㅏ	EVASION	초성숫자혼합	3	2	297	FLAGGED	true	0.90	9215	비속어 우회
+보슬아치	PROFANE	혐오차별	3	2	298	FLAGGED	true	0.95	9215	여성 혐오 비하적 신조어
+Tl발놈	EVASION	한영오타	3	2	299	FLAGGED	true	0.95	9215	욕설 포함
+꺼져ㅆㅣ발	EVASION	자모분리	3	2	300	FLAGGED	true	0.95	9215	욕설 포함
+후장개통	PROFANE	성적표현	3	2	301	FLAGGED	true	0.95	9215	변태적 성적 표현
+足같은놈	EVASION	닮은꼴문자	3	2	302	FLAGGED	true	0.95	9215	한자 혼용 욕설
+십자매한쌍	CLEAN	하드네거티브	3	2	303	CLEAN	false	0.90	9215	조류 이름
+번개같이	CLEAN	하드네거티브	3	2	304	CLEAN	false	0.99	9215	일반 부사구
+호박씨팔아요	CLEAN	하드네거티브	3	2	305	CLEAN	false	0.99	9215	일반 닉네임
+ㅅㅣ발롬	EVASION	자모분리	3	2	306	FLAGGED	true	0.95	9215	욕설 포함
+TlqtoRl	EVASION	한영오타	3	2	307	FLAGGED	true	0.95	9215	한영변환 욕설 (씨발)
+badass	AMBIGUOUS	애매	3	2	308	CLEAN	false	0.90	9215	일반 영어 슬랭
+十八年아	EVASION	닮은꼴문자	3	2	309	FLAGGED	true	0.95	9215	한자 욕설
+닥쳐온겨울	CLEAN	하드네거티브	3	2	310	CLEAN	false	0.99	9215	일반 닉네임
+까보전	AMBIGUOUS	혐오차별	3	2	311	FLAGGED	true	0.85	9215	지역/집단 비하 은어
+ㅎㅇㅌ	CLEAN	하드네거티브	3	2	312	CLEAN	false	0.99	9215	화이팅 초성
+ㄱㅓㄹ레년	EVASION	자모분리	3	2	313	FLAGGED	true	0.95	9215	비속어 포함
+⊥⊥먹어라	EVASION	닮은꼴문자	3	2	314	FLAGGED	true	0.90	9215	특수문자 우회 욕설
+호모	AMBIGUOUS	애매	3	2	315	PENDING	true	0.70	9215	성소수자 비하적 어휘로 사용될 수 있음
+마더뻐커	EVASION	발음변형	3	2	316	FLAGGED	true	0.95	9215	영어 욕설 음차
+노가다꾼주제	AMBIGUOUS	집단비하	3	2	317	PENDING	true	0.80	9215	직업 비하 표현
+人丨발놈	EVASION	닮은꼴문자	3	2	318	FLAGGED	true	0.95	9215	한자 변형 욕설
+milf	PROFANE	성적표현	3	2	319	PENDING	true	0.80	9215	성인물 슬랭
+도둑놈의갈고리	CLEAN	하드네거티브	3	2	320	CLEAN	false	0.99	9215	식물 이름
+흡연충	AMBIGUOUS	집단비하	3	2	321	FLAGGED	true	0.85	9215	벌레 접미사 비하어
+누드김밥	CLEAN	하드네거티브	3	2	322	CLEAN	false	0.99	9215	음식 이름
+wl.f kf하네	EVASION	복합삽입	3	2	323	CLEAN	false	0.60	9215	의미 불명
+유니섹스	CLEAN	하드네거티브	3	2	324	CLEAN	false	0.99	9215	일반 용어
+밝히는남자	AMBIGUOUS	애매	3	2	325	CLEAN	false	0.80	9215	성적인 뉘앙스가 있으나 직접적 비속어 아님
+빠가사리탕	CLEAN	하드네거티브	3	2	326	CLEAN	false	0.90	9215	물고기 이름(빠가사리)이 포함된 음식
+ㄱㅅ77	EVASION	초성숫자혼합	3	2	327	CLEAN	false	0.50	9215	단순 초성 및 숫자
+도태남집합	AMBIGUOUS	집단비하	3	2	328	FLAGGED	true	0.85	9215	혐오/비하 은어 포함
+2ㅅㄲ야	EVASION	초성숫자혼합	3	2	329	FLAGGED	true	0.95	9215	욕설 포함
+파5후쿰척	AMBIGUOUS	집단비하	3	2	330	PENDING	true	0.70	9215	비하성 신조어 뉘앙스
+개이득	CLEAN	하드네거티브	3	2	331	CLEAN	false	0.95	9215	일반 신조어
+개같이부활	AMBIGUOUS	애매	3	2	332	CLEAN	false	0.90	9215	일반 인터넷밈
+오피추천좀	AMBIGUOUS	성적표현	3	2	333	FLAGGED	true	0.85	9215	불법 성매매 관련 은어
+씨줄날줄	CLEAN	하드네거티브	3	2	334	CLEAN	false	0.99	9215	직물 용어
+Yamashita	CLEAN	하드네거티브	3	2	335	CLEAN	false	0.99	9215	일반 일본식 성씨
+지균충	AMBIGUOUS	집단비하	3	2	336	FLAGGED	true	0.85	9215	비하 접미사 포함
+rotorrl	EVASION	한영오타	3	2	337	CLEAN	false	0.70	9215	무의미한 영문
+한녀아웃	PROFANE	혐오차별	3	2	338	FLAGGED	true	0.90	9215	여성 혐오 표현 포함
+밤새끼적끼적	CLEAN	하드네거티브	3	2	339	CLEAN	false	0.90	9215	말장난
+alclssus	EVASION	한영오타	3	2	340	CLEAN	false	0.70	9215	무의미한 영문
+기타운지법	CLEAN	하드네거티브	3	2	341	CLEAN	false	0.99	9215	악기 연주법
+josh17	CLEAN	하드네거티브	3	2	342	CLEAN	false	0.99	9215	일반 닉네임
+씨발로마	PROFANE	발음변형	3	2	343	FLAGGED	true	0.95	9215	욕설 포함
+ㅆl ㅂr.ㄹ	EVASION	복합삽입	3	2	344	FLAGGED	true	0.95	9215	우회 욕설
+whwrkxsp	EVASION	한영오타	3	2	345	FLAGGED	true	0.95	9215	한영변환 욕설 (조까)
+날씨발표	CLEAN	하드네거티브	3	2	346	CLEAN	false	0.90	9215	언어유희 (날씨 + 발표)
+18년아	EVASION	숫자섞기	3	2	347	FLAGGED	true	0.95	9215	욕설 포함
+딜도수집가	PROFANE	성적표현	3	2	348	FLAGGED	true	0.90	9215	성인용품 명칭 포함
+번개소리	CLEAN	하드네거티브	3	2	349	CLEAN	false	0.99	9215	일반 닉네임
+5개년계획	CLEAN	하드네거티브	3	2	350	CLEAN	false	0.99	9215	일반 정책 용어

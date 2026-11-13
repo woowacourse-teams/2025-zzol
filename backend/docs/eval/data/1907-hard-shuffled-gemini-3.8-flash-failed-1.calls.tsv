@@ -1,0 +1,7 @@
+run	batch	size	succeeded	latency_ms	prompt_tokens	candidates_tokens	cached_tokens	thoughts_tokens	total_tokens	failure
+1	1	250	false	300255	0	0	0	0	0	ServerException: 504 DEADLINE_EXCEEDED. Deadline expired before operation cou
+1	2	100	false	298578	0	0	0	0	0	ServerException: 504 DEADLINE_EXCEEDED. Deadline expired before operation cou
+2	1	250	false	4052	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+2	2	100	false	85290	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+3	1	250	false	6259	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d
+3	2	100	false	1304	0	0	0	0	0	ServerException: 503 UNAVAILABLE. This model is currently experiencing high d

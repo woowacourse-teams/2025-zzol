@@ -33,3 +33,19 @@ dependencies {
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 }
+
+// 실제 Gemini를 부르는 골든셋 러너(@Tag("golden"))는 기본 test에서 뺀다. goldenTest로만 돈다
+tasks.named<Test>("test") {
+    useJUnitPlatform { excludeTags("golden") }
+}
+
+// 골든셋 평가 러너(@Tag("golden")). 실제 Gemini를 불러 build/reports/golden/에 리포트를 쓴다.
+// GEMINI_API_KEY가 없으면 건너뛴다
+tasks.register<Test>("goldenTest") {
+    description = "닉네임 검열 골든셋 평가"
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("golden") }
+    outputs.upToDateWhen { false }
+}

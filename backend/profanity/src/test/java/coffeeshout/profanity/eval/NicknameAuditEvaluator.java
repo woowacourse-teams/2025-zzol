@@ -1,0 +1,324 @@
+package coffeeshout.profanity.eval;
+
+import coffeeshout.profanity.domain.TextNormalizer;
+import coffeeshout.profanity.domain.audit.AiConfidence;
+import coffeeshout.profanity.domain.audit.NicknameAuditResult;
+import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
+import coffeeshout.profanity.domain.audit.NicknameAuditor;
+import coffeeshout.profanity.eval.GoldenItem.Expected;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.CallRecord;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Mismatch;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Predicted;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Rate;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.RunRow;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.Scores;
+import coffeeshout.profanity.eval.NicknameAuditEvaluation.TokenUsage;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * 골든셋을 검열기에 돌려 정답과 비교한다. 정답 비교만 하고 LLM 채점은 하지 않는다.
+ */
+@Slf4j
+@RequiredArgsConstructor
+public class NicknameAuditEvaluator {
+
+    private static final Set<String> FILLER_REASONS = Set.of("응답 파싱 실패", "응답 항목 수 불일치", "응답 닉네임 불일치");
+
+    private final TextNormalizer textNormalizer;
+    private final int minTermLength;
+
+    /** 닉네임을 골든셋 순서 그대로 보내고 토큰 사용량은 재지 않는다. */
+    public NicknameAuditEvaluation evaluate(
+            List<GoldenItem> items, NicknameAuditor auditor, int batchSize, int repeats) {
+        return evaluate(items, auditor, batchSize, repeats, null, () -> TokenUsage.NONE);
+    }
+
+    /**
+     * @param shuffleSeed     null이 아니면 회차마다 {@code shuffleSeed + 회차}를 시드로 닉네임 순서를 섞는다.
+     *                        배치 안 위치가 판정에 주는 영향을 회차끼리 다르게 한다
+     * @param usageOfLastCall 방금 성공한 호출의 토큰 사용량. 배치 호출이 성공할 때마다 한 번 부른다
+     */
+    public NicknameAuditEvaluation evaluate(
+            List<GoldenItem> items,
+            NicknameAuditor auditor,
+            int batchSize,
+            int repeats,
+            Long shuffleSeed,
+            Supplier<TokenUsage> usageOfLastCall) {
+        if (batchSize <= 0 || repeats <= 0) {
+            throw new IllegalArgumentException(
+                    "배치 크기와 반복 횟수는 1 이상이어야 한다: batchSize=%d, repeats=%d".formatted(batchSize, repeats));
+        }
+        final List<CallRecord> calls = new ArrayList<>();
+        final List<RunRow> rows = new ArrayList<>();
+        final List<Map<String, NicknameAuditResult>> runs = IntStream.rangeClosed(1, repeats)
+                .mapToObj(run -> runOnce(
+                        ordered(items, shuffleSeed, run), auditor, batchSize, usageOfLastCall, calls, run, rows))
+                .toList();
+        final List<Judged> judged =
+                items.stream().map(item -> majority(item, runs)).toList();
+        // 판정을 못 받은 닉네임은 혼동행렬과 회차별 MISSING에만 남기고 비율 지표에서는 뺀다.
+        // 섞으면 호출이 전부 실패한 회차가 "오탐 0%, 미탐 100%"처럼 모델 성능으로 읽힌다
+        final List<Judged> answered = filter(judged, j -> j.predicted() != Predicted.MISSING);
+        final List<Judged> positives = filter(answered, j -> j.item().expected().isPositive());
+
+        return new NicknameAuditEvaluation(
+                items.size(),
+                repeats,
+                batchSize,
+                runs.stream().map(run -> missingCount(items, run)).toList(),
+                shuffleSeed,
+                calls,
+                scores(answered),
+                answered.stream()
+                        .collect(Collectors.groupingBy(
+                                j -> j.item().category(),
+                                LinkedHashMap::new,
+                                Collectors.collectingAndThen(Collectors.toList(), this::scores))),
+                confusion(judged),
+                rate(
+                        filter(answered, j -> j.item().expected() == Expected.CLEAN),
+                        j -> j.predicted().isPositive()),
+                rate(positives, j -> !j.predicted().isPositive()),
+                rate(
+                        filter(answered, j -> j.item().expected() == Expected.AMBIGUOUS),
+                        j -> j.predicted() == Predicted.PENDING),
+                rate(filter(positives, j -> j.predicted() == Predicted.FLAGGED), this::termsMatch),
+                instability(items, runs),
+                mismatches(judged),
+                rows);
+    }
+
+    private Map<String, NicknameAuditResult> runOnce(
+            List<GoldenItem> items,
+            NicknameAuditor auditor,
+            int batchSize,
+            Supplier<TokenUsage> usageOfLastCall,
+            List<CallRecord> calls,
+            int run,
+            List<RunRow> rows) {
+        final Map<String, NicknameAuditResult> byNickname = new HashMap<>();
+        for (int from = 0; from < items.size(); from += batchSize) {
+            final List<GoldenItem> batchItems = items.subList(from, Math.min(from + batchSize, items.size()));
+            final List<String> batch =
+                    batchItems.stream().map(GoldenItem::nickname).toList();
+            // 응답에 섞인 다른 배치 닉네임이 뒤 항목의 판정을 가로채지 않게 요청한 닉네임만 받는다
+            // HashSet이라 모델이 nickname을 null로 돌려줘도 contains가 터지지 않는다
+            final Set<String> requested = new HashSet<>(batch);
+            final long startedAt = System.nanoTime();
+            List<NicknameAuditResult> results = List.of();
+            String failure = "";
+            try {
+                results = auditor.audit(batch);
+            } catch (RuntimeException e) {
+                // 한 배치 실패로 평가 전체를 버리지 않는다. 결과를 못 받은 닉네임은 MISSING으로 센다.
+                log.warn("[GoldenEval] 배치 검열 실패. {}건을 MISSING으로 센다", batch.size(), e);
+                failure = failureLabel(e);
+            }
+            final Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
+            final int batchNumber = from / batchSize + 1;
+            calls.add(new CallRecord(
+                    run,
+                    batchNumber,
+                    batch.size(),
+                    latency,
+                    failure.isEmpty() ? usageOfLastCall.get() : TokenUsage.NONE,
+                    failure));
+            results.stream()
+                    .filter(result -> requested.contains(result.nickname()))
+                    .forEach(result -> byNickname.putIfAbsent(result.nickname(), result));
+            for (int i = 0; i < batchItems.size(); i++) {
+                final GoldenItem item = batchItems.get(i);
+                rows.add(row(item, run, batchNumber, from + i + 1, byNickname.get(item.nickname()), latency));
+            }
+        }
+        return byNickname;
+    }
+
+    /**
+     * 회차마다 받은 판정 중 가장 많이 나온 것을 그 닉네임의 판정으로 삼는다. 판정을 못 받은 회차는 세지 않는다.
+     * 표가 같으면 앞 회차에서 먼저 나온 판정을 쓴다. 한 회차라도 판정을 받았으면 지표에 들어간다.
+     */
+    private static Judged majority(GoldenItem item, List<Map<String, NicknameAuditResult>> runs) {
+        final List<NicknameAuditResult> answered = runs.stream()
+                .map(run -> run.get(item.nickname()))
+                .filter(result -> predict(result) != Predicted.MISSING)
+                .toList();
+        if (answered.isEmpty()) {
+            return new Judged(item, null);
+        }
+        final Map<Predicted, Long> votes = answered.stream()
+                .collect(Collectors.groupingBy(NicknameAuditEvaluator::predict, Collectors.counting()));
+        final long top = Collections.max(votes.values());
+        return new Judged(
+                item,
+                answered.stream()
+                        .filter(result -> votes.get(predict(result)) == top)
+                        .findFirst()
+                        .orElseThrow());
+    }
+
+    private static List<GoldenItem> ordered(List<GoldenItem> items, Long shuffleSeed, int run) {
+        if (shuffleSeed == null) {
+            return items;
+        }
+        final List<GoldenItem> shuffled = new ArrayList<>(items);
+        Collections.shuffle(shuffled, new Random(shuffleSeed + run));
+        return shuffled;
+    }
+
+    private static RunRow row(
+            GoldenItem item, int run, int batch, int position, NicknameAuditResult result, Duration latency) {
+        final Predicted predicted = predict(result);
+        final boolean answered = predicted != Predicted.MISSING;
+        return new RunRow(
+                item.nickname(),
+                item.expected(),
+                item.category(),
+                run,
+                batch,
+                position,
+                predicted,
+                // CLEAN은 flagged=false일 때만, FLAGGED와 PENDING은 flagged=true일 때만 나온다(NicknameAuditResult.of)
+                answered ? String.valueOf(predicted != Predicted.CLEAN) : "",
+                answered ? result.confidence().value().toPlainString() : "",
+                result == null ? "" : String.valueOf(result.reason()),
+                latency);
+    }
+
+    /** 실패 원인을 예외 사슬의 맨 안쪽 타입과 메시지 앞머리로 줄여 적는다. */
+    private static String failureLabel(Throwable e) {
+        Throwable root = e;
+        while (root.getCause() != null) {
+            root = root.getCause();
+        }
+        final String message = String.valueOf(root.getMessage()).replaceAll("\\s+", " ");
+        return root.getClass().getSimpleName() + ": " + message.substring(0, Math.min(message.length(), 60));
+    }
+
+    private Scores scores(List<Judged> judged) {
+        final List<Judged> labeled = filter(judged, j -> j.item().expected() != Expected.AMBIGUOUS);
+        final List<Judged> positives = filter(labeled, j -> j.item().expected().isPositive());
+        final Predicate<Judged> expectedPositive = j -> j.item().expected().isPositive();
+        return new Scores(
+                rate(filter(labeled, j -> j.predicted().isPositive()), expectedPositive),
+                rate(positives, j -> j.predicted().isPositive()),
+                rate(filter(labeled, j -> j.predicted() == Predicted.FLAGGED), expectedPositive),
+                rate(positives, j -> j.predicted() == Predicted.FLAGGED));
+    }
+
+    private Map<Expected, Map<Predicted, Integer>> confusion(List<Judged> judged) {
+        final Map<Expected, Map<Predicted, Integer>> matrix = new EnumMap<>(Expected.class);
+        for (final Expected expected : Expected.values()) {
+            final Map<Predicted, Integer> row = new EnumMap<>(Predicted.class);
+            for (final Predicted predicted : Predicted.values()) {
+                row.put(predicted, 0);
+            }
+            matrix.put(expected, row);
+        }
+        judged.forEach(j -> matrix.get(j.item().expected()).merge(j.predicted(), 1, Integer::sum));
+        return matrix;
+    }
+
+    private boolean termsMatch(Judged judged) {
+        final Set<String> actual = judged.result().extractProfanityFragments(textNormalizer, minTermLength).stream()
+                .map(textNormalizer::normalize)
+                .collect(Collectors.toSet());
+        final Set<String> expected = judged.item().expectedTerms().stream()
+                .map(textNormalizer::normalize)
+                .collect(Collectors.toSet());
+        return actual.equals(expected);
+    }
+
+    private static int missingCount(List<GoldenItem> items, Map<String, NicknameAuditResult> run) {
+        return Math.toIntExact(items.stream()
+                .filter(item -> predict(run.get(item.nickname())) == Predicted.MISSING)
+                .count());
+    }
+
+    /** 판정을 두 회차 이상 받은 닉네임만 잰다. 호출 실패로 빈 회차를 판정 변화로 세지 않는다. */
+    private Rate instability(List<GoldenItem> items, List<Map<String, NicknameAuditResult>> runs) {
+        final List<List<Predicted>> comparable = items.stream()
+                .map(item -> runs.stream()
+                        .map(run -> predict(run.get(item.nickname())))
+                        .filter(predicted -> predicted != Predicted.MISSING)
+                        .toList())
+                .filter(predictions -> predictions.size() >= 2)
+                .toList();
+        final long changed = comparable.stream()
+                .filter(predictions -> predictions.stream().distinct().count() > 1)
+                .count();
+        return new Rate(Math.toIntExact(changed), comparable.size());
+    }
+
+    private List<Mismatch> mismatches(List<Judged> judged) {
+        return judged.stream()
+                .filter(j -> j.predicted() != ideal(j.item().expected()))
+                .map(j -> new Mismatch(
+                        j.item().nickname(),
+                        j.item().category(),
+                        j.item().expected(),
+                        j.predicted(),
+                        j.result() == null ? "응답 없음" : j.result().reason()))
+                .toList();
+    }
+
+    private static Predicted ideal(Expected expected) {
+        return switch (expected) {
+            case PROFANE, EVASION -> Predicted.FLAGGED;
+            case AMBIGUOUS -> Predicted.PENDING;
+            case CLEAN -> Predicted.CLEAN;
+        };
+    }
+
+    private static Predicted predict(NicknameAuditResult result) {
+        if (result == null) {
+            return Predicted.MISSING;
+        }
+        // 운영 검열기가 응답에서 빠지거나 짝을 못 찾은 닉네임을 메울 때 쓰는 값이다. 모델이 보류한 게 아니다.
+        // 모델이 confidence 0.00으로 보류한 판정과 구분하려고 사유까지 본다(GeminiNicknameAuditor)
+        if (result.status() == NicknameAuditStatus.PENDING
+                && AiConfidence.UNKNOWN.equals(result.confidence())
+                && FILLER_REASONS.contains(result.reason())) {
+            return Predicted.MISSING;
+        }
+        return switch (result.status()) {
+            case FLAGGED -> Predicted.FLAGGED;
+            case PENDING -> Predicted.PENDING;
+            case CLEAN -> Predicted.CLEAN;
+            // 검열기는 위 셋만 돌려준다. 그 밖의 상태는 판정을 못 받은 것으로 센다.
+            default -> Predicted.MISSING;
+        };
+    }
+
+    private static List<Judged> filter(List<Judged> judged, Predicate<Judged> condition) {
+        return judged.stream().filter(condition).toList();
+    }
+
+    private static Rate rate(List<Judged> pool, Predicate<Judged> hit) {
+        return new Rate(Math.toIntExact(pool.stream().filter(hit).count()), pool.size());
+    }
+
+    private record Judged(GoldenItem item, NicknameAuditResult result) {
+
+        Predicted predicted() {
+            return predict(result);
+        }
+    }
+}

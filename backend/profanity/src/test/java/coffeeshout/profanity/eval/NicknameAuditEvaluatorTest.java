@@ -53,7 +53,7 @@ class NicknameAuditEvaluatorTest {
     }
 
     @Nested
-    class 첫_회차_지표 {
+    class 지표 {
 
         private static final List<GoldenItem> 항목 = List.of(
                 욕설("씨발놈", "직접욕설", "씨발"),
@@ -141,7 +141,7 @@ class NicknameAuditEvaluatorTest {
 
         @Test
         void 한_번만_돌리면_흔들림은_잴_수_없다() {
-            assertThat(결과.instability().toString()).isEqualTo("n/a");
+            assertThat(결과.instability()).isEqualTo(new Rate(0, 0));
         }
 
         @Test
@@ -203,7 +203,7 @@ class NicknameAuditEvaluatorTest {
 
         final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("고정닉", "일반닉네임")), 검열기, 100, 3);
 
-        assertThat(결과.instability().toString()).isEqualTo("n/a");
+        assertThat(결과.instability()).isEqualTo(new Rate(0, 0));
     }
 
     @Test
@@ -429,7 +429,9 @@ class NicknameAuditEvaluatorTest {
                 "첫째닉", NicknameAuditResult.of("첫째닉", true, 0.95, "욕설\t포함\n확실", 0.85),
                 "둘째닉", NicknameAuditResult.of("둘째닉", true, 0.6, "애매", 0.85),
                 "셋째닉", NicknameAuditResult.of("셋째닉", false, 0.999, "정상", 0.85),
-                "다섯째닉", new NicknameAuditResult("다섯째닉", NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 누락")));
+                "다섯째닉",
+                        new NicknameAuditResult(
+                                "다섯째닉", NicknameAuditStatus.PENDING, AiConfidence.UNKNOWN, "응답 항목 수 불일치")));
         final List<GoldenItem> 항목 = List.of(
                 욕설("첫째닉", "직접욕설", "첫째"), 경계("둘째닉"), 정상("셋째닉", "일반닉네임"), 정상("넷째닉", "일반닉네임"), 정상("다섯째닉", "일반닉네임"));
 
@@ -482,16 +484,88 @@ class NicknameAuditEvaluatorTest {
         assertThat(결과.ambiguousCapture()).isEqualTo(new Rate(1, 3));
     }
 
+    @Nested
+    class 다수결 {
+
+        private static NicknameAuditor 회차마다(NicknameAuditStatus... 회차별_판정) {
+            final AtomicInteger 호출 = new AtomicInteger();
+            return nicknames -> List.of(판정("용감한호랑이", 회차별_판정[호출.getAndIncrement()]));
+        }
+
+        @Test
+        void 흔들림을_뺀_지표는_회차_다수결_판정으로_센다() {
+            final NicknameAuditor 검열기 =
+                    회차마다(NicknameAuditStatus.CLEAN, NicknameAuditStatus.FLAGGED, NicknameAuditStatus.FLAGGED);
+
+            final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("용감한호랑이", "일반닉네임")), 검열기, 100, 3);
+
+            assertThat(결과.cleanFalsePositive()).isEqualTo(new Rate(1, 1));
+        }
+
+        @Test
+        void 표가_같으면_앞_회차_판정을_쓴다() {
+            final NicknameAuditor 검열기 = 회차마다(NicknameAuditStatus.CLEAN, NicknameAuditStatus.FLAGGED);
+
+            final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("용감한호랑이", "일반닉네임")), 검열기, 100, 2);
+
+            assertThat(결과.cleanFalsePositive()).isEqualTo(new Rate(0, 1));
+        }
+
+        @Test
+        void 첫_회차가_실패해도_다음_회차_판정으로_센다() {
+            final AtomicInteger 호출 = new AtomicInteger();
+            final NicknameAuditor 검열기 = nicknames -> {
+                if (호출.getAndIncrement() == 0) {
+                    throw new IllegalStateException("503");
+                }
+                return List.of(판정("용감한호랑이", NicknameAuditStatus.FLAGGED));
+            };
+
+            final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("용감한호랑이", "일반닉네임")), 검열기, 100, 2);
+
+            assertSoftly(softly -> {
+                softly.assertThat(결과.cleanFalsePositive()).isEqualTo(new Rate(1, 1));
+                softly.assertThat(결과.missingByRun()).containsExactly(1, 0);
+            });
+        }
+
+        @Test
+        void 모든_회차가_실패한_닉네임만_MISSING이다() {
+            final NicknameAuditor 검열기 = nicknames -> {
+                throw new IllegalStateException("503");
+            };
+
+            final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("용감한호랑이", "일반닉네임")), 검열기, 100, 2);
+
+            assertSoftly(softly -> {
+                softly.assertThat(결과.confusion().get(Expected.CLEAN)).containsEntry(Predicted.MISSING, 1);
+                softly.assertThat(결과.cleanFalsePositive()).isEqualTo(new Rate(0, 0));
+            });
+        }
+    }
+
     @Test
-    void 흔들림을_뺀_지표는_첫_회차_판정으로_센다() {
-        // 첫 회차는 CLEAN, 둘째 회차는 FLAGGED
-        final AtomicInteger 호출 = new AtomicInteger();
-        final NicknameAuditor 검열기 = nicknames -> List.of(
-                판정("용감한호랑이", 호출.getAndIncrement() == 0 ? NicknameAuditStatus.CLEAN : NicknameAuditStatus.FLAGGED));
+    void 배치_크기나_반복_횟수가_1보다_작으면_평가하지_않는다() {
+        final List<GoldenItem> 항목 = List.of(정상("용감한호랑이", "일반닉네임"));
+        final NicknameAuditor 검열기 = nicknames -> List.of();
 
-        final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(정상("용감한호랑이", "일반닉네임")), 검열기, 100, 2);
+        assertSoftly(softly -> {
+            softly.assertThatThrownBy(() -> evaluator.evaluate(항목, 검열기, 0, 1))
+                    .isInstanceOf(IllegalArgumentException.class);
+            softly.assertThatThrownBy(() -> evaluator.evaluate(항목, 검열기, 100, 0))
+                    .isInstanceOf(IllegalArgumentException.class);
+        });
+    }
 
-        assertThat(결과.cleanFalsePositive()).isEqualTo(new Rate(0, 1));
+    @Test
+    void 모델이_confidence_0으로_보류한_판정은_PENDING으로_센다() {
+        // 0.004는 반올림하면 AiConfidence.UNKNOWN(0.00)과 같아진다. 사유가 메운 값의 사유가 아니면 모델 판정이다
+        final NicknameAuditor 검열기 = nicknames ->
+                List.of(new NicknameAuditResult("애매닉", NicknameAuditStatus.PENDING, AiConfidence.of(0.004), "애매함"));
+
+        final NicknameAuditEvaluation 결과 = evaluator.evaluate(List.of(경계("애매닉")), 검열기, 100, 1);
+
+        assertThat(결과.confusion().get(Expected.AMBIGUOUS)).containsEntry(Predicted.PENDING, 1);
     }
 
     @Test

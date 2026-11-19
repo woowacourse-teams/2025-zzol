@@ -38,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class NicknameAuditEvaluator {
 
+    private static final Set<String> FILLER_REASONS = Set.of("응답 파싱 실패", "응답 항목 수 불일치", "응답 닉네임 불일치");
+
     private final TextNormalizer textNormalizer;
     private final int minTermLength;
 
@@ -59,15 +61,18 @@ public class NicknameAuditEvaluator {
             int repeats,
             Long shuffleSeed,
             Supplier<TokenUsage> usageOfLastCall) {
+        if (batchSize <= 0 || repeats <= 0) {
+            throw new IllegalArgumentException(
+                    "배치 크기와 반복 횟수는 1 이상이어야 한다: batchSize=%d, repeats=%d".formatted(batchSize, repeats));
+        }
         final List<CallRecord> calls = new ArrayList<>();
         final List<RunRow> rows = new ArrayList<>();
         final List<Map<String, NicknameAuditResult>> runs = IntStream.rangeClosed(1, repeats)
                 .mapToObj(run -> runOnce(
                         ordered(items, shuffleSeed, run), auditor, batchSize, usageOfLastCall, calls, run, rows))
                 .toList();
-        final List<Judged> judged = items.stream()
-                .map(item -> new Judged(item, runs.getFirst().get(item.nickname())))
-                .toList();
+        final List<Judged> judged =
+                items.stream().map(item -> majority(item, runs)).toList();
         // 판정을 못 받은 닉네임은 혼동행렬과 회차별 MISSING에만 남기고 비율 지표에서는 뺀다.
         // 섞으면 호출이 전부 실패한 회차가 "오탐 0%, 미탐 100%"처럼 모델 성능으로 읽힌다
         final List<Judged> answered = filter(judged, j -> j.predicted() != Predicted.MISSING);
@@ -144,6 +149,29 @@ public class NicknameAuditEvaluator {
             }
         }
         return byNickname;
+    }
+
+    /**
+     * 회차마다 받은 판정 중 가장 많이 나온 것을 그 닉네임의 판정으로 삼는다. 판정을 못 받은 회차는 세지 않는다.
+     * 표가 같으면 앞 회차에서 먼저 나온 판정을 쓴다. 한 회차라도 판정을 받았으면 지표에 들어간다.
+     */
+    private static Judged majority(GoldenItem item, List<Map<String, NicknameAuditResult>> runs) {
+        final List<NicknameAuditResult> answered = runs.stream()
+                .map(run -> run.get(item.nickname()))
+                .filter(result -> predict(result) != Predicted.MISSING)
+                .toList();
+        if (answered.isEmpty()) {
+            return new Judged(item, null);
+        }
+        final Map<Predicted, Long> votes = answered.stream()
+                .collect(Collectors.groupingBy(NicknameAuditEvaluator::predict, Collectors.counting()));
+        final long top = Collections.max(votes.values());
+        return new Judged(
+                item,
+                answered.stream()
+                        .filter(result -> votes.get(predict(result)) == top)
+                        .findFirst()
+                        .orElseThrow());
     }
 
     private static List<GoldenItem> ordered(List<GoldenItem> items, Long shuffleSeed, int run) {
@@ -263,8 +291,11 @@ public class NicknameAuditEvaluator {
         if (result == null) {
             return Predicted.MISSING;
         }
-        // 운영 검열기가 응답에서 빠지거나 짝을 못 찾은 닉네임을 메울 때 쓰는 값이다. 모델이 보류한 게 아니다
-        if (result.status() == NicknameAuditStatus.PENDING && AiConfidence.UNKNOWN.equals(result.confidence())) {
+        // 운영 검열기가 응답에서 빠지거나 짝을 못 찾은 닉네임을 메울 때 쓰는 값이다. 모델이 보류한 게 아니다.
+        // 모델이 confidence 0.00으로 보류한 판정과 구분하려고 사유까지 본다(GeminiNicknameAuditor)
+        if (result.status() == NicknameAuditStatus.PENDING
+                && AiConfidence.UNKNOWN.equals(result.confidence())
+                && FILLER_REASONS.contains(result.reason())) {
             return Predicted.MISSING;
         }
         return switch (result.status()) {

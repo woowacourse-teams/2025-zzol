@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * 골든셋 한 번 평가한 결과. 흔들림을 뺀 지표는 전부 첫 회차 판정으로 센다.
+ * 골든셋 한 번 평가한 결과. 흔들림을 뺀 지표는 전부 회차 다수결 판정으로 센다.
  * 비율 지표는 판정을 받은 닉네임만 분모에 넣는다. 판정을 못 받은 건수는 {@code missingByRun}과 혼동행렬에서 본다.
  *
  * @param missingByRun 회차마다 판정을 못 받은(MISSING) 닉네임 수
  * @param shuffleSeed 회차마다 닉네임 순서를 섞은 시드. 회차 n은 {@code shuffleSeed + n}을 쓴다. null이면 섞지 않았다
- * @param calls       모든 회차의 배치 호출 기록. 걸린 시간에는 호출 간격 대기와 SDK 재시도가 포함된다
+ * @param calls       모든 회차의 배치 호출 기록. 걸린 시간에는 호출 간격 대기가 들어가고, SDK 재시도를 켰으면 재시도 대기도 들어간다
  * @param confusion   정답 4종 × 판정 4종 건수
  * @param cleanFalsePositive 정상 닉네임을 걸러낸(FLAGGED 또는 PENDING) 비율
  * @param positiveMiss 욕설(PROFANE·EVASION)을 CLEAN으로 넘긴 비율
@@ -164,7 +164,8 @@ public record NicknameAuditEvaluation(
                 "# 닉네임 검열 골든셋 평가",
                 "",
                 "- 대상: " + subject,
-                "- 항목 %d건, 배치 %d건, %d회 반복. 흔들림을 뺀 지표는 첫 회차 기준이다".formatted(itemCount, batchSize, repeats),
+                "- 항목 %d건, 배치 %d건, %d회 반복. 흔들림을 뺀 지표는 회차 다수결 기준이다(표가 같으면 앞 회차)"
+                        .formatted(itemCount, batchSize, repeats),
                 "- 닉네임 순서: " + (shuffleSeed == null ? "골든셋 순서 그대로" : "회차마다 섞음(시드 %d + 회차)".formatted(shuffleSeed)),
                 "- 비율 지표는 판정을 받은 닉네임만 센다. 판정을 못 받은 건수는 회차별 MISSING에 있다",
                 "",
@@ -270,7 +271,7 @@ public record NicknameAuditEvaluation(
                 .collect(Collectors.joining("\n"));
         return String.join(
                 "\n",
-                "## 이상 판정과 다른 닉네임 (첫 회차, %d건)".formatted(mismatches.size()),
+                "## 이상 판정과 다른 닉네임 (다수결, %d건)".formatted(mismatches.size()),
                 "",
                 "| 닉네임 | 카테고리 | 정답 | 판정 | 사유 |",
                 "| --- | --- | --- | --- | --- |",

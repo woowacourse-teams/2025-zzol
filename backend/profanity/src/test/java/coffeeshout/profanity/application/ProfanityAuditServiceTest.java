@@ -142,7 +142,7 @@ class ProfanityAuditServiceTest {
      *
      * <p>배치 하나가 Gemini 호출 하나이고 레이트리미터가 13초에 하나만 허용하므로
      * ({@code resilience4j.yml}의 geminiAudit.limit-refresh-period) 회차 소요가 적체량에 정비례한다.
-     * 예산이 없으면 적체 10만 건에 3.6시간을 도는데 그동안 실행기 스레드를 붙잡고 있게 된다.
+     * 예산이 없으면 적체 10만 건에 1.4시간을 도는데 그동안 실행기 스레드를 붙잡고 있게 된다.
      */
     @Nested
     class auditPending_한_회차_소요시간 {
@@ -151,7 +151,7 @@ class ProfanityAuditServiceTest {
         private static final int SECONDS_PER_BATCH = 13;
 
         /** 프로덕션 배치 크기. {@code service.yml}의 nickname-audit.batch-size. */
-        private static final int PRODUCTION_BATCH_SIZE = 100;
+        private static final int PRODUCTION_BATCH_SIZE = 250;
 
         /** 회차 예산. {@code service.yml}의 nickname-audit.max-run-duration. */
         private static final int MAX_RUN_SECONDS = 600;

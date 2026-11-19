@@ -1,3 +1,5 @@
 package coffeeshout.dashboard.domain;
 
-public record BlockStackingTopPlayerResponse(String playerName, Long maxFloor) {}
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
+public record BlockStackingTopPlayerResponse(@JsonUnwrapped RankedPlayerName player, Long maxFloor) {}

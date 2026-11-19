@@ -3,6 +3,7 @@ package coffeeshout.room.application.event;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
 import coffeeshout.global.exception.custom.SystemException;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
@@ -12,6 +13,7 @@ import coffeeshout.room.infra.persistence.PlayerEntity;
 import coffeeshout.room.infra.persistence.RoomEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,8 @@ import org.springframework.stereotype.Component;
  * {@code @Transactional}+{@code @RedisLock} 안에서 실행된다 — 기존 직접 생성과 동일한 순서·멱등·실패 전파를 보장한다.
  * {@code RoomGameStartListener}·{@code MiniGameResultRoomListener}와 함께 {@code :room}의 게임 생명주기 in-process
  * 리스너다.
+ *
+ * <p>저장한 이름은 미니게임 랭킹에 그대로 나간다. 그래서 같은 트랜잭션에서 검열 큐에도 넣는다(#1906).
  */
 @Slf4j
 @Component
@@ -33,6 +37,7 @@ public class PlayerSnapshotListener {
     private final RoomQueryService roomQueryService;
     private final RoomEntityRepository roomEntityRepository;
     private final PlayerEntityRepository playerEntityRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @EventListener
     public void handle(PlayerSnapshotRequiredEvent event) {
@@ -42,9 +47,12 @@ public class PlayerSnapshotListener {
                         GlobalErrorCode.INTERNAL_SERVER_ERROR, "방이 존재하지 않습니다: " + event.joinCode()));
         final Room room = roomQueryService.getByJoinCode(new JoinCode(event.joinCode()));
 
-        room.getPlayers()
-                .forEach(player -> playerEntityRepository.save(new PlayerEntity(
-                        roomEntity, player.getName().value(), player.getPlayerType(), player.getUserId())));
+        room.getPlayers().forEach(player -> {
+            final String playerName = player.getName().value();
+            playerEntityRepository.save(
+                    new PlayerEntity(roomEntity, playerName, player.getPlayerType(), player.getUserId()));
+            eventPublisher.publishEvent(new NicknameSubmittedEvent(playerName));
+        });
 
         log.debug(
                 "플레이어 스냅샷 저장 완료: joinCode={}, playerCount={}",

@@ -2,8 +2,10 @@ package coffeeshout.user.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 import coffeeshout.UserModuleServiceTest;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.user.domain.OAuthProvider;
 import coffeeshout.user.domain.User;
@@ -43,6 +45,14 @@ class UserRegistrationServiceTest extends UserModuleServiceTest {
                 softly.assertThat(user.getUserCode().value()).hasSize(5);
                 softly.assertThat(user.getNickname().value()).isEqualTo("용감한호랑이");
             });
+        }
+
+        @Test
+        void 가입한_닉네임의_검열_등록을_요청한다() {
+            userRegistrationService.registerOrLogin(GOOGLE, PROVIDER_USER_ID, EMAIL, "용감한호랑이");
+
+            // 회원 닉네임은 TOP5·최저 확률 랭킹에 나간다. 등록하지 않으면 판정을 받을 길이 없어 영영 가려진다(#1906).
+            then(eventPublisher).should().publishEvent(new NicknameSubmittedEvent("용감한호랑이"));
         }
 
         @Test

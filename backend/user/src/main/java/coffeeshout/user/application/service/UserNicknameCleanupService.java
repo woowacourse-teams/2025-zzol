@@ -1,6 +1,7 @@
 package coffeeshout.user.application.service;
 
 import coffeeshout.global.exception.custom.BusinessException;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.global.nickname.NicknamesCollectedEvent;
 import coffeeshout.global.nickname.ProfanityChecker;
 import coffeeshout.global.nickname.ProfanityWordBlockedEvent;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +28,7 @@ public class UserNicknameCleanupService {
     private final UserRepository userRepository;
     private final NicknameDefaultGenerator nicknameDefaultGenerator;
     private final ProfanityChecker profanityChecker;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 랭킹 수집 회차마다 사전에 걸리는 회원 프로필 닉네임을 생성 닉네임으로 교체한다 (#1777).
@@ -73,6 +76,8 @@ public class UserNicknameCleanupService {
             final UserNickname newNickname = new UserNickname(nicknameDefaultGenerator.generate());
             user.changeNickname(newNickname);
             userRepository.save(user);
+            // 새 닉네임도 랭킹에 나가므로 판정을 받아야 공개된다(#1906).
+            eventPublisher.publishEvent(new NicknameSubmittedEvent(newNickname.value()));
             log.debug("닉네임 교체 완료: userId={}, newNickname={}", user.getId(), newNickname.value());
         }
     }

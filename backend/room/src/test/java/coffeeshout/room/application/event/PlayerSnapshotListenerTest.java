@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.exception.GlobalErrorCode;
+import coffeeshout.global.nickname.NicknameSubmittedEvent;
 import coffeeshout.minigame.event.PlayerSnapshotRequiredEvent;
 import coffeeshout.room.application.port.PlayerEntityRepository;
 import coffeeshout.room.application.port.RoomEntityRepository;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class PlayerSnapshotListenerTest {
@@ -44,11 +46,15 @@ class PlayerSnapshotListenerTest {
     @Mock
     private RoomEntity roomEntity;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private PlayerSnapshotListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new PlayerSnapshotListener(roomQueryService, roomEntityRepository, playerEntityRepository);
+        listener = new PlayerSnapshotListener(
+                roomQueryService, roomEntityRepository, playerEntityRepository, eventPublisher);
     }
 
     @Nested
@@ -83,6 +89,25 @@ class PlayerSnapshotListenerTest {
                         .extracting(PlayerEntity::getRoomSession)
                         .containsOnly(roomEntity);
             });
+        }
+
+        @Test
+        @DisplayName("저장한 플레이어 이름마다 검열 등록을 요청한다")
+        void 저장한_이름을_검열_큐에_넣으라고_알린다() {
+            // given
+            final Room room = RoomFixture.호스트_꾹이(new JoinCode(JOIN_CODE));
+            given(roomEntityRepository.findFirstByJoinCodeOrderByCreatedAtDesc(JOIN_CODE))
+                    .willReturn(Optional.of(roomEntity));
+            given(roomQueryService.getByJoinCode(new JoinCode(JOIN_CODE))).willReturn(room);
+
+            // when
+            listener.handle(new PlayerSnapshotRequiredEvent(JOIN_CODE));
+
+            // then: 미니게임 랭킹은 이 이름을 그대로 쓴다. 등록하지 않으면 판정을 받을 길이 없어 영영 가려진다(#1906).
+            room.getPlayers()
+                    .forEach(player -> verify(eventPublisher)
+                            .publishEvent(
+                                    new NicknameSubmittedEvent(player.getName().value())));
         }
 
         @Test

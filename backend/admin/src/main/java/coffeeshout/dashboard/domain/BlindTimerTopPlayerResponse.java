@@ -1,3 +1,5 @@
 package coffeeshout.dashboard.domain;
 
-public record BlindTimerTopPlayerResponse(String playerName, long bestErrorMillis) {}
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
+public record BlindTimerTopPlayerResponse(@JsonUnwrapped RankedPlayerName player, long bestErrorMillis) {}

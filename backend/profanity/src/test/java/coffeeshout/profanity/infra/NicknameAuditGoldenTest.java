@@ -51,17 +51,18 @@ import org.springframework.test.util.ReflectionTestUtils;
 /**
  * 실제 Gemini로 골든셋을 돌려 리포트를 쓴다. 기본 test 태스크에서 빠지고 {@code :profanity:goldenTest}로만 돈다.
  *
- * <p>환경변수로 조건을 바꾼다. {@code NICKNAME_AUDIT_MODEL}, {@code NICKNAME_AUDIT_BATCH_SIZE}(기본 100),
+ * <p>환경변수로 조건을 바꾼다. {@code NICKNAME_AUDIT_MODEL}(기본 운영 모델), {@code NICKNAME_AUDIT_BATCH_SIZE}(기본 운영값 250),
  * {@code NICKNAME_AUDIT_REPEATS}(기본 3), {@code NICKNAME_AUDIT_TIMEOUT_SECONDS}(기본 120),
- * {@code NICKNAME_AUDIT_HTTP_ATTEMPTS}(기본은 SDK 기본 재시도. 1이면 재시도를 꺼서 배치 하나가 HTTP 요청 하나가 된다),
+ * {@code NICKNAME_AUDIT_HTTP_ATTEMPTS}(기본 1. 배치 하나가 HTTP 요청 하나다. 0이면 SDK 기본 재시도를 쓴다),
  * {@code NICKNAME_GOLDEN_SET}(기본 {@code golden}, 어려운 표본만 돌리려면 {@code hard}),
  * {@code NICKNAME_AUDIT_SHUFFLE_SEED}(기본 1907. 회차 n은 이 값에 n을 더한 시드로 닉네임 순서를 섞는다),
  * {@code NICKNAME_AUDIT_ONLY_CALLS}(기본은 전부. {@code 1,5}처럼 적으면 그 순번의 배치 호출만 보낸다. 실패한 배치만 다시 잴 때 쓴다),
  * {@code NICKNAME_AUDIT_ABORT_AFTER_LEADING_FAILURES}(기본 0으로 꺼짐. 2면 첫 두 호출이 연달아 실패할 때 남은 호출을 보내지 않는다).
  *
- * <p>재시도는 SDK 기본 재시도(408·429·5xx, 5회)만 쓴다. 운영 {@code geminiAudit} 재시도는
- * {@code InfrastructureException}을 무시하는데 검열기가 모든 호출 오류를 그 예외로 감싸므로 운영에서도 돌지 않는다.
- * 여기에 재시도를 하나 더 얹으면 배치 하나가 HTTP 요청을 최대 20번 보내 무료 등급 일일 한도를 태운다.
+ * <p>측정에서는 SDK 재시도(408·429·5xx, 5회)를 기본으로 끈다. 켜면 503 한 번이 HTTP 요청 여러 번이 되고,
+ * 재시도 대기가 응답 시간에 섞이며, 호출 기록의 1건이 실제로 몇 번 보냈는지 알 수 없다.
+ * 운영 {@code geminiAudit} 재시도는 {@code InfrastructureException}을 무시하는데 검열기가 모든 호출 오류를
+ * 그 예외로 감싸므로 운영에서도 돌지 않는다.
  */
 @Slf4j
 @Tag("golden")
@@ -69,18 +70,21 @@ class NicknameAuditGoldenTest {
 
     // 무료 등급 RPM 15보다 넉넉하게 호출 사이를 5초 띄운다
     private static final Duration 호출_간격 = Duration.ofSeconds(5);
+    // 운영 설정(service.yml nickname-audit.batch-size)과 같은 배치 크기
+    private static final int 운영_배치_크기 = 250;
 
     @Test
     void 골든셋으로_현재_프롬프트를_평가해_리포트를_쓴다() throws IOException {
         final String apiKey = System.getenv("GEMINI_API_KEY");
         assumeTrue(apiKey != null && !apiKey.isBlank(), "GEMINI_API_KEY가 없어 건너뛴다");
-        final String model = Objects.requireNonNullElse(System.getenv("NICKNAME_AUDIT_MODEL"), "gemini-3.5-flash");
-        final int batchSize = 정수_환경변수("NICKNAME_AUDIT_BATCH_SIZE", 100);
+        final String model =
+                Objects.requireNonNullElse(System.getenv("NICKNAME_AUDIT_MODEL"), NicknameAuditPropertiesFixture.운영_모델);
+        final int batchSize = 정수_환경변수("NICKNAME_AUDIT_BATCH_SIZE", 운영_배치_크기);
         final int repeats = 정수_환경변수("NICKNAME_AUDIT_REPEATS", 3);
         final Duration timeout = Duration.ofSeconds(정수_환경변수("NICKNAME_AUDIT_TIMEOUT_SECONDS", 120));
         final String goldenSet = NicknameGoldenSetFixture.세트_이름();
-        final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.모델(apiKey, model, timeout);
-        final int httpAttempts = 정수_환경변수("NICKNAME_AUDIT_HTTP_ATTEMPTS", 0);
+        final NicknameAuditProperties properties = NicknameAuditPropertiesFixture.모델과_타임아웃(apiKey, model, timeout);
+        final int httpAttempts = 정수_환경변수("NICKNAME_AUDIT_HTTP_ATTEMPTS", 1);
         final long shuffleSeed = 정수_환경변수("NICKNAME_AUDIT_SHUFFLE_SEED", 1907);
         final AtomicReference<TokenUsage> lastUsage = new AtomicReference<>(TokenUsage.NONE);
 

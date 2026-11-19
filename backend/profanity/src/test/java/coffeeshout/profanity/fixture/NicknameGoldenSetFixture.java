@@ -10,20 +10,46 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 골든셋 CSV와 평가 단위 테스트용 항목을 만든다.
  *
  * <p>CSV는 따옴표를 해석하지 않는다. 닉네임에 쉼표를 넣지 않는 것으로 파서를 대신한다.
+ *
+ * <p>세트는 둘이다. {@code golden}은 회귀 기준인 {@code golden.csv}, {@code hard}는 어려운 표본만 모은
+ * {@code golden-hard.csv}다. 러너는 환경변수 {@code NICKNAME_GOLDEN_SET}으로 고른다.
  */
 public final class NicknameGoldenSetFixture {
 
-    private static final String 골든셋_경로 = "/nickname-audit/golden.csv";
+    public static final String 기본_세트 = "golden";
+    public static final String 하드_세트 = "hard";
+
+    private static final String 세트_환경변수 = "NICKNAME_GOLDEN_SET";
+    private static final Map<String, String> 세트별_경로 =
+            Map.of(기본_세트, "/nickname-audit/golden.csv", 하드_세트, "/nickname-audit/golden-hard.csv");
 
     private NicknameGoldenSetFixture() {}
 
+    /** 환경변수가 고른 세트 이름. 비어 있으면 기본 세트다. */
+    public static String 세트_이름() {
+        return 세트_이름(System.getenv(세트_환경변수));
+    }
+
+    static String 세트_이름(String value) {
+        return value == null || value.isBlank() ? 기본_세트 : value.trim();
+    }
+
     public static List<GoldenItem> 골든셋() {
-        try (InputStream in = NicknameGoldenSetFixture.class.getResourceAsStream(골든셋_경로);
+        return 골든셋(기본_세트);
+    }
+
+    public static List<GoldenItem> 골든셋(String 세트) {
+        final String 경로 = 세트별_경로.get(세트);
+        if (경로 == null) {
+            throw new IllegalArgumentException("모르는 골든셋이다: " + 세트 + ". 쓸 수 있는 값은 " + 세트별_경로.keySet());
+        }
+        try (InputStream in = NicknameGoldenSetFixture.class.getResourceAsStream(경로);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             return reader.lines()
                     .skip(1)

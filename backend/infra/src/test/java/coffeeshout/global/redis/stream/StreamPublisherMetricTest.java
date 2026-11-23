@@ -132,15 +132,16 @@ class StreamPublisherMetricTest {
     private StreamPublisher publisherWith(StringRedisTemplate stringRedisTemplate) {
         final ReactiveStringRedisTemplate reactiveTemplate = mock(ReactiveStringRedisTemplate.class);
         doReturn(reactiveStreamOperations).when(reactiveTemplate).opsForStream();
+        final RedisStreamPublishMetricService metricService = new RedisStreamPublishMetricService(meterRegistry);
         final StreamPublisher publisher = new StreamPublisher(
                 stringRedisTemplate,
                 reactiveTemplate,
                 properties(),
-                new StreamPublishProperties(10, Duration.ofSeconds(5)),
+                new InFlightPublishLimiter(new StreamPublishProperties(10, Duration.ofSeconds(5)), metricService),
                 new ObjectMapper().findAndRegisterModules(),
                 mock(StreamTracePropagator.class),
                 meterRegistry,
-                new RedisStreamPublishMetricService(meterRegistry),
+                metricService,
                 ContextSnapshotFactory.builder().build());
         publisher.initializeCounters();
         return publisher;

@@ -6,7 +6,6 @@ import coffeeshout.global.metric.RedisStreamPublishMetricService;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
-import coffeeshout.global.redis.config.StreamPublishProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.context.ContextSnapshotFactory;
@@ -14,16 +13,12 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.RedisStreamCommands.TrimOptions;
@@ -54,9 +49,7 @@ public class StreamPublisher {
     private final MeterRegistry meterRegistry;
     private final RedisStreamPublishMetricService publishMetricService;
     private final ContextSnapshotFactory contextSnapshotFactory;
-    private final int maxInFlight;
-    private final Duration drainTimeout;
-    private final Semaphore asyncInFlight;
+    private final InFlightPublishLimiter inFlightPublishLimiter;
     // 발행마다 Counter를 새로 만들지 않도록 스트림별로 캐싱한다 (WebSocketMetricService 선례)
     private final Map<String, Counter> publishedCounters = new ConcurrentHashMap<>();
 
@@ -64,7 +57,7 @@ public class StreamPublisher {
             StringRedisTemplate stringRedisTemplate,
             ReactiveStringRedisTemplate reactiveStringRedisTemplate,
             RedisStreamProperties redisStreamProperties,
-            StreamPublishProperties streamPublishProperties,
+            InFlightPublishLimiter inFlightPublishLimiter,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             StreamTracePropagator streamTracePropagator,
             MeterRegistry meterRegistry,
@@ -78,10 +71,7 @@ public class StreamPublisher {
         this.meterRegistry = meterRegistry;
         this.publishMetricService = publishMetricService;
         this.contextSnapshotFactory = contextSnapshotFactory;
-        this.maxInFlight = streamPublishProperties.maxInFlight();
-        this.drainTimeout = streamPublishProperties.drainTimeout();
-        this.asyncInFlight = new Semaphore(maxInFlight);
-        publishMetricService.bindInFlight(asyncInFlight, maxInFlight);
+        this.inFlightPublishLimiter = inFlightPublishLimiter;
     }
 
     // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
@@ -145,7 +135,7 @@ public class StreamPublisher {
             return CompletableFuture.completedFuture(null);
         }
 
-        if (!asyncInFlight.tryAcquire()) {
+        if (!inFlightPublishLimiter.tryAcquire()) {
             publishMetricService.recordRejected(redisKey);
             throw new InfrastructureException(
                     GlobalErrorCode.STREAM_PUBLISH_OVERLOADED, "응답을 기다리는 Redis Stream 발행이 상한에 닿았습니다: " + redisKey);
@@ -160,7 +150,7 @@ public class StreamPublisher {
         Mono.defer(() -> reactiveStringRedisTemplate
                         .opsForStream()
                         .add(StreamRecords.newRecord().in(redisKey).ofMap(fields), options.get()))
-                .doFinally(signal -> asyncInFlight.release())
+                .doFinally(signal -> inFlightPublishLimiter.release())
                 .subscribe(
                         recordId -> {},
                         error -> {
@@ -173,28 +163,6 @@ public class StreamPublisher {
                             published.complete(null);
                         });
         return published;
-    }
-
-    /**
-     * 종료할 때 이미 넘긴 비동기 발행이 끝나기를 기다린다. 이 빈은 Redis 커넥션 팩토리보다 먼저 정리되므로,
-     * 커넥션이 닫히기 전에 대기 중인 XADD가 끝난다. 기다린 뒤에는 자리를 돌려주지 않아 새 비동기 발행을 받지 않는다.
-     */
-    @PreDestroy
-    void awaitInFlightPublishes() {
-        drainInFlight(drainTimeout);
-    }
-
-    boolean drainInFlight(Duration timeout) {
-        try {
-            if (asyncInFlight.tryAcquire(maxInFlight, timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-                return true;
-            }
-            log.warn("종료 전에 끝나지 않은 Redis Stream 비동기 발행이 있습니다: {}건", maxInFlight - asyncInFlight.availablePermits());
-            return false;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
     }
 
     private Map<String, String> toFields(BaseEvent event) {

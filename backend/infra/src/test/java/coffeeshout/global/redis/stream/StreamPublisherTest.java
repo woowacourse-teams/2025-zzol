@@ -44,8 +44,17 @@ class StreamPublisherTest {
             mock(ReactiveStreamOperations.class);
 
     private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private final RedisStreamPublishMetricService metricService = new RedisStreamPublishMetricService(meterRegistry);
+
+    private InFlightPublishLimiter limiter(int maxInFlight, Duration drainTimeout) {
+        return new InFlightPublishLimiter(new StreamPublishProperties(maxInFlight, drainTimeout), metricService);
+    }
 
     private StreamPublisher publisherWithMaxInFlight(int maxInFlight) {
+        return publisherWith(limiter(maxInFlight, Duration.ofSeconds(5)));
+    }
+
+    private StreamPublisher publisherWith(InFlightPublishLimiter limiter) {
         final ReactiveStringRedisTemplate reactiveTemplate = mock(ReactiveStringRedisTemplate.class);
         doReturn(reactiveStreamOperations).when(reactiveTemplate).opsForStream();
 
@@ -58,11 +67,11 @@ class StreamPublisherTest {
                 mock(StringRedisTemplate.class),
                 reactiveTemplate,
                 redisStreamProperties,
-                new StreamPublishProperties(maxInFlight, Duration.ofSeconds(5)),
+                limiter,
                 new ObjectMapper().findAndRegisterModules(),
                 mock(StreamTracePropagator.class),
                 meterRegistry,
-                new RedisStreamPublishMetricService(meterRegistry),
+                metricService,
                 ContextSnapshotFactory.builder().build());
     }
 
@@ -77,9 +86,9 @@ class StreamPublisherTest {
                 RedisStreamPublishMetricService.ROUND_TRIP_METRIC, "stream", "room", "outcome", outcome);
     }
 
-    private double failureCount(String reason) {
+    private double rejectedCount() {
         return meterRegistry
-                .counter(RedisStreamPublishMetricService.FAILURE_METRIC, "stream", "room", "reason", reason)
+                .counter(RedisStreamPublishMetricService.REJECTED_METRIC, "stream", "room")
                 .count();
     }
 
@@ -147,6 +156,27 @@ class StreamPublisherTest {
             assertCoffeeShoutException(
                     () -> publisher.publishAsync(KEY, 이벤트()), GlobalErrorCode.STREAM_PUBLISH_OVERLOADED);
         }
+
+        @Test
+        void XADD_명령을_만들다_바로_실패해도_future로_알리고_자리를_돌려준다() {
+            // given — 상한 1, Mono를 돌려주기 전에 바로 던지는 XADD
+            final StreamPublisher publisher = publisherWithMaxInFlight(1);
+            final IllegalStateException failure = new IllegalStateException("커넥션 없음");
+            given(reactiveStreamOperations.add(any(MapRecord.class), any(XAddOptions.class)))
+                    .willThrow(failure)
+                    .willReturn(Mono.never());
+
+            // when
+            final CompletableFuture<Void> published = publisher.publishAsync(KEY, 이벤트());
+
+            // then — 호출 스레드로 예외가 새지 않고 future가 실패하며, 자리를 돌려줘 다음 발행이 거절되지 않는다
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(published.handle((ignored, error) -> error))
+                        .succeedsWithin(Duration.ofSeconds(1))
+                        .isSameAs(failure);
+                softly.assertThatCode(() -> publisher.publishAsync(KEY, 이벤트())).doesNotThrowAnyException();
+            });
+        }
     }
 
     @Nested
@@ -170,7 +200,7 @@ class StreamPublisherTest {
         }
 
         @Test
-        void 발행이_실패하면_실패_수와_실패한_왕복_시간을_남긴다() {
+        void 발행이_실패하면_실패한_왕복_시간으로_남긴다() {
             // given
             final StreamPublisher publisher = publisherWithMaxInFlight(10);
             givenXAddResults(Mono.error(new IllegalStateException("Redis 연결 끊김")));
@@ -178,15 +208,15 @@ class StreamPublisherTest {
             // when — 실패 처리가 끝날 때까지 기다린다
             publisher.publishAsync(KEY, 이벤트()).exceptionally(error -> null).join();
 
-            // then
+            // then — 실패 수는 outcome=error 왕복 시간의 count로 본다. 거절 수와 섞이지 않는다
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(failureCount("error")).isEqualTo(1.0);
                 softly.assertThat(roundTripTimer("error").count()).isEqualTo(1);
+                softly.assertThat(rejectedCount()).isZero();
             });
         }
 
         @Test
-        void 상한에_닿아_거절하면_overloaded로_남긴다() {
+        void 상한에_닿아_거절하면_거절_수를_남긴다() {
             // given — 상한 1, 첫 발행이 자리를 계속 차지한다
             final StreamPublisher publisher = publisherWithMaxInFlight(1);
             givenXAddResults(Mono.never());
@@ -196,7 +226,7 @@ class StreamPublisherTest {
             catchThrowable(() -> publisher.publishAsync(KEY, 이벤트()));
 
             // then
-            assertThat(failureCount("overloaded")).isEqualTo(1.0);
+            assertThat(rejectedCount()).isEqualTo(1.0);
         }
 
         @Test
@@ -253,34 +283,46 @@ class StreamPublisherTest {
     class 종료 {
 
         @Test
-        void 대기_중인_비동기_발행이_끝날_때까지_기다리고_그_뒤로는_받지_않는다() {
+        void 응답을_기다리는_발행이_끝날_때까지_기다린다() {
             // given — 200ms 뒤에 끝나는 XADD
-            final StreamPublisher publisher = publisherWithMaxInFlight(10);
+            final InFlightPublishLimiter limiter = limiter(10, Duration.ofSeconds(2));
+            final StreamPublisher publisher = publisherWith(limiter);
             givenXAddResults(Mono.just(RecordId.of("1-0")).delayElement(Duration.ofMillis(200)));
             final CompletableFuture<Void> published = publisher.publishAsync(KEY, 이벤트());
 
             // when
-            final boolean drained = publisher.drainInFlight(Duration.ofSeconds(2));
+            limiter.stop();
 
             // then — 다 비운 뒤에 돌아온다
-            SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(drained).isTrue();
-                softly.assertThat(published).isDone();
-            });
-            // 비운 뒤로는 새 비동기 발행을 받지 않는다
-            assertCoffeeShoutException(
-                    () -> publisher.publishAsync(KEY, 이벤트()), GlobalErrorCode.STREAM_PUBLISH_OVERLOADED);
+            assertThat(published).isDone();
         }
 
         @Test
         void 제한_시간_안에_끝나지_않으면_기다리기를_멈춘다() {
-            // given — 끝나지 않는 XADD
-            final StreamPublisher publisher = publisherWithMaxInFlight(10);
+            // given — 끝나지 않는 XADD, 종료 대기 한도 100ms
+            final InFlightPublishLimiter limiter = limiter(10, Duration.ofMillis(100));
+            final StreamPublisher publisher = publisherWith(limiter);
             givenXAddResults(Mono.never());
-            publisher.publishAsync(KEY, 이벤트());
+            final CompletableFuture<Void> published = publisher.publishAsync(KEY, 이벤트());
 
-            // when & then
-            assertThat(publisher.drainInFlight(Duration.ofMillis(100))).isFalse();
+            // when & then — 한도가 지나면 남은 발행을 두고 돌아온다
+            assertThat(CompletableFuture.runAsync(limiter::stop)).succeedsWithin(Duration.ofSeconds(2));
+            assertThat(published).isNotDone();
+        }
+
+        @Test
+        void 멈췄다가_다시_시작하면_발행을_받는다() {
+            // given — 테스트 컨텍스트처럼 lifecycle이 멈췄다가 다시 시작한다
+            final InFlightPublishLimiter limiter = limiter(1, Duration.ofSeconds(1));
+            final StreamPublisher publisher = publisherWith(limiter);
+            givenXAddResults(Mono.just(RecordId.of("1-0")));
+            limiter.stop();
+
+            // when
+            limiter.start();
+
+            // then — 종료 대기에 잡았던 자리를 돌려줘, 상한 1에서도 발행이 거절되지 않는다
+            assertThat(publisher.publishAsync(KEY, 이벤트())).succeedsWithin(Duration.ofSeconds(1));
         }
     }
 }

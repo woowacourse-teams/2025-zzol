@@ -5,12 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import coffeeshout.fixture.BaseEventDummy;
+import coffeeshout.global.metric.RedisStreamPublishMetricService;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.CommonSettings;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
+import coffeeshout.global.redis.config.StreamPublishProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -24,7 +29,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.RecordId;
+import org.springframework.data.redis.core.ReactiveStreamOperations;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import reactor.core.publisher.Mono;
 
 /**
  * 발행 카운터는 컨슈머 정지 알림(RedisStreamConsumptionStalled)의 좌변이다. 스트림 태그가 빠지거나
@@ -36,19 +45,17 @@ class StreamPublisherMetricTest {
     private static final String STREAM_KEY = "room";
     private static final String OTHER_STREAM_KEY = "wormgame";
 
+    @SuppressWarnings("unchecked")
+    private final ReactiveStreamOperations<String, Object, Object> reactiveStreamOperations =
+            mock(ReactiveStreamOperations.class);
+
     private MeterRegistry meterRegistry;
     private StreamPublisher streamPublisher;
 
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        streamPublisher = new StreamPublisher(
-                mock(StringRedisTemplate.class, RETURNS_DEEP_STUBS),
-                properties(),
-                new ObjectMapper(),
-                mock(StreamTracePropagator.class),
-                meterRegistry);
-        streamPublisher.initializeCounters();
+        streamPublisher = publisherWith(mock(StringRedisTemplate.class, RETURNS_DEEP_STUBS));
     }
 
     // 첫 발행 때 시계열이 생기면 Prometheus rate()가 그 증가를 못 세서, 발행이 한 번뿐인 스트림에서
@@ -83,14 +90,60 @@ class StreamPublisherMetricTest {
         final StringRedisTemplate failingTemplate = mock(StringRedisTemplate.class, RETURNS_DEEP_STUBS);
         given(failingTemplate.opsForStream().add(any(MapRecord.class), any(XAddOptions.class)))
                 .willThrow(new RedisConnectionFailureException("연결 실패"));
-        final StreamPublisher publisher = new StreamPublisher(
-                failingTemplate, properties(), new ObjectMapper(), mock(StreamTracePropagator.class), meterRegistry);
-        publisher.initializeCounters();
+        final StreamPublisher publisher = publisherWith(failingTemplate);
 
         // when & then
         assertThatThrownBy(() -> publisher.publish(STREAM_KEY, "{}", null))
                 .isInstanceOf(RedisConnectionFailureException.class);
         assertThat(counterOf(STREAM_KEY).count()).isZero();
+    }
+
+    @Test
+    void 비동기_발행도_XADD가_끝나면_카운터가_증가한다() {
+        // given
+        given(reactiveStreamOperations.add(any(MapRecord.class), any(XAddOptions.class)))
+                .willReturn(Mono.just(RecordId.of("1-0")));
+
+        // when
+        streamPublisher
+                .publishAsync(() -> STREAM_KEY, BaseEventDummy.페이로드("비동기 발행"))
+                .join();
+
+        // then
+        assertThat(counterOf(STREAM_KEY).count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void 비동기_발행이_실패하면_카운터가_증가하지_않는다() {
+        // given
+        given(reactiveStreamOperations.add(any(MapRecord.class), any(XAddOptions.class)))
+                .willReturn(Mono.error(new RedisConnectionFailureException("연결 실패")));
+
+        // when
+        streamPublisher
+                .publishAsync(() -> STREAM_KEY, BaseEventDummy.페이로드("비동기 발행"))
+                .exceptionally(error -> null)
+                .join();
+
+        // then
+        assertThat(counterOf(STREAM_KEY).count()).isZero();
+    }
+
+    private StreamPublisher publisherWith(StringRedisTemplate stringRedisTemplate) {
+        final ReactiveStringRedisTemplate reactiveTemplate = mock(ReactiveStringRedisTemplate.class);
+        doReturn(reactiveStreamOperations).when(reactiveTemplate).opsForStream();
+        final StreamPublisher publisher = new StreamPublisher(
+                stringRedisTemplate,
+                reactiveTemplate,
+                properties(),
+                new StreamPublishProperties(10, Duration.ofSeconds(5)),
+                new ObjectMapper().findAndRegisterModules(),
+                mock(StreamTracePropagator.class),
+                meterRegistry,
+                new RedisStreamPublishMetricService(meterRegistry),
+                ContextSnapshotFactory.builder().build());
+        publisher.initializeCounters();
+        return publisher;
     }
 
     private Counter counterOf(String streamKey) {

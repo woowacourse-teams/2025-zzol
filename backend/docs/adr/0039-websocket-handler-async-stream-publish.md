@@ -1,7 +1,7 @@
 # 0039. WebSocket 핸들러는 Redis Stream 발행 응답을 기다리지 않는다
 
 - 날짜: 2026-11-23
-- 상태: 승인 (#1926 구현 중)
+- 상태: 승인 (#1927 리뷰 중)
 
 ## 컨텍스트
 
@@ -22,8 +22,9 @@ WebSocket 핸들러는 `StreamPublisher.publishAsync`로 발행하고, 돌려받
 - `publishAsync`는 `ReactiveStringRedisTemplate`로 XADD를 Lettuce 이벤트 루프에 넘기고 바로 돌아온다. 직렬화와 traceparent 주입은 호출 스레드에서 끝낸다.
 - 발행이 실패하면 future는 XADD 예외를 감싸지 않은 채 실패한다. Spring이 이 실패를 기존 `@MessageExceptionHandler`로 넘겨, 동기 발행 때처럼 보낸 사용자에게 에러를 보낸다.
 - 실패 알림은 이벤트 루프 밖에서 실행하고, 발행 시점의 트레이스와 MDC를 되살린다. 그래서 에러 로그에도 요청의 traceId가 남는다.
-- 응답을 기다리는 발행 수는 `redis.stream.publish.max-in-flight`로 제한한다. 기본값은 10,000이고, 넘으면 `STREAM_PUBLISH_OVERLOADED`로 거절한다.
-- 종료할 때는 `redis.stream.publish.drain-timeout`만큼 남은 발행이 끝나기를 기다린 뒤 커넥션을 닫는다. 기본값은 5초다.
+- 응답을 기다리는 발행 수는 `InFlightPublishLimiter`가 `redis.stream.publish.max-in-flight`로 제한한다. 기본값은 10,000이고, 넘으면 `STREAM_PUBLISH_OVERLOADED`로 거절한다.
+- 종료할 때는 웹서버가 멈춘 뒤, Stream 폴러와 커넥션 팩토리가 멈추기 전에 남은 발행이 끝나기를 기다린다. `InFlightPublishLimiter`가 SmartLifecycle phase 2048에서 `redis.stream.publish.drain-timeout`만큼 기다리고, 기본값은 5초다.
+- 종료 대기에 `@PreDestroy`를 쓰지 않는다. 빈 파괴는 lifecycle stop 뒤에 일어나는데, `LettuceConnectionFactory`는 lifecycle stop의 phase 0에서 이미 커넥션을 닫는다.
 - Handler가 아닌 경로는 동기 `publish`를 그대로 쓴다. Outbox 릴레이처럼 발행 성공을 확인해야 하는 경로, Application Service, 이벤트 리스너, 컨슈머가 여기에 해당한다.
 - 비동기 발행도 XADD가 성공한 뒤에 `redis.stream.published` 카운터를 올린다. 컨슈머 정지 알림이 이 카운터를 쓰기 때문이다.
 - ArchUnit이 `@MessageMapping` 메서드의 `CompletableFuture` 반환을 강제한다.
@@ -48,6 +49,6 @@ WebSocket 핸들러는 `StreamPublisher.publishAsync`로 발행하고, 돌려받
 ## 결과
 
 - Handler 규칙이 바뀐다. 새 `@MessageMapping` 핸들러는 `publishAsync`를 쓰고 future를 반환한다. `docs/tech-stack.md`에 반영했다.
-- 지표 세 개가 생긴다. XADD 왕복 시간은 `redis.stream.publish.async.duration`, 응답 대기 수는 `redis.stream.publish.async.in-flight`, 실패와 거절 수는 `redis.stream.publish.async.failed`로 본다.
+- 지표가 생긴다. XADD 왕복 시간은 `redis.stream.publish.async.duration`으로 보고, 실패 수는 그중 `outcome=error`의 count로 본다. 응답 대기 수는 `redis.stream.publish.async.in-flight`, 상한에 닿아 거절한 수는 `redis.stream.publish.async.rejected`로 본다.
 - Inbound 스레드 수는 32개 그대로 둔다. `broadcastRouletteSpin`이 `roomService.spinRoulette`를 동기로 불러서, 스레드를 줄이면 이 호출이 다른 메시지를 막는다. 이 호출을 정리한 뒤 따로 줄인다.
 - 이 코드로 팀 환경에서 부하를 다시 재는 일은 후속으로 남긴다.

@@ -9,7 +9,6 @@ import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import coffeeshout.global.redis.config.StreamPublishProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PreDestroy;
@@ -18,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +33,12 @@ import reactor.core.scheduler.Schedulers;
 @Slf4j
 @Component
 public class StreamPublisher {
+
+    /**
+     * 비동기 발행의 실패 알림을 실행할 곳. 실패를 받은 Spring이 이어서 사용자에게 에러를 보내는 일이
+     * 응답을 받은 Lettuce 이벤트 루프를 붙잡지 않게 한다.
+     */
+    private static final Executor OFF_EVENT_LOOP = task -> Schedulers.boundedElastic().schedule(task);
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ReactiveStringRedisTemplate reactiveStringRedisTemplate;
@@ -98,12 +104,12 @@ public class StreamPublisher {
      * <p>
      * 클라이언트 응답을 Stream 컨슈머가 보내는 WebSocket 인바운드 핸들러처럼, 발행 결과를 쓰지 않는 경로 전용이다.
      * 발행 성공을 확인해야 하는 경로(Outbox 릴레이 등)는 {@link #publish(String, String, String)}를 쓴다.
+     * 직렬화와 트레이스 주입은 호출 스레드에서 끝낸다.
      * <p>
-     * 직렬화와 트레이스 주입은 호출 스레드에서 끝낸다. 실패 처리는 발행 시점의 컨텍스트(트레이스, MDC)를 되살린
-     * 다른 스레드에서 하므로, 실패 로그와 그 뒤 사용자 알림도 같은 traceId로 묶인다.
-     * <p>
-     * 돌려주는 future는 XADD가 끝나면 완료되고, 실패하면 예외로 완료된다. {@code @MessageMapping} 핸들러가 이 future를
-     * 그대로 반환하면 Spring이 실패를 {@code @MessageExceptionHandler}로 넘겨, 동기 발행 때처럼 보낸 사용자에게 에러가 간다.
+     * 돌려주는 future는 XADD가 끝나면 완료되고, 실패하면 XADD의 예외 그대로 완료된다. {@code @MessageMapping} 핸들러가
+     * 이 future를 반환하면 Spring이 실패를 {@code @MessageExceptionHandler}로 넘겨, 동기 발행 때처럼 보낸 사용자에게
+     * 에러를 보내고 에러 로그를 남긴다. 이 일은 이벤트 루프 밖에서 발행 시점의 컨텍스트(트레이스, MDC)를 되살려
+     * 실행하므로, 그 로그에도 요청의 traceId가 남는다.
      *
      * @throws InfrastructureException 응답을 기다리는 비동기 발행이 상한에 닿았을 때
      */
@@ -116,23 +122,29 @@ public class StreamPublisher {
         }
 
         if (!asyncInFlight.tryAcquire()) {
-            publishMetricService.recordFailure(redisKey, "overloaded");
+            publishMetricService.recordRejected(redisKey);
             throw new InfrastructureException(GlobalErrorCode.STREAM_PUBLISH_OVERLOADED,
                     "응답을 기다리는 Redis Stream 발행이 상한에 닿았습니다: " + redisKey);
         }
 
-        final ContextSnapshot publisherContext = contextSnapshotFactory.captureAll();
         final Timer.Sample roundTrip = publishMetricService.startRoundTrip();
+        final Executor failureNotifier = contextSnapshotFactory.captureAll().wrapExecutor(OFF_EVENT_LOOP);
+        // thenXxx로 이어 만든 future는 실패를 CompletionException으로 감싸고, Spring은 이를 풀지 않은 채
+        // @MessageExceptionHandler를 고른다. 원래 예외가 그대로 가도록 future를 직접 만들어 완료한다
         final CompletableFuture<Void> published = new CompletableFuture<>();
+        // defer: add()가 Mono를 만들다 바로 던져도 오류 신호로 바뀌어, doFinally가 자리를 돌려준다
         Mono.defer(() -> reactiveStringRedisTemplate.opsForStream()
                         .add(StreamRecords.newRecord().in(redisKey).ofMap(fields), options.get()))
                 .doFinally(signal -> asyncInFlight.release())
                 .subscribe(
                         recordId -> {
                         },
-                        error -> handleAsyncFailure(redisKey, event, error, roundTrip, publisherContext, published),
+                        error -> {
+                            publishMetricService.recordFailed(roundTrip, redisKey);
+                            failureNotifier.execute(() -> published.completeExceptionally(error));
+                        },
                         () -> {
-                            publishMetricService.recordRoundTrip(roundTrip, redisKey, "success");
+                            publishMetricService.recordPublished(roundTrip, redisKey);
                             published.complete(null);
                         }
                 );
@@ -160,26 +172,6 @@ public class StreamPublisher {
             Thread.currentThread().interrupt();
             return false;
         }
-    }
-
-    /**
-     * 실패 후속 처리(로그, 사용자에게 에러 전송)가 Lettuce 이벤트 루프를 붙잡지 않도록 다른 스레드에서,
-     * 발행 시점의 컨텍스트를 되살려 처리한다.
-     */
-    private void handleAsyncFailure(
-            String redisKey,
-            BaseEvent event,
-            Throwable error,
-            Timer.Sample roundTrip,
-            ContextSnapshot publisherContext,
-            CompletableFuture<Void> published
-    ) {
-        publishMetricService.recordRoundTrip(roundTrip, redisKey, "error");
-        Schedulers.boundedElastic().schedule(publisherContext.wrap(() -> {
-            log.error("Redis Stream 비동기 발행 실패: key={}, eventId={}", redisKey, event.eventId(), error);
-            publishMetricService.recordFailure(redisKey, "error");
-            published.completeExceptionally(error);
-        }));
     }
 
     private Map<String, String> toFields(BaseEvent event) {

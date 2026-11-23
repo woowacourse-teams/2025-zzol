@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
@@ -116,7 +115,7 @@ class StreamPublisherTest {
         }
 
         @Test
-        void 발행이_실패하면_future가_예외로_완료되고_자리를_돌려준다() {
+        void 발행이_실패하면_future가_XADD_예외_그대로_완료되고_자리를_돌려준다() {
             // given — 상한 1, 첫 XADD는 실패
             final StreamPublisher publisher = publisherWithMaxInFlight(1);
             final IllegalStateException failure = new IllegalStateException("Redis 연결 끊김");
@@ -125,11 +124,12 @@ class StreamPublisherTest {
             // when
             final CompletableFuture<Void> published = publisher.publishAsync(KEY, 이벤트());
 
-            // then — 호출자가 실패를 받고, 실패한 발행이 자리를 돌려줘 다음 발행이 거절되지 않는다
+            // then — Spring이 예외 타입으로 @MessageExceptionHandler를 고르므로 CompletionException으로 감싸지 않은
+            // 원래 예외를 받는다. 실패한 발행은 자리를 돌려줘 다음 발행이 거절되지 않는다
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(published).failsWithin(Duration.ofSeconds(1))
-                        .withThrowableOfType(ExecutionException.class)
-                        .withCause(failure);
+                softly.assertThat(published.handle((ignored, error) -> error))
+                        .succeedsWithin(Duration.ofSeconds(1))
+                        .isSameAs(failure);
                 softly.assertThatCode(() -> publisher.publishAsync(KEY, 이벤트())).doesNotThrowAnyException();
             });
         }

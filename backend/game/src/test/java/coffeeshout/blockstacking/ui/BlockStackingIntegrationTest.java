@@ -1,6 +1,7 @@
 package coffeeshout.blockstacking.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import coffeeshout.GameModuleWebSocketTest;
 import coffeeshout.blockstacking.application.response.BlockStackingProgressResponse;
@@ -19,6 +20,8 @@ import coffeeshout.minigame.event.GameStartReadyEvent;
 import coffeeshout.room.domain.service.JoinCodeGenerator;
 import coffeeshout.support.MessageResponse;
 import coffeeshout.support.TestStompSession;
+import coffeeshout.support.TestStompSession.MessageCollector;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
@@ -153,6 +156,33 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
         }
     }
 
+    @Nested
+    class 실패_이벤트_테스트 {
+
+        /**
+         * 실패 요청이 WebSocket → Stream → 컨슈머를 거쳐 게임에 반영되는지(와이어링)만 확인한다.
+         * 전원 실패 시 조기 종료하는 분기는 도메인·오케스트레이터 테스트가 맡는다.
+         */
+        @Test
+        void 모든_플레이어의_실패_요청이_게임에_반영된다() throws Exception {
+            final List<TestStompSession> 나머지세션 = List.of(
+                    createSession(joinCode.getValue(), "루키"),
+                    createSession(joinCode.getValue(), "엠제이"),
+                    createSession(joinCode.getValue(), "한스"));
+            final var stateResponses = session.subscribe(stateUrl());
+
+            startBlockStackingGame();
+            awaitState(stateResponses, BlockStackingGameState.PLAYING);
+
+            session.send(failCommandUrl());
+            나머지세션.forEach(other -> other.send(failCommandUrl()));
+
+            final BlockStackingGame game = (BlockStackingGame)
+                    gameSessionService.getSession(joinCode).findCompletedGame(MiniGameType.BLOCK_STACKING);
+            await().atMost(Duration.ofSeconds(5)).until(game::isAllPlayersFailed);
+        }
+    }
+
     // ---- 헬퍼 메서드 ----
 
     private String stateUrl() {
@@ -165,6 +195,21 @@ class BlockStackingIntegrationTest extends GameModuleWebSocketTest {
 
     private String progressCommandUrl() {
         return String.format("/app/room/%s/block-stacking/progress", joinCode.getValue());
+    }
+
+    private String failCommandUrl() {
+        return String.format("/app/room/%s/block-stacking/fail", joinCode.getValue());
+    }
+
+    private BlockStackingStateResponse awaitState(MessageCollector stateResponses, BlockStackingGameState target) {
+        for (int i = 0; i < 4; i++) {
+            final BlockStackingStateResponse response =
+                    payloadAs(stateResponses.get(2, TimeUnit.SECONDS), BlockStackingStateResponse.class);
+            if (response.state() == target) {
+                return response;
+            }
+        }
+        throw new AssertionError(target + " 상태를 받지 못했습니다");
     }
 
     /**

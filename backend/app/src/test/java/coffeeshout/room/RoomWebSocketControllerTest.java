@@ -9,6 +9,10 @@ import coffeeshout.gamecommon.JoinCode;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.domain.GameSessionRepository;
 import coffeeshout.minigame.domain.MiniGameType;
+import coffeeshout.minigame.ui.request.CommandType;
+import coffeeshout.minigame.ui.request.MiniGameMessage;
+import coffeeshout.minigame.ui.request.command.StartMiniGameCommand;
+import coffeeshout.minigame.ui.response.MiniGameStartMessage;
 import coffeeshout.room.domain.Room;
 import coffeeshout.room.domain.RoomState;
 import coffeeshout.room.domain.player.Player;
@@ -24,10 +28,12 @@ import coffeeshout.room.ui.request.MiniGameSelectMessage;
 import coffeeshout.room.ui.request.ReadyChangeMessage;
 import coffeeshout.room.ui.request.RouletteSpinMessage;
 import coffeeshout.room.ui.response.PlayerResponse;
+import coffeeshout.room.ui.response.RoomStatusResponse;
 import coffeeshout.room.ui.response.WinnerResponse;
 import coffeeshout.fixture.RoomFixture;
 import coffeeshout.support.TestStompSession;
 import coffeeshout.support.app.WebSocketIntegrationTestSupport;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
@@ -168,5 +174,39 @@ class RoomWebSocketControllerTest extends WebSocketIntegrationTestSupport {
         // 룰렛 결과는 랜덤이므로 당첨자가 방의 플레이어 중 하나인지만 검증한다
         WinnerResponse winner = payloadAs(responses.get(), WinnerResponse.class);
         assertThat(winner.playerName()).isIn("꾹이", "루키", "엠제이", "한스");
+    }
+
+    @Test
+    void 룰렛_화면으로_전환한다() {
+        final String subscribeUrl = String.format("/topic/room/%s/roulette", joinCode.getValue());
+        final String requestUrl = String.format("/app/room/%s/show-roulette", joinCode.getValue());
+
+        final var responses = session.subscribe(subscribeUrl);
+
+        session.send(requestUrl);
+
+        final RoomStatusResponse status = payloadAs(responses.get(), RoomStatusResponse.class);
+        assertThat(status.roomState()).isEqualTo(RoomState.ROULETTE);
+    }
+
+    @Test
+    void 미니게임을_시작한다(@Autowired ObjectMapper objectMapper) {
+        // 전원 준비 + 카드게임 선택까지 마친 방
+        testRoom.getPlayers().forEach(player -> player.updateReadyState(true));
+        final var miniGameResponses = session.subscribe(String.format("/topic/room/%s/minigame", joinCode.getValue()));
+        session.send(String.format("/app/room/%s/update-minigames", joinCode.getValue()),
+                new MiniGameSelectMessage(host.getName().value(), List.of(MiniGameType.CARD_GAME)));
+        miniGameResponses.get();
+
+        final String subscribeUrl = String.format("/topic/room/%s/round", joinCode.getValue());
+        final String requestUrl = String.format("/app/room/%s/minigame/command", joinCode.getValue());
+
+        final var responses = session.subscribe(subscribeUrl);
+
+        session.send(requestUrl, new MiniGameMessage(CommandType.START_MINI_GAME,
+                objectMapper.valueToTree(new StartMiniGameCommand(host.getName().value()))));
+
+        final MiniGameStartMessage started = payloadAs(responses.get(), MiniGameStartMessage.class);
+        assertThat(started.miniGameType()).isEqualTo(MiniGameType.CARD_GAME);
     }
 }

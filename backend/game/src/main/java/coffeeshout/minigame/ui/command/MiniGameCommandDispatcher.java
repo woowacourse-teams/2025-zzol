@@ -3,6 +3,7 @@ package coffeeshout.minigame.ui.command;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,11 +19,11 @@ public class MiniGameCommandDispatcher {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends MiniGameCommand> void dispatch(String joinCode, T command) {
+    public <T extends MiniGameCommand> CompletableFuture<Void> dispatch(String joinCode, T command) {
         final MiniGameCommandHandler<T> handler = (MiniGameCommandHandler<T>) handlers.get(command.getClass());
         if (handler == null) {
             throw new IllegalArgumentException("해당하는 요청에 대한 게임이 존재하지 않습니다.");
         }
-        handler.handle(joinCode, command);
+        return handler.handle(joinCode, command);
     }
 }

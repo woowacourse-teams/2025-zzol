@@ -13,6 +13,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Controller
@@ -26,10 +27,11 @@ public class BlindTimerGameWebSocketController {
             respondsOnTopics = "/room/{joinCode}/blind-timer/progress",
             description = "블라인드 타이머 게임 STOP 버튼"
     )
-    public void stop(@DestinationVariable String joinCode, @Payload @Valid StopCommand command) {
+    public CompletableFuture<Void> stop(@DestinationVariable String joinCode, @Payload @Valid StopCommand command) {
         final BaseEvent event = StopCommandEvent.create(joinCode, command.playerName());
-        streamPublisher.publish(BlindTimerStreamKey.EVENTS, event);
+        final CompletableFuture<Void> published = streamPublisher.publishAsync(BlindTimerStreamKey.EVENTS, event);
         log.debug("STOP 이벤트 발행: joinCode={}, player={}, eventId={}",
                 joinCode, command.playerName(), event.eventId());
+        return published;
     }
 }

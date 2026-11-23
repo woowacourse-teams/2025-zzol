@@ -10,6 +10,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Controller
@@ -23,7 +24,7 @@ public class RacingGameWebSocketController {
             respondsOnTopics = {"/room/{joinCode}/racing-game/state"},
             description = "레이싱 게임 탭"
     )
-    public void tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command) {
-        racingGameCommandPublisher.tap(joinCode, command.playerName(), command.tapCount());
+    public CompletableFuture<Void> tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command) {
+        return racingGameCommandPublisher.tap(joinCode, command.playerName(), command.tapCount());
     }
 }

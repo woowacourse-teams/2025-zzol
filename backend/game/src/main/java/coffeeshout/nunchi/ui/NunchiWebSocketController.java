@@ -6,6 +6,7 @@ import coffeeshout.nunchi.infra.NunchiStreamKey;
 import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.docs.WsReceive;
 import java.security.Principal;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -32,15 +33,16 @@ public class NunchiWebSocketController {
             },
             description = "눈치게임 press — 서버 수신 권위 시각(Q1)을 찍어 스트림 발행, 컨슈머가 충돌·순위 판정"
     )
-    public void press(
+    public CompletableFuture<Void> press(
             @DestinationVariable String joinCode,
             Principal principal
     ) {
         final String authenticatedPlayerName = PlayerKey.parse(principal.getName()).playerName();
         final NunchiCommandEvent event = NunchiCommandEvent.of(joinCode, authenticatedPlayerName);
-        streamPublisher.publish(NunchiStreamKey.INPUT, event);
+        final CompletableFuture<Void> published = streamPublisher.publishAsync(NunchiStreamKey.INPUT, event);
 
         log.debug("눈치게임 press 발행: joinCode={}, playerName={}, eventId={}",
                 joinCode, authenticatedPlayerName, event.eventId());
+        return published;
     }
 }

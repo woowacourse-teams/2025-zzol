@@ -10,6 +10,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import java.util.concurrent.CompletableFuture;
 
 @Controller
 @RequiredArgsConstructor
@@ -23,8 +24,8 @@ public class MiniGameWebSocketController {
             respondsOnTopics = {"/room/{joinCode}/round", "/room/{joinCode}/gameState"},
             description = "StartMiniGameCommand → round 발행, SelectCardCommand → gameState 발행"
     )
-    public void commandGame(@DestinationVariable String joinCode, @Payload MiniGameMessage command) {
+    public CompletableFuture<Void> commandGame(@DestinationVariable String joinCode, @Payload MiniGameMessage command) {
         final MiniGameCommand miniGameCommand = command.toCommand(objectMapper);
-        miniGameCommandDispatcher.dispatch(joinCode, miniGameCommand);
+        return miniGameCommandDispatcher.dispatch(joinCode, miniGameCommand);
     }
 }

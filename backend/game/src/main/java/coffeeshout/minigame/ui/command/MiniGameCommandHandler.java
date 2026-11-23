@@ -1,8 +1,10 @@
 package coffeeshout.minigame.ui.command;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface MiniGameCommandHandler<T extends MiniGameCommand> {
 
-    void handle(String joinCode, T command);
+    CompletableFuture<Void> handle(String joinCode, T command);
 
     Class<T> getCommandType();
 }

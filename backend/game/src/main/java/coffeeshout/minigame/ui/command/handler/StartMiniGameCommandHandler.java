@@ -6,10 +6,10 @@ import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
 import coffeeshout.minigame.ui.request.command.StartMiniGameCommand;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component

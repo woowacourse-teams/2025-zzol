@@ -5,12 +5,12 @@ import coffeeshout.minigame.ui.command.MiniGameCommand;
 import coffeeshout.minigame.ui.command.MiniGameCommandDispatcher;
 import coffeeshout.minigame.ui.request.MiniGameMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
-import java.util.concurrent.CompletableFuture;
 
 @Controller
 @RequiredArgsConstructor

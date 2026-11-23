@@ -4,10 +4,10 @@ import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.racinggame.infra.RacingGameStreamKey;
 import coffeeshout.global.redis.stream.StreamPublisher;
 import coffeeshout.racinggame.domain.event.TapCommandEvent;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service

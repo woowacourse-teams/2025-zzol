@@ -131,18 +131,18 @@ class StreamPublisherMetricTest {
     private StreamPublisher publisherWith(StringRedisTemplate stringRedisTemplate) {
         final ReactiveStringRedisTemplate reactiveTemplate = mock(ReactiveStringRedisTemplate.class);
         doReturn(reactiveStreamOperations).when(reactiveTemplate).opsForStream();
-        final RedisStreamPublishMetricService metricService = new RedisStreamPublishMetricService(meterRegistry);
-        final StreamPublisher publisher = new StreamPublisher(
+        final RedisStreamProperties properties = properties();
+        final RedisStreamPublishMetricService metricService =
+                new RedisStreamPublishMetricService(meterRegistry, properties);
+        metricService.registerPublishedCounters();
+        return new StreamPublisher(
                 stringRedisTemplate,
                 reactiveTemplate,
-                properties(),
+                properties,
                 new ObjectMapper().findAndRegisterModules(),
                 mock(StreamTracePropagator.class),
-                meterRegistry,
                 metricService,
                 ContextSnapshotFactory.builder().build());
-        publisher.initializeCounters();
-        return publisher;
     }
 
     private Counter counterOf(String streamKey) {

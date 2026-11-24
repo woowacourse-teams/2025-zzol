@@ -1,5 +1,6 @@
 package coffeeshout.global.redis.config;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
@@ -8,10 +9,29 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * Redis Stream 설정. 공통 설정과 스트림 키가 없으면 발행할 수 없으므로, 요청이 들어온 뒤가 아니라 기동할 때 실패한다.
+ */
 @Validated
 @ConfigurationProperties(prefix = "redis.stream")
 public record RedisStreamProperties(
-        CommonSettings commonSettings, Map<String, ThreadPoolConfig> threadPools, Map<String, StreamConfig> keys) {
+        @NotNull CommonSettings commonSettings,
+        Map<String, ThreadPoolConfig> threadPools,
+        @NotEmpty Map<String, StreamConfig> keys) {
+
+    /**
+     * 스트림에 남길 최대 길이. 스트림에 따로 정하지 않았으면 공통 설정을 따른다.
+     *
+     * @throws IllegalArgumentException 설정에 없는 스트림 키일 때
+     */
+    public int maxLength(String redisKey) {
+        final StreamConfig streamConfig = keys.get(redisKey);
+        if (streamConfig == null) {
+            throw new IllegalArgumentException("존재하지 않는 키입니다: " + redisKey + ". 사용 가능한 키: " + keys.keySet());
+        }
+        return streamConfig.getMaxLength(commonSettings);
+    }
+
     public record CommonSettings(
             @Positive int maxLength,
             @Positive int batchSize,

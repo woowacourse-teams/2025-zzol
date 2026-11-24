@@ -3,20 +3,14 @@ package coffeeshout.global.redis.stream;
 import coffeeshout.global.metric.RedisStreamPublishMetricService;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.config.RedisStreamProperties;
-import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.RedisStreamCommands.TrimOptions;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -47,12 +42,9 @@ public class StreamPublisher {
     private final RedisStreamProperties redisStreamProperties;
     private final ObjectMapper objectMapper;
     private final StreamTracePropagator streamTracePropagator;
-    private final MeterRegistry meterRegistry;
     private final RedisStreamPublishMetricService publishMetricService;
     private final ContextSnapshotFactory contextSnapshotFactory;
     private final Executor failureNotificationExecutor;
-    // 발행마다 Counter를 새로 만들지 않도록 스트림별로 캐싱한다 (WebSocketMetricService 선례)
-    private final Map<String, Counter> publishedCounters = new ConcurrentHashMap<>();
 
     @Autowired
     public StreamPublisher(
@@ -61,7 +53,6 @@ public class StreamPublisher {
             RedisStreamProperties redisStreamProperties,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             StreamTracePropagator streamTracePropagator,
-            MeterRegistry meterRegistry,
             RedisStreamPublishMetricService publishMetricService,
             ContextSnapshotFactory contextSnapshotFactory) {
         this(
@@ -70,7 +61,6 @@ public class StreamPublisher {
                 redisStreamProperties,
                 objectMapper,
                 streamTracePropagator,
-                meterRegistry,
                 publishMetricService,
                 contextSnapshotFactory,
                 OFF_EVENT_LOOP);
@@ -83,7 +73,6 @@ public class StreamPublisher {
             RedisStreamProperties redisStreamProperties,
             ObjectMapper objectMapper,
             StreamTracePropagator streamTracePropagator,
-            MeterRegistry meterRegistry,
             RedisStreamPublishMetricService publishMetricService,
             ContextSnapshotFactory contextSnapshotFactory,
             Executor failureNotificationExecutor) {
@@ -92,24 +81,9 @@ public class StreamPublisher {
         this.redisStreamProperties = redisStreamProperties;
         this.objectMapper = objectMapper;
         this.streamTracePropagator = streamTracePropagator;
-        this.meterRegistry = meterRegistry;
         this.publishMetricService = publishMetricService;
         this.contextSnapshotFactory = contextSnapshotFactory;
         this.failureNotificationExecutor = failureNotificationExecutor;
-    }
-
-    // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
-    // 첫 샘플을 증가로 세지 않아, 기동 후 발행이 한 번뿐인 스트림은 컨슈머가 멎어도 정지 룰이
-    // 침묵한다. 발행이 띄엄한 스트림을 잡는 게 그 룰의 목적이다.
-    @PostConstruct
-    public void initializeCounters() {
-        if (redisStreamProperties.keys() == null) {
-            return;
-        }
-        redisStreamProperties
-                .keys()
-                .keySet()
-                .forEach(redisKey -> publishedCounters.computeIfAbsent(redisKey, this::registerPublishedCounter));
     }
 
     public void publish(StreamKey key, BaseEvent event) {
@@ -154,11 +128,9 @@ public class StreamPublisher {
      */
     public CompletableFuture<Void> publishAsync(StreamKey key, BaseEvent event) {
         final String redisKey = key.getRedisKey();
-        final Map<String, String> fields = toFields(event);
-        final Optional<XAddOptions> options = resolveXAddOptions(redisKey);
-        if (options.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
+        final MapRecord<String, String, String> record =
+                StreamRecords.newRecord().in(redisKey).ofMap(toFields(event));
+        final XAddOptions options = xAddOptions(redisKey);
 
         final Timer.Sample roundTrip = publishMetricService.startRoundTrip();
         final ContextSnapshot publishContext = contextSnapshotFactory.captureAll();
@@ -166,9 +138,7 @@ public class StreamPublisher {
         // @MessageExceptionHandler를 고른다. 원래 예외가 그대로 가도록 future를 직접 만들어 완료한다
         final CompletableFuture<Void> published = new CompletableFuture<>();
         // defer: add()가 Mono를 만들다 바로 던져도 오류 신호로 바뀌어, 다른 실패와 같은 경로로 지표를 남기고 알린다
-        Mono.defer(() -> reactiveStringRedisTemplate
-                        .opsForStream()
-                        .add(StreamRecords.newRecord().in(redisKey).ofMap(fields), options.get()))
+        Mono.defer(() -> reactiveStringRedisTemplate.opsForStream().add(record, options))
                 .subscribe(
                         recordId -> {},
                         error -> {
@@ -177,7 +147,6 @@ public class StreamPublisher {
                         },
                         () -> {
                             publishMetricService.recordPublished(roundTrip, redisKey);
-                            countPublished(redisKey);
                             published.complete(null);
                         });
         return published;
@@ -210,54 +179,14 @@ public class StreamPublisher {
     }
 
     private void publishFields(String redisKey, Map<String, String> fields) {
-        resolveXAddOptions(redisKey).ifPresent(options -> {
-            stringRedisTemplate
-                    .opsForStream()
-                    .add(StreamRecords.newRecord().in(redisKey).ofMap(fields), options);
-            countPublished(redisKey);
-        });
+        stringRedisTemplate
+                .opsForStream()
+                .add(StreamRecords.newRecord().in(redisKey).ofMap(fields), xAddOptions(redisKey));
+        publishMetricService.countPublished(redisKey);
     }
 
-    /**
-     * 스트림 설정을 확인하고 XADD 옵션을 만든다. 설정이 아예 없으면 발행하지 않으므로 비어 있는 값을 돌려준다.
-     */
-    private Optional<XAddOptions> resolveXAddOptions(String redisKey) {
-        if (redisStreamProperties.keys() == null) {
-            log.warn("Redis Stream 설정이 없습니다. 이벤트를 발행하지 않습니다: {}", redisKey);
-            return Optional.empty();
-        }
-
-        if (!redisStreamProperties.keys().containsKey(redisKey)) {
-            log.error(
-                    "존재하지 않는 키입니다: {}. 사용 가능한 키: {}",
-                    redisKey,
-                    redisStreamProperties.keys().keySet());
-            throw new IllegalArgumentException("존재하지 않는 키입니다: " + redisKey);
-        }
-
-        final StreamConfig streamConfig = redisStreamProperties.keys().get(redisKey);
-
-        if (redisStreamProperties.commonSettings() == null) {
-            log.warn("Redis Stream 공통 설정이 없습니다. 이벤트를 발행하지 않습니다: {}", redisKey);
-            return Optional.empty();
-        }
-
-        final int maxLength = streamConfig.getMaxLength(redisStreamProperties.commonSettings());
-        return Optional.of(XAddOptions.trim(TrimOptions.maxLen(maxLength).approximate()));
-    }
-
-    private void countPublished(String redisKey) {
-        publishedCounters
-                .computeIfAbsent(redisKey, this::registerPublishedCounter)
-                .increment();
-    }
-
-    // 발행률만으로는 적체를 알 수 없다. 소비율(redis_stream_consumed_total)과 짝지어
-    // "발행은 되는데 소비가 0"인 상태를 잡는 데 쓴다 (RedisStreamConsumptionStalled, #1744).
-    private Counter registerPublishedCounter(String redisKey) {
-        return Counter.builder("redis.stream.published")
-                .description("Redis Stream에 발행된 메시지 수")
-                .tag("stream", redisKey)
-                .register(meterRegistry);
+    private XAddOptions xAddOptions(String redisKey) {
+        return XAddOptions.trim(
+                TrimOptions.maxLen(redisStreamProperties.maxLength(redisKey)).approximate());
     }
 }

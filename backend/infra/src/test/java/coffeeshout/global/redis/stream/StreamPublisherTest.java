@@ -41,14 +41,15 @@ class StreamPublisherTest {
     private final ReactiveStreamOperations<String, Object, Object> reactiveStreamOperations =
             mock(ReactiveStreamOperations.class);
 
-    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-    private final RedisStreamPublishMetricService metricService = new RedisStreamPublishMetricService(meterRegistry);
-
     private final ReactiveStringRedisTemplate reactiveTemplate = mock(ReactiveStringRedisTemplate.class);
     private final RedisStreamProperties redisStreamProperties = new RedisStreamProperties(
             new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5)),
             Map.of(),
             Map.of("room", new StreamConfig("concurrent", null, null, null, null, null)));
+
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private final RedisStreamPublishMetricService metricService =
+            new RedisStreamPublishMetricService(meterRegistry, redisStreamProperties);
 
     private StreamPublisher publisher() {
         doReturn(reactiveStreamOperations).when(reactiveTemplate).opsForStream();
@@ -58,7 +59,6 @@ class StreamPublisherTest {
                 redisStreamProperties,
                 new ObjectMapper().findAndRegisterModules(),
                 mock(StreamTracePropagator.class),
-                meterRegistry,
                 metricService,
                 ContextSnapshotFactory.builder().build());
     }
@@ -71,7 +71,6 @@ class StreamPublisherTest {
                 redisStreamProperties,
                 new ObjectMapper().findAndRegisterModules(),
                 mock(StreamTracePropagator.class),
-                meterRegistry,
                 metricService,
                 ContextSnapshotFactory.builder().build(),
                 failureNotificationExecutor);

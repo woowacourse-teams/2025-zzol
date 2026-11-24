@@ -21,10 +21,9 @@ WebSocket 핸들러는 `StreamPublisher.publishAsync`로 발행하고, 돌려받
 
 - `publishAsync`는 `ReactiveStringRedisTemplate`로 XADD를 Lettuce 이벤트 루프에 넘기고 바로 돌아온다. 직렬화와 traceparent 주입은 호출 스레드에서 끝낸다.
 - 발행이 실패하면 future는 XADD 예외를 감싸지 않은 채 실패한다. Spring이 이 실패를 기존 `@MessageExceptionHandler`로 넘겨, 동기 발행 때처럼 보낸 사용자에게 에러를 보낸다.
-- 실패 알림은 이벤트 루프 밖에서 실행하고, 발행 시점의 트레이스와 MDC를 되살린다. 그래서 에러 로그에도 요청의 traceId가 남는다.
-- 응답을 기다리는 발행 수는 `InFlightPublishLimiter`가 `redis.stream.publish.max-in-flight`로 제한한다. 기본값은 10,000이고, 넘으면 `STREAM_PUBLISH_OVERLOADED`로 거절한다.
-- 종료할 때는 웹서버가 멈춘 뒤, Stream 폴러와 커넥션 팩토리가 멈추기 전에 남은 발행이 끝나기를 기다린다. `InFlightPublishLimiter`가 SmartLifecycle phase 2048에서 `redis.stream.publish.drain-timeout`만큼 기다리고, 기본값은 5초다.
-- 종료 대기에 `@PreDestroy`를 쓰지 않는다. 빈 파괴는 lifecycle stop 뒤에 일어나는데, `LettuceConnectionFactory`는 lifecycle stop의 phase 0에서 이미 커넥션을 닫는다.
+- 실패 알림은 이벤트 루프 밖에서 실행하고, 발행 시점의 트레이스와 MDC를 되살린다. 그래서 에러 로그에도 요청의 traceId가 남는다. 알림을 넘길 스케줄러가 가득 찼거나 멈춰 작업을 거절하면, 알림이 사라지지 않도록 실패를 받은 스레드에서 바로 알린다.
+- 응답을 기다리는 명령 수는 Lettuce의 `requestQueueSize`로 제한한다. `RedisConfig`가 커넥션마다 10,000으로 두고, 넘으면 Lettuce가 명령을 보내지 않고 바로 실패시킨다. 이 실패도 다른 발행 실패처럼 보낸 사용자에게 알린다.
+- 종료할 때 응답을 기다리는 발행이 끝나기를 따로 기다리지 않는다. 웹서버가 먼저 멈춰 새 발행은 들어오지 않고, 정상 부하에서 응답을 기다리는 XADD는 1~2건이다.
 - Handler가 아닌 경로는 동기 `publish`를 그대로 쓴다. Outbox 릴레이처럼 발행 성공을 확인해야 하는 경로, Application Service, 이벤트 리스너, 컨슈머가 여기에 해당한다.
 - 비동기 발행도 XADD가 성공한 뒤에 `redis.stream.published` 카운터를 올린다. 컨슈머 정지 알림이 이 카운터를 쓰기 때문이다.
 - ArchUnit이 `@MessageMapping` 메서드의 `CompletableFuture` 반환을 강제한다.
@@ -37,10 +36,19 @@ WebSocket 핸들러는 `StreamPublisher.publishAsync`로 발행하고, 돌려받
 | 가상 스레드 (Java 21) | 코드가 동기 흐름 그대로다. 2,700 TPS 큐 대기 P95 0.18ms로 가장 낮다 | 기다림이 싸질 뿐 사라지지 않는다. JDK 21에서는 `synchronized` 구간이 캐리어 스레드를 붙잡는다. 측정 중 `SecureRandom` 모니터 대기 37.8ms를 봤다. CPU를 비동기보다 3~9% 더 쓴다 |
 | 비동기 발행 (선택) | 스레드 1개로 2,700 TPS 큐 대기 P95 0.29ms. 13,500 TPS에서 CPU 약 169%, 큐 최대 95건. 약 2만 TPS에서 큐 대기 P99 12ms | 실패가 핸들러가 끝난 뒤에 난다. 스레드가 발행 수를 눌러 주지 않는다. 컨텍스트가 스레드를 넘어간다 |
 
+응답을 기다리는 명령 수의 상한을 두는 방법도 비교했다.
+
+| 대안 | 장점 | 단점 |
+| --- | --- | --- |
+| 세마포어로 직접 제한 | 이 발행 경로에만 건다. 전용 에러 코드와 거절 지표를 둘 수 있다. 종료할 때 남은 발행을 셀 수 있다 | 클래스, 설정, 종료 순서용 lifecycle phase가 늘어난다. Lettuce에 같은 기능이 있다 |
+| Lettuce `requestQueueSize` (선택) | 설정 한 줄이다. 라이브러리가 상한을 지켜 따로 관리할 상태가 없다 | 커넥션 팩토리 전체에 걸린다. 거절이 일반 발행 실패로 보인다 |
+
 ## 트레이드오프
 
 - 실패가 핸들러가 끝난 뒤에 난다. 핸들러가 future를 반환하지 않으면 그 엔드포인트만 실패 알림이 조용히 사라진다. ArchUnit 규칙으로 막았지만, 모든 `@MessageMapping`이 future를 반환해야 하는 제약이 생긴다. 결과를 바로 돌려주는 핸들러가 필요해지면 이 규칙을 다시 정해야 한다.
-- 스레드가 더 이상 발행 수를 눌러 주지 않는다. Redis가 느려지면 Lettuce 요청 큐에 명령이 쌓인다. 상한을 두어 막았고, 상한에 닿으면 연결을 유지한 채 사용자에게 에러를 보낸다. 전에는 Inbound 큐 2,048건이 차면 연결이 끊겼다.
+- 스레드가 더 이상 발행 수를 눌러 주지 않는다. Redis가 느려지면 Lettuce 요청 큐에 명령이 쌓인다. 요청 큐에 상한을 두어 막았고, 상한에 닿으면 연결을 유지한 채 사용자에게 에러를 보낸다. 전에는 Inbound 큐 2,048건이 차면 연결이 끊겼다.
+- 요청 큐 상한은 커넥션 팩토리 전체에 걸려 동기 발행 커넥션에도 적용된다. 동기 호출은 스레드 수만큼만 쌓여 닿을 일이 없다. 상한에 닿은 거절은 전용 에러 코드 없이 일반 발행 실패로 보인다.
+- 종료할 때 응답을 기다리던 XADD는 커넥션이 닫히며 실패할 수 있다. 정상 부하에서 1~2건이고, 그 입력은 반영되지 않는다.
 - 실패 알림과 그 에러 로그가 Inbound 스레드가 아닌 다른 스레드에서 실행된다. 트레이스와 MDC는 되살리지만, 다른 스레드 로컬에 기대는 예외 핸들러를 새로 만들면 깨질 수 있다.
 - 같은 스트림에 동기 발행과 비동기 발행이 서로 다른 커넥션으로 들어간다. 지금 순서가 중요한 흐름은 앞 이벤트가 소비된 뒤에 다음 발행이 일어나서 영향이 없다. 두 경로를 섞어 연달아 발행하는 흐름을 새로 만들면 순서가 바뀔 수 있다.
 - 인스턴스마다 Redis 커넥션이 하나 늘어난다.
@@ -49,6 +57,6 @@ WebSocket 핸들러는 `StreamPublisher.publishAsync`로 발행하고, 돌려받
 ## 결과
 
 - Handler 규칙이 바뀐다. 새 `@MessageMapping` 핸들러는 `publishAsync`를 쓰고 future를 반환한다. `docs/tech-stack.md`에 반영했다.
-- 지표가 생긴다. XADD 왕복 시간은 `redis.stream.publish.async.duration`으로 보고, 실패 수는 그중 `outcome=error`의 count로 본다. 응답 대기 수는 `redis.stream.publish.async.in-flight`, 상한에 닿아 거절한 수는 `redis.stream.publish.async.rejected`로 본다.
+- 지표가 생긴다. XADD 왕복 시간은 `redis.stream.publish.async.duration`으로 보고, 실패 수는 그중 `outcome=error`의 count로 본다. 요청 큐 상한에 닿아 보내지 못한 발행도 실패로 들어간다.
 - Inbound 스레드 수는 32개 그대로 둔다. `broadcastRouletteSpin`이 `roomService.spinRoulette`를 동기로 불러서, 스레드를 줄이면 이 호출이 다른 메시지를 막는다. 이 호출을 정리한 뒤 따로 줄인다.
 - 이 코드로 팀 환경에서 부하를 다시 재는 일은 후속으로 남긴다.

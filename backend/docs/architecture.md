@@ -178,7 +178,6 @@ L0  순수      :common                                     ← Spring 무관
 | `MAX-1` | `WebSocketGracefulShutdownHandler` | WS 세션 드레인 | **우리** (`:websocket`) |
 | `MAX-1024` | `WebServerGracefulShutdownLifecycle` | HTTP 요청 드레인 | Spring Boot |
 | `MAX-2048` | `WebServerStartStopLifecycle` | 웹서버 stop | Spring Boot |
-| `2048` | `InFlightPublishLimiter` | 응답을 기다리는 비동기 발행 비우기 | **우리** (`:infra`) |
 | `1024` | `RedisStreamContainerRegistry` | Stream 폴러 정지 | **우리** (`:infra`) |
 | `512` | `RedisStreamLagMetricService` | XLEN 게이지 소등 | **우리** (`:infra`) |
 | `0` | `LettuceConnectionFactory` | Redis 커넥션 정지 | spring-data-redis |
@@ -186,9 +185,6 @@ L0  순수      :common                                     ← Spring 무관
 각 자리의 근거:
 
 - **WS 세션 드레인이 가장 먼저** — HTTP 요청 드레인이 시작되기 전에 클라이언트를 정리해야 세션이 끊기지 않는다.
-- **phase 2048인 비동기 발행 비우기가 웹서버 stop 뒤, 폴러 정지 앞** — 웹서버가 멈춘 뒤라 새 발행이 들어오지 않고,
-  커넥션 팩토리가 커넥션을 닫기 전에 남은 XADD가 끝난다. 폴러보다 먼저라 이 인스턴스의 컨슈머도 아직 받는다.
-  `@PreDestroy`로는 안 된다. 빈 파괴는 lifecycle stop 뒤라 그때는 커넥션이 이미 닫혀 있다 (ADR-0039).
 - **phase 1024인 폴러 정지가 phase 0인 커넥션 팩토리보다 먼저** — 순서가 뒤집히면 폴러가 정지된 팩토리에 무한 재시도한다 (#1573).
 - **phase 512인 게이지 소등이 폴러 정지 뒤, 커넥션 팩토리 앞** — 폴러가 멈춘 뒤에도 백로그는 관측 대상이다.
   기본값(`Integer.MAX_VALUE`)으로 두면 드레인(`spring.lifecycle.timeout-per-shutdown-phase: 5m`) 내내

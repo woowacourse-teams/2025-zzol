@@ -1,7 +1,5 @@
 package coffeeshout.global.redis.stream;
 
-import coffeeshout.global.exception.GlobalErrorCode;
-import coffeeshout.global.exception.custom.InfrastructureException;
 import coffeeshout.global.metric.RedisStreamPublishMetricService;
 import coffeeshout.global.redis.BaseEvent;
 import coffeeshout.global.redis.config.RedisStreamProperties;
@@ -49,7 +47,6 @@ public class StreamPublisher {
     private final MeterRegistry meterRegistry;
     private final RedisStreamPublishMetricService publishMetricService;
     private final ContextSnapshotFactory contextSnapshotFactory;
-    private final InFlightPublishLimiter inFlightPublishLimiter;
     // 발행마다 Counter를 새로 만들지 않도록 스트림별로 캐싱한다 (WebSocketMetricService 선례)
     private final Map<String, Counter> publishedCounters = new ConcurrentHashMap<>();
 
@@ -57,7 +54,6 @@ public class StreamPublisher {
             StringRedisTemplate stringRedisTemplate,
             ReactiveStringRedisTemplate reactiveStringRedisTemplate,
             RedisStreamProperties redisStreamProperties,
-            InFlightPublishLimiter inFlightPublishLimiter,
             @Qualifier("redisObjectMapper") ObjectMapper objectMapper,
             StreamTracePropagator streamTracePropagator,
             MeterRegistry meterRegistry,
@@ -71,7 +67,6 @@ public class StreamPublisher {
         this.meterRegistry = meterRegistry;
         this.publishMetricService = publishMetricService;
         this.contextSnapshotFactory = contextSnapshotFactory;
-        this.inFlightPublishLimiter = inFlightPublishLimiter;
     }
 
     // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
@@ -124,8 +119,9 @@ public class StreamPublisher {
      * 이 future를 반환하면 Spring이 실패를 {@code @MessageExceptionHandler}로 넘겨, 동기 발행 때처럼 보낸 사용자에게
      * 에러를 보내고 에러 로그를 남긴다. 이 일은 이벤트 루프 밖에서 발행 시점의 컨텍스트(트레이스, MDC)를 되살려
      * 실행하므로, 그 로그에도 요청의 traceId가 남는다.
-     *
-     * @throws InfrastructureException 응답을 기다리는 비동기 발행이 상한에 닿았을 때
+     * <p>
+     * 응답을 기다리는 명령 수의 상한은 {@code RedisConfig}가 정한 요청 큐 크기로 Lettuce가 지킨다. 상한을 넘으면
+     * Lettuce가 명령을 보내지 않고 바로 실패시키고, 그 실패도 다른 발행 실패와 같은 방식으로 사용자에게 알린다.
      */
     public CompletableFuture<Void> publishAsync(StreamKey key, BaseEvent event) {
         final String redisKey = key.getRedisKey();
@@ -135,22 +131,15 @@ public class StreamPublisher {
             return CompletableFuture.completedFuture(null);
         }
 
-        if (!inFlightPublishLimiter.tryAcquire()) {
-            publishMetricService.recordRejected(redisKey);
-            throw new InfrastructureException(
-                    GlobalErrorCode.STREAM_PUBLISH_OVERLOADED, "응답을 기다리는 Redis Stream 발행이 상한에 닿았습니다: " + redisKey);
-        }
-
         final Timer.Sample roundTrip = publishMetricService.startRoundTrip();
         final Executor failureNotifier = contextSnapshotFactory.captureAll().wrapExecutor(OFF_EVENT_LOOP);
         // thenXxx로 이어 만든 future는 실패를 CompletionException으로 감싸고, Spring은 이를 풀지 않은 채
         // @MessageExceptionHandler를 고른다. 원래 예외가 그대로 가도록 future를 직접 만들어 완료한다
         final CompletableFuture<Void> published = new CompletableFuture<>();
-        // defer: add()가 Mono를 만들다 바로 던져도 오류 신호로 바뀌어, doFinally가 자리를 돌려준다
+        // defer: add()가 Mono를 만들다 바로 던져도 오류 신호로 바뀌어, 다른 실패와 같은 경로로 지표를 남기고 알린다
         Mono.defer(() -> reactiveStringRedisTemplate
                         .opsForStream()
                         .add(StreamRecords.newRecord().in(redisKey).ofMap(fields), options.get()))
-                .doFinally(signal -> inFlightPublishLimiter.release())
                 .subscribe(
                         recordId -> {},
                         error -> {

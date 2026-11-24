@@ -13,7 +13,6 @@ import coffeeshout.global.metric.RedisStreamPublishMetricService;
 import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.CommonSettings;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
-import coffeeshout.global.redis.config.StreamPublishProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.core.instrument.Counter;
@@ -137,7 +136,6 @@ class StreamPublisherMetricTest {
                 stringRedisTemplate,
                 reactiveTemplate,
                 properties(),
-                new InFlightPublishLimiter(new StreamPublishProperties(10, Duration.ofSeconds(5)), metricService),
                 new ObjectMapper().findAndRegisterModules(),
                 mock(StreamTracePropagator.class),
                 meterRegistry,

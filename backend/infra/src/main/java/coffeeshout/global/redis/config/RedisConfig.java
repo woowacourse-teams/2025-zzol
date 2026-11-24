@@ -1,5 +1,6 @@
 package coffeeshout.global.redis.config;
 
+import io.lettuce.core.ClientOptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,14 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @RequiredArgsConstructor
 public class RedisConfig {
 
+    /**
+     * 커넥션마다 응답을 기다리는 명령 수의 상한. 넘으면 Lettuce가 새 명령을 보내지 않고 바로 실패시킨다.
+     * <p>
+     * 비동기 발행은 호출 스레드가 응답을 기다리지 않아, 스레드 수가 더는 발행 수를 눌러 주지 않는다. 상한이 없으면
+     * Redis가 느려지거나 끊겼을 때 명령이 메모리에 끝없이 쌓인다 (ADR-0039).
+     */
+    static final int REQUEST_QUEUE_SIZE = 10_000;
+
     private final RedisProperties redisProperties;
 
     /**
@@ -29,7 +38,10 @@ public class RedisConfig {
                 new RedisStandaloneConfiguration(redisProperties.host(), redisProperties.port());
 
         final LettuceClientConfiguration.LettuceClientConfigurationBuilder clientConfig =
-                LettuceClientConfiguration.builder();
+                LettuceClientConfiguration.builder()
+                        .clientOptions(ClientOptions.builder()
+                                .requestQueueSize(REQUEST_QUEUE_SIZE)
+                                .build());
 
         if (redisProperties.ssl().enabled()) {
             clientConfig.useSsl();

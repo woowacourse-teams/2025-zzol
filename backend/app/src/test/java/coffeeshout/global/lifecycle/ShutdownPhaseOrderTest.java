@@ -36,17 +36,16 @@ class ShutdownPhaseOrderTest extends IntegrationTestSupport {
     private ApplicationContext applicationContext;
 
     @Test
-    @DisplayName("종료는 HTTP 요청 → 웹서버 → 비동기 발행 비우기 → Stream 폴러 → 게이지 → Redis 커넥션 순으로 멈춘다")
+    @DisplayName("종료는 HTTP 요청 → 웹서버 → Stream 폴러 → 게이지 → Redis 커넥션 순으로 멈춘다")
     void 컨텍스트의_lifecycle_빈이_문서화된_phase_순서를_따른다() {
         // when: phase 내림차순 = stop 호출 순서
         List<String> stopOrder = stopOrder();
 
-        // then: 사이에 다른 빈이 끼는 것은 무방하나, 이 여섯의 상대 순서는 계약이다
+        // then: 사이에 다른 빈이 끼는 것은 무방하나, 이 다섯의 상대 순서는 계약이다
         assertThat(stopOrder)
                 .containsSubsequence(
                         "WebServerGracefulShutdownLifecycle",
                         "WebServerStartStopLifecycle",
-                        "InFlightPublishLimiter",
                         "RedisStreamContainerRegistry",
                         "RedisStreamLagMetricService",
                         "LettuceConnectionFactory");

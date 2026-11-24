@@ -6,6 +6,7 @@ import coffeeshout.global.redis.config.RedisStreamProperties;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,7 +18,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.connection.RedisStreamCommands.TrimOptions;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
@@ -47,9 +50,11 @@ public class StreamPublisher {
     private final MeterRegistry meterRegistry;
     private final RedisStreamPublishMetricService publishMetricService;
     private final ContextSnapshotFactory contextSnapshotFactory;
+    private final Executor failureNotificationExecutor;
     // 발행마다 Counter를 새로 만들지 않도록 스트림별로 캐싱한다 (WebSocketMetricService 선례)
     private final Map<String, Counter> publishedCounters = new ConcurrentHashMap<>();
 
+    @Autowired
     public StreamPublisher(
             StringRedisTemplate stringRedisTemplate,
             ReactiveStringRedisTemplate reactiveStringRedisTemplate,
@@ -59,6 +64,29 @@ public class StreamPublisher {
             MeterRegistry meterRegistry,
             RedisStreamPublishMetricService publishMetricService,
             ContextSnapshotFactory contextSnapshotFactory) {
+        this(
+                stringRedisTemplate,
+                reactiveStringRedisTemplate,
+                redisStreamProperties,
+                objectMapper,
+                streamTracePropagator,
+                meterRegistry,
+                publishMetricService,
+                contextSnapshotFactory,
+                OFF_EVENT_LOOP);
+    }
+
+    // 실패 알림을 넘길 곳을 바꿔 끼워, 넘기지 못한 경우를 테스트한다
+    StreamPublisher(
+            StringRedisTemplate stringRedisTemplate,
+            ReactiveStringRedisTemplate reactiveStringRedisTemplate,
+            RedisStreamProperties redisStreamProperties,
+            ObjectMapper objectMapper,
+            StreamTracePropagator streamTracePropagator,
+            MeterRegistry meterRegistry,
+            RedisStreamPublishMetricService publishMetricService,
+            ContextSnapshotFactory contextSnapshotFactory,
+            Executor failureNotificationExecutor) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.reactiveStringRedisTemplate = reactiveStringRedisTemplate;
         this.redisStreamProperties = redisStreamProperties;
@@ -67,6 +95,7 @@ public class StreamPublisher {
         this.meterRegistry = meterRegistry;
         this.publishMetricService = publishMetricService;
         this.contextSnapshotFactory = contextSnapshotFactory;
+        this.failureNotificationExecutor = failureNotificationExecutor;
     }
 
     // 카운터를 기동 시점에 0으로 만들어 둔다. 첫 발행 때 시계열이 생기면 Prometheus rate()가 그
@@ -132,7 +161,7 @@ public class StreamPublisher {
         }
 
         final Timer.Sample roundTrip = publishMetricService.startRoundTrip();
-        final Executor failureNotifier = contextSnapshotFactory.captureAll().wrapExecutor(OFF_EVENT_LOOP);
+        final ContextSnapshot publishContext = contextSnapshotFactory.captureAll();
         // thenXxx로 이어 만든 future는 실패를 CompletionException으로 감싸고, Spring은 이를 풀지 않은 채
         // @MessageExceptionHandler를 고른다. 원래 예외가 그대로 가도록 future를 직접 만들어 완료한다
         final CompletableFuture<Void> published = new CompletableFuture<>();
@@ -144,7 +173,7 @@ public class StreamPublisher {
                         recordId -> {},
                         error -> {
                             publishMetricService.recordFailed(roundTrip, redisKey);
-                            failureNotifier.execute(() -> published.completeExceptionally(error));
+                            notifyFailure(publishContext, published, error);
                         },
                         () -> {
                             publishMetricService.recordPublished(roundTrip, redisKey);
@@ -152,6 +181,21 @@ public class StreamPublisher {
                             published.complete(null);
                         });
         return published;
+    }
+
+    /**
+     * 실패 알림을 이벤트 루프 밖으로 넘긴다. 스케줄러가 가득 찼거나 멈춰 넘기지 못하면, 알림이 사라지지 않도록
+     * 지금 스레드에서 바로 알린다. 어느 쪽이든 발행 시점의 컨텍스트를 되살려 실행한다.
+     */
+    private void notifyFailure(ContextSnapshot publishContext, CompletableFuture<Void> published, Throwable error) {
+        final Runnable failPublished = () -> published.completeExceptionally(error);
+        final Runnable notification = publishContext.wrap(failPublished);
+        try {
+            failureNotificationExecutor.execute(notification);
+        } catch (RejectedExecutionException rejected) {
+            log.warn("Redis Stream 비동기 발행의 실패 알림을 넘기지 못해 지금 스레드에서 알립니다", rejected);
+            notification.run();
+        }
     }
 
     private Map<String, String> toFields(BaseEvent event) {

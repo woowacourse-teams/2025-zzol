@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Nested;
@@ -59,6 +61,26 @@ class StreamPublisherTest {
                 meterRegistry,
                 metricService,
                 ContextSnapshotFactory.builder().build());
+    }
+
+    private StreamPublisher publisherWithFailureNotificationExecutor(Executor failureNotificationExecutor) {
+        doReturn(reactiveStreamOperations).when(reactiveTemplate).opsForStream();
+        return new StreamPublisher(
+                mock(StringRedisTemplate.class),
+                reactiveTemplate,
+                redisStreamProperties,
+                new ObjectMapper().findAndRegisterModules(),
+                mock(StreamTracePropagator.class),
+                meterRegistry,
+                metricService,
+                ContextSnapshotFactory.builder().build(),
+                failureNotificationExecutor);
+    }
+
+    private static Executor 작업을_거절하는_실행기() {
+        return task -> {
+            throw new RejectedExecutionException("실패 알림 스케줄러가 가득 참");
+        };
     }
 
     @SafeVarargs
@@ -138,6 +160,22 @@ class StreamPublisherTest {
                     .succeedsWithin(Duration.ofSeconds(1))
                     .isSameAs(failure);
         }
+
+        @Test
+        void 실패_알림을_넘기지_못해도_사라지지_않고_지금_스레드에서_알린다() {
+            // given — 실패 알림을 넘길 곳이 작업을 거절하고, XADD는 실패한다
+            final StreamPublisher publisher = publisherWithFailureNotificationExecutor(작업을_거절하는_실행기());
+            final IllegalStateException failure = new IllegalStateException("Redis 연결 끊김");
+            givenXAddResults(Mono.error(failure));
+
+            // when
+            final CompletableFuture<Void> published = publisher.publishAsync(KEY, 이벤트());
+
+            // then — 넘기지 못했다고 future가 끝나지 않은 채 남지 않고, XADD 예외 그대로 실패한다
+            assertThat(published.handle((ignored, error) -> error))
+                    .succeedsWithin(Duration.ofSeconds(1))
+                    .isSameAs(failure);
+        }
     }
 
     @Nested
@@ -198,6 +236,31 @@ class StreamPublisherTest {
                         published.handle((ignored, error) -> requestContext.get());
 
                 // then — 실패를 처리한 다른 스레드에서도 발행 시점의 컨텍스트가 보인다
+                assertThat(contextOnFailure)
+                        .succeedsWithin(Duration.ofSeconds(2))
+                        .isEqualTo("trace-1");
+            } finally {
+                ContextRegistry.getInstance().removeThreadLocalAccessor(CONTEXT_KEY);
+            }
+        }
+
+        @Test
+        void 실패_알림을_넘기지_못해_지금_스레드에서_알려도_발행한_스레드의_컨텍스트를_되살린다() {
+            // given — 실패 알림을 넘길 곳이 작업을 거절하고, XADD 실패는 발행 스레드가 아닌 다른 스레드에서 온다
+            ContextRegistry.getInstance().registerThreadLocalAccessor(CONTEXT_KEY, requestContext);
+            try {
+                final StreamPublisher publisher = publisherWithFailureNotificationExecutor(작업을_거절하는_실행기());
+                givenXAddResults(Mono.<RecordId>error(new IllegalStateException("Redis 연결 끊김"))
+                        .delaySubscription(Duration.ofMillis(200)));
+
+                // when — 발행한 뒤 발행 스레드의 컨텍스트는 지운다
+                requestContext.set("trace-1");
+                final CompletableFuture<Void> published = publisher.publishAsync(KEY, 이벤트());
+                requestContext.remove();
+                final CompletableFuture<String> contextOnFailure =
+                        published.handle((ignored, error) -> requestContext.get());
+
+                // then — 실패를 받은 스레드에서 바로 알려도 발행 시점의 컨텍스트가 보인다
                 assertThat(contextOnFailure)
                         .succeedsWithin(Duration.ofSeconds(2))
                         .isEqualTo("trace-1");

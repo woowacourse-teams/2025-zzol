@@ -23,7 +23,9 @@ class RankingNicknameAuditBackfillMigrationTest {
     private static final MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:8.0"))
             .withDatabaseName("backfill_verify")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            // dev·prod compose와 같은 서버 콜레이션. 마이그레이션이 테이블마다 다른 콜레이션을 만드는 조건을 재현한다(#1917).
+            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci");
 
     private static JdbcTemplate jdbc;
 
@@ -36,7 +38,6 @@ class RankingNicknameAuditBackfillMigrationTest {
         jdbc = new JdbcTemplate(dataSource);
 
         flyway(dataSource, "48").migrate();
-        운영_DB처럼_콜레이션을_섞는다();
 
         final long room = 방();
         플레이어(room, "새미니게임", 1);
@@ -70,17 +71,6 @@ class RankingNicknameAuditBackfillMigrationTest {
                 .locations("classpath:db/migration")
                 .target(target)
                 .load();
-    }
-
-    /**
-     * dev·prod는 player·app_user를 서버 콜레이션을 바꾸기 전에 만들어 원천 컬럼과 검열 컬럼의 콜레이션이 다르다(#1917).
-     * 컨테이너는 모든 테이블을 같은 콜레이션으로 만들어서 그대로 두면 비교식의 콜레이션 충돌을 못 잡는다.
-     */
-    private static void 운영_DB처럼_콜레이션을_섞는다() {
-        jdbc.execute("ALTER TABLE player MODIFY player_name VARCHAR(10) COLLATE utf8mb4_0900_ai_ci NOT NULL");
-        jdbc.execute("ALTER TABLE app_user MODIFY nickname VARCHAR(10) COLLATE utf8mb4_0900_ai_ci NULL");
-        jdbc.execute(
-                "ALTER TABLE player_name_audit MODIFY player_name VARCHAR(10) COLLATE utf8mb4_unicode_ci NOT NULL");
     }
 
     private static long 방() {

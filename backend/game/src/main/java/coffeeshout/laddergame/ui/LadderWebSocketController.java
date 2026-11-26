@@ -8,6 +8,7 @@ import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -24,12 +25,12 @@ public class LadderWebSocketController {
 
     @MessageMapping("/room/{joinCode}/ladder/draw")
     @WsReceive(respondsOnTopics = "/room/{joinCode}/ladder/line", description = "사다리 선 그리기 이벤트 발행 — 선 브로드캐스트")
-    public void draw(
+    public CompletableFuture<Void> draw(
             @DestinationVariable String joinCode, @Payload @Valid LadderDrawRequest request, Principal principal) {
         final String playerName = PlayerKey.parse(principal.getName()).playerName();
         final LadderDrawCommandEvent event =
                 LadderDrawCommandEvent.of(joinCode, playerName, request.segmentIndex(), request.row());
-        streamPublisher.publish(LadderGameStreamKey.EVENTS, event);
+        final CompletableFuture<Void> published = streamPublisher.publishAsync(LadderGameStreamKey.EVENTS, event);
 
         log.debug(
                 "사다리게임 선 그리기 이벤트 발행: joinCode={}, playerName={}, segmentIndex={}, row={}, eventId={}",
@@ -38,5 +39,6 @@ public class LadderWebSocketController {
                 request.segmentIndex(),
                 request.row(),
                 event.eventId());
+        return published;
     }
 }

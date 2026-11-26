@@ -6,6 +6,7 @@ import coffeeshout.websocket.PlayerKey;
 import coffeeshout.websocket.docs.WsReceive;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,9 +23,10 @@ public class RacingGameWebSocketController {
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}/racing-game/state"},
             description = "레이싱 게임 탭")
-    public void tap(@DestinationVariable String joinCode, @Payload @Valid TapCommand command, Principal principal) {
+    public CompletableFuture<Void> tap(
+            @DestinationVariable String joinCode, @Payload @Valid TapCommand command, Principal principal) {
         final String authenticatedPlayerName =
                 PlayerKey.parse(principal.getName()).playerName();
-        racingGameCommandPublisher.tap(joinCode, authenticatedPlayerName, command.tapCount());
+        return racingGameCommandPublisher.tap(joinCode, authenticatedPlayerName, command.tapCount());
     }
 }

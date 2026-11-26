@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import coffeeshout.global.redis.config.RedisStreamProperties.CommonSettings;
 import coffeeshout.global.redis.config.RedisStreamProperties.StreamConfig;
 import coffeeshout.global.redis.config.RedisStreamProperties.ThreadPoolConfig;
+import java.time.Duration;
+import java.util.Map;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -60,6 +63,35 @@ class RedisStreamPropertiesTest {
             assertThatThrownBy(() -> new StreamConfig(null, POOL, null, null, null, false))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("스레드풀을 지정할 수 없습니다");
+        }
+    }
+
+    @Nested
+    class 스트림의_최대_길이를_구할_때 {
+
+        private final CommonSettings common = new CommonSettings(100, 10, Duration.ofSeconds(2), Duration.ofSeconds(5));
+        private final RedisStreamProperties properties = new RedisStreamProperties(
+                common,
+                Map.of(),
+                Map.of(
+                        "room", new StreamConfig("concurrent", null, null, null, null, null),
+                        "room:join", new StreamConfig("concurrent", null, 500, null, null, null)));
+
+        @Test
+        void 스트림에_따로_정하지_않으면_공통_설정을_따른다() {
+            assertThat(properties.maxLength("room")).isEqualTo(100);
+        }
+
+        @Test
+        void 스트림에_정한_값이_있으면_그_값을_쓴다() {
+            assertThat(properties.maxLength("room:join")).isEqualTo(500);
+        }
+
+        @Test
+        void 설정에_없는_키면_예외가_발생한다() {
+            assertThatThrownBy(() -> properties.maxLength("unknown"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("존재하지 않는 키입니다: unknown");
         }
     }
 }

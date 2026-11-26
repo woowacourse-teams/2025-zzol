@@ -6,6 +6,7 @@ import coffeeshout.minigame.event.StartMiniGameCommandEvent;
 import coffeeshout.minigame.infra.MinigameStreamKey;
 import coffeeshout.minigame.ui.command.MiniGameCommandHandler;
 import coffeeshout.minigame.ui.request.command.StartMiniGameCommand;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,9 +19,9 @@ public class StartMiniGameCommandHandler implements MiniGameCommandHandler<Start
     private final StreamPublisher streamPublisher;
 
     @Override
-    public void handle(String joinCode, StartMiniGameCommand command) {
+    public CompletableFuture<Void> handle(String joinCode, StartMiniGameCommand command) {
         final BaseEvent event = new StartMiniGameCommandEvent(joinCode, command.hostName());
-        streamPublisher.publish(MinigameStreamKey.EVENTS, event);
+        return streamPublisher.publishAsync(MinigameStreamKey.EVENTS, event);
     }
 
     @Override

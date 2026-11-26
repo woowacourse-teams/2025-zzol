@@ -6,6 +6,7 @@ import coffeeshout.wormgame.infra.messaging.WormGameCommandPublisher;
 import coffeeshout.wormgame.ui.request.SteerCommand;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -26,9 +27,10 @@ public class WormGameWebSocketController {
     @WsReceive(
             respondsOnTopics = {"/room/{joinCode}/worm"},
             description = "지렁이 게임 조향 — 목표각(라디안)과 일련번호. 10Hz·변화 시만 전송")
-    public void steer(@DestinationVariable String joinCode, @Payload @Valid SteerCommand command, Principal principal) {
+    public CompletableFuture<Void> steer(
+            @DestinationVariable String joinCode, @Payload @Valid SteerCommand command, Principal principal) {
         final String authenticatedPlayerName =
                 PlayerKey.parse(principal.getName()).playerName();
-        commandPublisher.steer(joinCode, authenticatedPlayerName, command.angle(), command.seq());
+        return commandPublisher.steer(joinCode, authenticatedPlayerName, command.angle(), command.seq());
     }
 }

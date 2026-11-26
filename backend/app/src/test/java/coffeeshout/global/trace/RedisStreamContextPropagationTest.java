@@ -150,6 +150,30 @@ class RedisStreamContextPropagationTest extends IntegrationTestSupport {
         }
 
         @Test
+        void 비동기_발행도_레코드의_traceparent_필드에_Publisher의_traceId가_주입된다() {
+            // given
+            final AtomicReference<String> publisherTraceId = new AtomicReference<>();
+
+            final Observation observation = Observation.createNotStarted("test-publish-async", observationRegistry)
+                    .start();
+            try (Scope scope = observation.openScope()) {
+                publisherTraceId.set(tracer.currentSpan().context().traceId());
+
+                final RoomJoinEvent event = new RoomJoinEvent(joinCode, "비동기전파");
+                streamPublisher.publishAsync(RoomStreamKey.BROADCAST, event);
+            } finally {
+                observation.stop();
+            }
+
+            // then — 응답을 기다리지 않으므로 레코드가 실릴 때까지 기다린 뒤, 호출 스레드에서 주입한 캐리어를 확인한다
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> assertThat(findPublishedTraceparent("비동기전파"))
+                            .isNotBlank()
+                            .contains(publisherTraceId.get()));
+        }
+
+        @Test
         void Consumer에서_Publisher의_traceparent가_담긴_캐리어로_consumer_span이_복원된다() {
             // given
             AtomicReference<String> publisherTraceId = new AtomicReference<>();

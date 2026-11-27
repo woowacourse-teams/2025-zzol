@@ -26,9 +26,6 @@ public class NicknameFeedback {
     @Column(name = "player_name", nullable = false, length = 10)
     private String nickname;
 
-    @Column(nullable = false)
-    private boolean aiFlagged;
-
     @Column(nullable = false, precision = 3, scale = 2)
     private AiConfidence aiConfidence;
 
@@ -43,13 +40,8 @@ public class NicknameFeedback {
     private Instant createdAt;
 
     public NicknameFeedback(
-            String nickname,
-            boolean aiFlagged,
-            AiConfidence aiConfidence,
-            OperatorDecision operatorDecision,
-            String reason) {
+            String nickname, AiConfidence aiConfidence, OperatorDecision operatorDecision, String reason) {
         this.nickname = nickname;
-        this.aiFlagged = aiFlagged;
         this.aiConfidence = aiConfidence != null ? aiConfidence : AiConfidence.UNKNOWN;
         this.operatorDecision = operatorDecision;
         this.reason = reason;

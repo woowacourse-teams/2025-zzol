@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @DisplayName("AdminProfanityController")
 @ExtendWith(MockitoExtension.class)
@@ -62,8 +63,8 @@ class AdminProfanityControllerTest {
 
             controller().audits(NicknameAuditStatus.FLAGGED, 3);
 
-            final PageRequest expected = PageRequest.of(
-                    3, 10, org.springframework.data.domain.Sort.by("auditedAt").descending());
+            final PageRequest expected =
+                    PageRequest.of(3, 10, Sort.by("auditedAt").descending());
             then(auditService).should().listByStatus(NicknameAuditStatus.FLAGGED, expected);
         }
 
@@ -94,6 +95,37 @@ class AdminProfanityControllerTest {
             controller().block(1L);
 
             then(feedbackService).should().block(1L);
+        }
+    }
+
+    @Nested
+    class 표본_검토 {
+
+        @Test
+        void 미검토_표본을_감사_목록과_같은_크기와_정렬로_조회한다() {
+            given(auditService.listUnreviewedSamples(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.<NicknameAudit>of()));
+
+            controller().samples(2);
+
+            then(auditService)
+                    .should()
+                    .listUnreviewedSamples(
+                            PageRequest.of(2, 10, Sort.by("auditedAt").descending()));
+        }
+
+        @Test
+        void 정상_확정을_위임한다() {
+            controller().confirmSampleOk(1L);
+
+            then(feedbackService).should().allowSample(1L);
+        }
+
+        @Test
+        void 미탐_확정을_위임한다() {
+            controller().confirmSampleMiss(1L);
+
+            then(feedbackService).should().blockSample(1L);
         }
     }
 

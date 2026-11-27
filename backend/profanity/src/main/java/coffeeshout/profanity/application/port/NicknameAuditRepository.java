@@ -19,7 +19,7 @@ public interface NicknameAuditRepository {
     List<NicknameAudit> saveAll(Iterable<NicknameAudit> entities);
 
     /**
-     * 이미 id를 가진 엔티티들의 status·confidence·reason·audited_at을 JDBC 배치 UPDATE 한 번으로
+     * 이미 id를 가진 엔티티들의 status·confidence·reason·audited_at·review_sample을 JDBC 배치 UPDATE 한 번으로
      * 갱신한다. {@link NicknameAudit#complete}를 거쳐 네 값이 모두 채워진 엔티티만 넘긴다.
      */
     void bulkUpdateAuditResults(List<NicknameAudit> entities);
@@ -35,6 +35,16 @@ public interface NicknameAuditRepository {
     List<NicknameAudit> findByStatusAndAuditedAtIsNull(NicknameAuditStatus status, Pageable pageable);
 
     Page<NicknameAudit> findByStatus(NicknameAuditStatus status, Pageable pageable);
+
+    Page<NicknameAudit> findByReviewSampleTrueAndStatus(NicknameAuditStatus status, Pageable pageable);
+
+    /**
+     * 검토 대기 중인 표본(표본이면서 CLEAN)만 {@code decision}으로 바꾼다. 읽고 나서 확인하면 두 운영자가
+     * 같은 표본을 동시에 결정할 때 둘 다 통과하므로, 확인과 변경을 UPDATE 한 문장에 묶는다.
+     *
+     * @return 바뀐 행 수. 0이면 없는 id이거나 이미 결정된 표본, 또는 표본이 아닌 행이다
+     */
+    int claimUnreviewedSample(Long id, NicknameAuditStatus decision);
 
     Set<String> findNicknamesByStatus(NicknameAuditStatus status);
 

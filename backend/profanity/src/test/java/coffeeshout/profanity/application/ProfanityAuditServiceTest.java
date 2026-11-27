@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 
 import coffeeshout.profanity.application.port.NicknameAuditRepository;
 import coffeeshout.profanity.config.NicknameAuditProperties;
+import coffeeshout.profanity.domain.audit.CleanSampler;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditStatus;
 import coffeeshout.profanity.fixture.NicknameAuditPropertiesFixture;
@@ -23,9 +24,11 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Pageable;
 
 class ProfanityAuditServiceTest {
@@ -118,7 +121,7 @@ class ProfanityAuditServiceTest {
 
             service.auditPending();
 
-            then(batchProcessor).should(never()).process(any());
+            then(batchProcessor).should(never()).process(any(), any());
         }
 
         @Test
@@ -129,11 +132,11 @@ class ProfanityAuditServiceTest {
             given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
                     .willReturn(List.of(entity))
                     .willReturn(List.of());
-            given(batchProcessor.process(any())).willReturn(1);
+            given(batchProcessor.process(any(), any())).willReturn(1);
 
             service.auditPending();
 
-            then(batchProcessor).should().process(List.of(entity));
+            then(batchProcessor).should().process(eq(List.of(entity)), any());
         }
     }
 
@@ -169,7 +172,7 @@ class ProfanityAuditServiceTest {
                     .willReturn((long) BACKLOG);
             given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
                     .willAnswer(invocation -> nextBatch(remaining));
-            given(batchProcessor.process(any())).willAnswer(invocation -> {
+            given(batchProcessor.process(any(), any())).willAnswer(invocation -> {
                 final List<NicknameAudit> batch = invocation.getArgument(0);
                 clock.advance(Duration.ofSeconds(SECONDS_PER_BATCH));
                 return batch.size();
@@ -204,14 +207,41 @@ class ProfanityAuditServiceTest {
                         return pageable.getPageNumber() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
                     });
             // 배치가 통째로 UNAUDITED로 남은 상황. 검열 호출 실패와 판정 짝짓기 실패가 여기로 모인다.
-            given(batchProcessor.process(any())).willReturn(0);
+            given(batchProcessor.process(any(), any())).willReturn(0);
 
             target.auditPending();
 
             assertThat(readPages)
                     .as("같은 페이지를 다시 읽으면 무한 반복이고, 커서를 안 밀면 회차가 첫 배치에서 끝난다.")
                     .containsExactly(0, 1, 2);
-            then(batchProcessor).should(times(2)).process(any());
+            then(batchProcessor).should(times(2)).process(any(), any());
+        }
+
+        /**
+         * 표본 상한은 회차 단위다. 배치마다 추출기를 새로 넘기면 적체를 몰아 처리하는 회차에 상한이 배치 수만큼
+         * 곱해진다. 다음 회차는 상한을 새로 받아야 한다.
+         */
+        @Test
+        void 표본_추출기는_회차마다_하나를_만들어_모든_배치에_넘긴다() {
+            final StubClock clock = new StubClock(Instant.parse("2026-09-03T00:00:00Z"));
+            final ProfanityAuditService target = productionSizedService(clock);
+            final AtomicInteger reads = new AtomicInteger();
+            given(auditRepository.findByStatusAndAuditedAtIsNull(any(NicknameAuditStatus.class), any(Pageable.class)))
+                    .willAnswer(
+                            invocation -> reads.getAndIncrement() % 3 < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of());
+            given(batchProcessor.process(any(), any())).willReturn(PRODUCTION_BATCH_SIZE);
+
+            target.auditPending();
+            target.auditPending();
+
+            final ArgumentCaptor<CleanSampler> samplers = ArgumentCaptor.captor();
+            then(batchProcessor).should(times(4)).process(any(), samplers.capture());
+            final List<CleanSampler> passed = samplers.getAllValues();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(passed.get(1)).as("같은 회차의 두 번째 배치").isSameAs(passed.get(0));
+                softly.assertThat(passed.get(3)).as("같은 회차의 두 번째 배치").isSameAs(passed.get(2));
+                softly.assertThat(passed.get(2)).as("다음 회차").isNotSameAs(passed.get(0));
+            });
         }
 
         /**
@@ -238,7 +268,7 @@ class ProfanityAuditServiceTest {
                         return reads.getAndIncrement() < 2 ? batchOf(PRODUCTION_BATCH_SIZE) : List.of();
                     });
             // 페이지 0은 통째로 실패하고, 페이지 1은 부분 진행이다. 남은 행은 같은 페이지에 다시 잡힌다.
-            given(batchProcessor.process(any())).willReturn(0, PRODUCTION_BATCH_SIZE - 40);
+            given(batchProcessor.process(any(), any())).willReturn(0, PRODUCTION_BATCH_SIZE - 40);
 
             target.auditPending();
 
@@ -301,7 +331,7 @@ class ProfanityAuditServiceTest {
                 Thread.interrupted();
             }
 
-            then(batchProcessor).should(never()).process(any());
+            then(batchProcessor).should(never()).process(any(), any());
         }
     }
 

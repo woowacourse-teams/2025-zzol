@@ -8,6 +8,7 @@ import coffeeshout.profanity.config.NicknameAuditProperties;
 import coffeeshout.profanity.domain.Language;
 import coffeeshout.profanity.domain.TextNormalizer;
 import coffeeshout.profanity.domain.WordSource;
+import coffeeshout.profanity.domain.audit.CleanSampler;
 import coffeeshout.profanity.domain.audit.NicknameAudit;
 import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameAuditResult;
@@ -85,7 +86,10 @@ public class ProfanityAuditBatchProcessor {
                 .register(meterRegistry);
     }
 
-    public int process(List<NicknameAudit> batch) {
+    /**
+     * @param sampler 이번 회차의 CLEAN 표본 추출기. 회차가 하나 만들어 모든 배치에 같은 것을 넘긴다.
+     */
+    public int process(List<NicknameAudit> batch, CleanSampler sampler) {
         final List<String> nicknames =
                 batch.stream().map(NicknameAudit::getNickname).distinct().toList();
 
@@ -115,13 +119,13 @@ public class ProfanityAuditBatchProcessor {
 
         try {
             final Integer settled = settlePhaseTimer.record(
-                    () -> transactionTemplate.execute(status -> settle(batch, nicknames, resultMap)));
+                    () -> transactionTemplate.execute(status -> settle(batch, nicknames, resultMap, sampler)));
             return settled == null ? 0 : settled;
         } catch (RuntimeException e) {
             log.warn("배치 저장 실패 {}건 — 같은 판정으로 건별 저장을 다시 시도한다", batch.size(), e);
             // 여기서 다시 재지 않는다. 위 record는 예외로 빠져나가도 실패한 트랜잭션 시간을 이미 기록했다.
             // 폴백까지 같은 타이머로 감싸면 그 배치의 settle이 두 번 세어져 병목을 잘못 지목하게 된다.
-            return settleIndividually(batch, resultMap);
+            return settleIndividually(batch, resultMap, sampler);
         }
     }
 
@@ -155,7 +159,8 @@ public class ProfanityAuditBatchProcessor {
      * {@code NicknameAuditBulkUpdaterImpl}이 attempt_count를 일부러 뺀 것과 다른 컬럼 집합이다.
      * 이 폴백은 벌크 저장이 실패했을 때만 도는 드문 경로라 그 차이를 맞추지 않는다.
      */
-    private int settleIndividually(List<NicknameAudit> batch, Map<String, NicknameAuditResult> resultMap) {
+    private int settleIndividually(
+            List<NicknameAudit> batch, Map<String, NicknameAuditResult> resultMap, CleanSampler sampler) {
         int settled = 0;
         for (final NicknameAudit entity : batch) {
             final NicknameAuditResult result = resultMap.get(entity.getNickname());
@@ -164,7 +169,7 @@ public class ProfanityAuditBatchProcessor {
             }
             try {
                 transactionTemplate.executeWithoutResult(status -> {
-                    applyResult(entity, result);
+                    applyResult(entity, result, sampler);
                     auditRepository.save(entity);
                 });
                 countResults(List.of(entity));
@@ -222,7 +227,11 @@ public class ProfanityAuditBatchProcessor {
      * 수를 보지 않는다. 그 사이 다른 경로가 이 행을 지웠어도 이 카운트는 그대로 오르지만, 지운 행은
      * 되살아나지 않고 다음 페이지 조회에도 안 잡히므로 드레인 루프가 헛돌지는 않는다.
      */
-    private int settle(List<NicknameAudit> batch, List<String> nicknames, Map<String, NicknameAuditResult> resultMap) {
+    private int settle(
+            List<NicknameAudit> batch,
+            List<String> nicknames,
+            Map<String, NicknameAuditResult> resultMap,
+            CleanSampler sampler) {
         // 배치 닉네임 중 이미 검열 완료(terminal) 행을 가진 것들을 한 번에 조회한다 (건별 조회 N+1 회피).
         final Set<String> nicknamesWithTerminal = auditRepository.findNicknamesWithTerminalStatus(nicknames);
 
@@ -244,7 +253,7 @@ public class ProfanityAuditBatchProcessor {
                 redundant.add(entity);
                 continue;
             }
-            applyResult(entity, result);
+            applyResult(entity, result, sampler);
             toPromote.add(entity);
         }
         auditRepository.bulkUpdateAuditResults(toPromote);
@@ -259,11 +268,14 @@ public class ProfanityAuditBatchProcessor {
         return toPromote.size() + redundant.size();
     }
 
-    private void applyResult(NicknameAudit entity, NicknameAuditResult result) {
+    private void applyResult(NicknameAudit entity, NicknameAuditResult result, CleanSampler sampler) {
         entity.complete(result.status(), result.confidence(), result.reason());
         if (result.status() == NicknameAuditStatus.FLAGGED) {
             autoBlock(result);
         }
+        // 벌크 저장이 실패하면 건별 폴백이 같은 엔티티에 다시 반영하지만, 이미 표본인 행은 예산을 쓰지 않는다.
+        // 표시는 엔티티에 남아 있으므로 폴백의 save가 그대로 저장한다.
+        sampler.trySample(entity);
     }
 
     /**

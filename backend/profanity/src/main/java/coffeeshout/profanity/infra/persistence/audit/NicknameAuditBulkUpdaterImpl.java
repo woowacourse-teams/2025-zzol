@@ -29,7 +29,7 @@ public class NicknameAuditBulkUpdaterImpl implements NicknameAuditBulkUpdater {
      * 건수와 판정 메트릭이 그만큼 실제보다 크게 세어진다.
      *
      * <p>{@link NicknameAudit#complete}를 거쳐 status·confidence·reason·audited_at이 모두 채워진
-     * 엔티티만 넘긴다. 갱신도 이 네 컬럼만 하고 attempt_count·created_at·player_name은 건드리지 않는다.
+     * 엔티티만 넘긴다. 갱신은 이 네 컬럼과 표본 표시 review_sample만 하고 attempt_count·created_at·player_name은 건드리지 않는다.
      * attempt_count는 일부러 뺐다: {@code incrementAttemptCount}가 JPQL 벌크 UPDATE로 DB에서 직접
      * 올리므로, 이 메서드에 넘어오는 준영속 엔티티가 든 값은 낡았을 수 있다. 예전 {@code saveAll}은 그
      * 낡은 값으로 덮어썼다.
@@ -40,7 +40,8 @@ public class NicknameAuditBulkUpdaterImpl implements NicknameAuditBulkUpdater {
             return;
         }
         final String sql =
-                "UPDATE player_name_audit SET status = ?, confidence = ?, reason = ?, audited_at = ? WHERE id = ?";
+                "UPDATE player_name_audit SET status = ?, confidence = ?, reason = ?, audited_at = ?, review_sample = ? "
+                        + "WHERE id = ?";
         // Calendar 없이 setTimestamp를 쓰면 JVM 기본 타임존(KST 등)으로 해석돼, Hibernate가 Instant 컬럼을
         // 읽고 쓸 때 쓰는 UTC 기준과 어긋나 시간이 몇 시간씩 밀린다. Calendar는 상태를 갖는 mutable 객체라
         // 배치 항목마다 새로 만든다.
@@ -49,7 +50,8 @@ public class NicknameAuditBulkUpdaterImpl implements NicknameAuditBulkUpdater {
             ps.setBigDecimal(2, entity.getConfidence().value());
             ps.setString(3, entity.getReason());
             ps.setTimestamp(4, Timestamp.from(entity.getAuditedAt()), Calendar.getInstance(UTC));
-            ps.setLong(5, entity.getId());
+            ps.setBoolean(5, entity.isReviewSample());
+            ps.setLong(6, entity.getId());
         });
     }
 }

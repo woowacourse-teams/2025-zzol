@@ -10,6 +10,10 @@ spring:
         shutdown-timeout: 300ms
 
 redis:
+  # 인스턴스 경계를 넘는 WS 알림 브로드캐스트 채널 — 전 인스턴스가 구독해 각자 로컬 클라이언트로 전달한다.
+  # Stream과 달리 소비 이력을 남기지 않는다(재생·복구는 WsRecoveryService의 몫).
+  notification:
+    channel: "notification:ws"
   stream:
     # 공통 기본 설정 (각 스트림에서 오버라이드 가능)
     common-settings:

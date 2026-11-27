@@ -1,0 +1,281 @@
+package coffeeshout.profanity.eval;
+
+import coffeeshout.profanity.eval.GoldenItem.Expected;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * 골든셋 한 번 평가한 결과. 흔들림을 뺀 지표는 전부 회차 다수결 판정으로 센다.
+ * 비율 지표는 판정을 받은 닉네임만 분모에 넣는다. 판정을 못 받은 건수는 {@code missingByRun}과 혼동행렬에서 본다.
+ *
+ * @param missingByRun 회차마다 판정을 못 받은(MISSING) 닉네임 수
+ * @param shuffleSeed 회차마다 닉네임 순서를 섞은 시드. 회차 n은 {@code shuffleSeed + n}을 쓴다. null이면 섞지 않았다
+ * @param calls       모든 회차의 배치 호출 기록. 걸린 시간에는 호출 간격 대기가 들어가고, SDK 재시도를 켰으면 재시도 대기도 들어간다
+ * @param confusion   정답 4종 × 판정 4종 건수
+ * @param cleanFalsePositive 정상 닉네임을 걸러낸(FLAGGED 또는 PENDING) 비율
+ * @param positiveMiss 욕설(PROFANE·EVASION)을 CLEAN으로 넘긴 비율
+ * @param ambiguousCapture 경계 닉네임을 사람 확인(PENDING)으로 보낸 비율
+ * @param termAccuracy 욕설을 FLAGGED로 잡은 건 중 채택된 조각이 정답 조각과 정규화 기준으로 같은 비율
+ * @param instability  회차마다 판정이 달라진 닉네임 비율. 두 회차 이상 판정을 받은 닉네임만 센다
+ * @param mismatches   이상적인 판정과 다른 닉네임. 욕설은 FLAGGED, 경계는 PENDING, 정상은 CLEAN이 이상적이다
+ * @param rows        모든 회차의 닉네임별 판정. 모델끼리 짝지어 비교할 때 쓴다
+ */
+public record NicknameAuditEvaluation(
+        int itemCount,
+        int repeats,
+        int batchSize,
+        List<Integer> missingByRun,
+        Long shuffleSeed,
+        List<CallRecord> calls,
+        Scores overall,
+        Map<String, Scores> byCategory,
+        Map<Expected, Map<Predicted, Integer>> confusion,
+        Rate cleanFalsePositive,
+        Rate positiveMiss,
+        Rate ambiguousCapture,
+        Rate termAccuracy,
+        Rate instability,
+        List<Mismatch> mismatches,
+        List<RunRow> rows) {
+
+    public enum Predicted {
+        CLEAN,
+        FLAGGED,
+        PENDING,
+        /** 검열기가 이 닉네임의 결과를 돌려주지 않았다. 배치 호출이 실패해도 여기로 센다. */
+        MISSING;
+
+        public boolean isPositive() {
+            return this == FLAGGED || this == PENDING;
+        }
+    }
+
+    public record Rate(int hit, int total) {
+
+        @Override
+        public String toString() {
+            return total == 0 ? "n/a" : "%.1f%% (%d/%d)".formatted(100.0 * hit / total, hit, total);
+        }
+    }
+
+    /**
+     * 경계(AMBIGUOUS)를 뺀 정답으로 잰 정밀도·재현율.
+     * positive는 FLAGGED와 PENDING을 모두 걸러낸 것으로 보고, block은 자동 차단되는 FLAGGED만 본다.
+     */
+    public record Scores(Rate positivePrecision, Rate positiveRecall, Rate blockPrecision, Rate blockRecall) {}
+
+    public record Mismatch(String nickname, String category, Expected expected, Predicted predicted, String reason) {}
+
+    /**
+     * 한 회차에서 닉네임 하나가 받은 판정.
+     *
+     * @param batch        회차 안에서 몇 번째 배치였는지. 1부터 센다
+     * @param position     회차 안에서 몇 번째로 보냈는지. 1부터 센다
+     * @param flagged      모델이 낸 flagged 원값. 판정을 못 받았으면 빈 문자열이다
+     * @param confidence   모델이 낸 confidence를 소수 둘째 자리로 반올림한 값. 판정을 못 받았으면 빈 문자열이다
+     * @param batchLatency 이 닉네임이 실린 배치 호출에 걸린 시간
+     */
+    public record RunRow(
+            String nickname,
+            Expected expected,
+            String category,
+            int run,
+            int batch,
+            int position,
+            Predicted predicted,
+            String flagged,
+            String confidence,
+            String reason,
+            Duration batchLatency) {}
+
+    /** 호출 한 번의 토큰 사용량. 응답에 값이 없으면 0이다. */
+    public record TokenUsage(int prompt, int candidates, int cached, int thoughts, int total) {
+
+        public static final TokenUsage NONE = new TokenUsage(0, 0, 0, 0, 0);
+    }
+
+    /**
+     * 배치 호출 한 번.
+     *
+     * @param failure 실패 원인. 성공했으면 빈 문자열이다
+     */
+    public record CallRecord(int run, int batch, int size, Duration latency, TokenUsage usage, String failure) {
+
+        public boolean succeeded() {
+            return failure.isEmpty();
+        }
+    }
+
+    /** 호출 단위 기록을 탭으로 나눠 적는다. */
+    public String toCallsTsv() {
+        return calls.stream()
+                .map(call -> String.join(
+                        "\t",
+                        String.valueOf(call.run()),
+                        String.valueOf(call.batch()),
+                        String.valueOf(call.size()),
+                        String.valueOf(call.succeeded()),
+                        String.valueOf(call.latency().toMillis()),
+                        String.valueOf(call.usage().prompt()),
+                        String.valueOf(call.usage().candidates()),
+                        String.valueOf(call.usage().cached()),
+                        String.valueOf(call.usage().thoughts()),
+                        String.valueOf(call.usage().total()),
+                        call.failure()))
+                .collect(Collectors.joining(
+                        "\n",
+                        "run\tbatch\tsize\tsucceeded\tlatency_ms\tprompt_tokens\tcandidates_tokens"
+                                + "\tcached_tokens\tthoughts_tokens\ttotal_tokens\tfailure\n",
+                        "\n"));
+    }
+
+    /** 행 단위 판정을 탭으로 나눠 적는다. 모델이 쓴 사유의 탭과 줄바꿈은 공백으로 바꾼다. */
+    public String toRowsTsv() {
+        return rows.stream()
+                .map(row -> String.join(
+                        "\t",
+                        row.nickname(),
+                        row.expected().name(),
+                        row.category(),
+                        String.valueOf(row.run()),
+                        String.valueOf(row.batch()),
+                        String.valueOf(row.position()),
+                        row.predicted().name(),
+                        row.flagged(),
+                        row.confidence(),
+                        String.valueOf(row.batchLatency().toMillis()),
+                        row.reason().replaceAll("\\s+", " ")))
+                .collect(Collectors.joining(
+                        "\n",
+                        "nickname\texpected\tcategory\trun\tbatch\tposition\tpredicted\tflagged\tconfidence"
+                                + "\tbatch_latency_ms\treason\n",
+                        "\n"));
+    }
+
+    /**
+     * @param subject 무엇을 평가했는지. 모델명과 프롬프트 조건처럼 결과만으로는 알 수 없는 것을 적는다.
+     */
+    public String toMarkdown(String subject) {
+        return String.join(
+                "\n",
+                "# 닉네임 검열 골든셋 평가",
+                "",
+                "- 대상: " + subject,
+                "- 항목 %d건, 배치 %d건, %d회 반복. 흔들림을 뺀 지표는 회차 다수결 기준이다(표가 같으면 앞 회차)"
+                        .formatted(itemCount, batchSize, repeats),
+                "- 닉네임 순서: " + (shuffleSeed == null ? "골든셋 순서 그대로" : "회차마다 섞음(시드 %d + 회차)".formatted(shuffleSeed)),
+                "- 비율 지표는 판정을 받은 닉네임만 센다. 판정을 못 받은 건수는 회차별 MISSING에 있다",
+                "",
+                summarySection(),
+                confusionSection(),
+                categorySection(),
+                mismatchSection());
+    }
+
+    private String summarySection() {
+        return String.join(
+                "\n",
+                "## 요약",
+                "",
+                "| 지표 | 값 |",
+                "| --- | --- |",
+                "| 회차별 MISSING | " + missingByRun.stream().map(String::valueOf).collect(Collectors.joining(" / "))
+                        + " |",
+                "| 성공한 호출 응답 시간 (평균 / 최대) | " + latencySummary() + " |",
+                "| 실패한 호출 | "
+                        + new Rate(
+                                Math.toIntExact(calls.stream()
+                                        .filter(call -> !call.succeeded())
+                                        .count()),
+                                calls.size())
+                        + " |",
+                "| 걸러냄 정밀도 (FLAGGED+PENDING) | " + overall.positivePrecision() + " |",
+                "| 걸러냄 재현율 (FLAGGED+PENDING) | " + overall.positiveRecall() + " |",
+                "| 자동 차단 정밀도 (FLAGGED) | " + overall.blockPrecision() + " |",
+                "| 자동 차단 재현율 (FLAGGED) | " + overall.blockRecall() + " |",
+                "| 정상어 오탐률 | " + cleanFalsePositive + " |",
+                "| 욕설 미탐률 | " + positiveMiss + " |",
+                "| 경계 PENDING 포착률 | " + ambiguousCapture + " |",
+                "| 조각 정확도 | " + termAccuracy + " |",
+                "| 판정 흔들림 | " + instability + " |",
+                "");
+    }
+
+    private String latencySummary() {
+        // 실패한 호출은 타임아웃까지 기다렸거나 곧바로 끊겨서 모델 응답 시간이 아니다
+        final List<Duration> succeeded = calls.stream()
+                .filter(CallRecord::succeeded)
+                .map(CallRecord::latency)
+                .toList();
+        if (succeeded.isEmpty()) {
+            return "n/a";
+        }
+        final Duration total = succeeded.stream().reduce(Duration.ZERO, Duration::plus);
+        final Duration max = succeeded.stream().max(Duration::compareTo).orElseThrow();
+        return "%.1fs / %.1fs".formatted(total.toMillis() / 1000.0 / succeeded.size(), max.toMillis() / 1000.0);
+    }
+
+    private String confusionSection() {
+        final String header = Stream.of(Predicted.values()).map(Enum::name).collect(Collectors.joining(" | "));
+        final String rows = Stream.of(Expected.values())
+                .map(expected -> "| " + expected + " | "
+                        + Stream.of(Predicted.values())
+                                .map(predicted ->
+                                        String.valueOf(confusion.get(expected).get(predicted)))
+                                .collect(Collectors.joining(" | "))
+                        + " |")
+                .collect(Collectors.joining("\n"));
+        return String.join(
+                "\n",
+                "## 혼동행렬 (행: 정답, 열: 판정)",
+                "",
+                "| 정답 \\ 판정 | " + header + " |",
+                "| --- |" + " --- |".repeat(Predicted.values().length),
+                rows,
+                "");
+    }
+
+    private String categorySection() {
+        final String rows = byCategory.entrySet().stream()
+                .map(entry -> "| %s | %s | %s | %s | %s |"
+                        .formatted(
+                                entry.getKey(),
+                                entry.getValue().positivePrecision(),
+                                entry.getValue().positiveRecall(),
+                                entry.getValue().blockPrecision(),
+                                entry.getValue().blockRecall()))
+                .collect(Collectors.joining("\n"));
+        return String.join(
+                "\n",
+                "## 카테고리별",
+                "",
+                "| 카테고리 | 걸러냄 정밀도 | 걸러냄 재현율 | 자동 차단 정밀도 | 자동 차단 재현율 |",
+                "| --- | --- | --- | --- | --- |",
+                rows,
+                "");
+    }
+
+    private String mismatchSection() {
+        final String rows = mismatches.stream()
+                .map(m -> "| %s | %s | %s | %s | %s |"
+                        .formatted(
+                                m.nickname(),
+                                m.category(),
+                                m.expected(),
+                                m.predicted(),
+                                // 모델이 쓴 사유가 표를 깨지 않게 한다
+                                String.valueOf(m.reason()).replace('|', '/').replace('\n', ' ')))
+                .collect(Collectors.joining("\n"));
+        return String.join(
+                "\n",
+                "## 이상 판정과 다른 닉네임 (다수결, %d건)".formatted(mismatches.size()),
+                "",
+                "| 닉네임 | 카테고리 | 정답 | 판정 | 사유 |",
+                "| --- | --- | --- | --- | --- |",
+                rows,
+                "");
+    }
+}

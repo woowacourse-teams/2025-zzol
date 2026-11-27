@@ -5,6 +5,7 @@ import coffeeshout.profanity.domain.audit.NicknameAuditErrorCode;
 import coffeeshout.profanity.domain.audit.NicknameFeedback;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +40,6 @@ public class NicknameAuditPromptTemplate {
             ]
             """;
 
-    private static final double EXAMPLE_CONFIDENCE = 0.99;
-
     private final ObjectMapper objectMapper;
 
     public String buildUserMessage(List<String> nicknames, List<NicknameFeedback> feedbackExamples) {
@@ -56,18 +55,11 @@ public class NicknameAuditPromptTemplate {
         }
         final List<Map<String, Object>> exampleMaps = examples.stream()
                 .map(fb -> {
-                    final boolean flagged = fb.getOperatorDecision() == NicknameFeedback.OperatorDecision.BLOCKED;
-                    return Map.<String, Object>of(
-                            "nickname",
-                            fb.getNickname(),
-                            "flagged",
-                            flagged,
-                            "confidence",
-                            EXAMPLE_CONFIDENCE,
-                            "reason",
-                            "운영자 피드백",
-                            "terms",
-                            flagged ? List.of(fb.getNickname()) : List.of());
+                    final Map<String, Object> example = new LinkedHashMap<>();
+                    example.put("nickname", fb.getNickname());
+                    example.put("flagged", fb.getOperatorDecision() == NicknameFeedback.OperatorDecision.BLOCKED);
+                    example.put("reason", "운영자 피드백");
+                    return example;
                 })
                 .toList();
         try {

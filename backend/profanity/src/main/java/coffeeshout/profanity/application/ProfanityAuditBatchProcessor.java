@@ -113,6 +113,11 @@ public class ProfanityAuditBatchProcessor {
         final Map<String, NicknameAuditResult> resultMap = results.stream()
                 .collect(Collectors.toMap(NicknameAuditResult::nickname, Function.identity(), (a, b) -> a));
 
+        return settleMatched(batch, nicknames, resultMap) + recordUnmatched(batch, resultMap);
+    }
+
+    private int settleMatched(
+            List<NicknameAudit> batch, List<String> nicknames, Map<String, NicknameAuditResult> resultMap) {
         try {
             final Integer settled = settlePhaseTimer.record(
                     () -> transactionTemplate.execute(status -> settle(batch, nicknames, resultMap)));
@@ -123,6 +128,24 @@ public class ProfanityAuditBatchProcessor {
             // 폴백까지 같은 타이머로 감싸면 그 배치의 settle이 두 번 세어져 병목을 잘못 지목하게 된다.
             return settleIndividually(batch, resultMap);
         }
+    }
+
+    /**
+     * 응답을 받고도 판정을 붙이지 못한 행의 시도 횟수를 올린다. 항목 파싱 실패, 항목 누락, 모델이 닉네임을
+     * 바꿔 돌려준 경우다. 판정이 없는 것이라 PENDING으로 사람에게 넘기지 않고 다시 판정받게 한다.
+     *
+     * <p>세지 않으면 같은 행이 회차마다 Gemini를 부르고도 영영 UNAUDITED로 남는다. 판정 저장과 트랜잭션을
+     * 나눠, 여기서 실패해도 이미 받은 판정은 롤백되지 않는다.
+     */
+    private int recordUnmatched(List<NicknameAudit> batch, Map<String, NicknameAuditResult> resultMap) {
+        final List<NicknameAudit> unmatched = batch.stream()
+                .filter(entity -> !resultMap.containsKey(entity.getNickname()))
+                .toList();
+        if (unmatched.isEmpty()) {
+            return 0;
+        }
+        log.warn("판정을 짝지을 수 없는 닉네임 {}건 — 시도 횟수를 올린다", unmatched.size());
+        return recordFailure(unmatched);
     }
 
     /**
@@ -228,11 +251,9 @@ public class ProfanityAuditBatchProcessor {
 
         final List<NicknameAudit> toPromote = new ArrayList<>();
         final List<NicknameAudit> redundant = new ArrayList<>();
-        int unmatched = 0;
         for (final NicknameAudit entity : batch) {
             final NicknameAuditResult result = resultMap.get(entity.getNickname());
             if (result == null) {
-                unmatched++;
                 continue;
             }
             // 같은 닉네임의 검열 완료(terminal) 행이 이미 있으면 이 UNAUDITED는 #1467 fix 이전에 생긴
@@ -252,9 +273,6 @@ public class ProfanityAuditBatchProcessor {
         if (!redundant.isEmpty()) {
             auditRepository.deleteAll(redundant);
             log.warn("이미 검열된 닉네임의 잔존 UNAUDITED {}건 제거 (중복 재등록)", redundant.size());
-        }
-        if (unmatched > 0) {
-            log.warn("판정을 짝지을 수 없는 닉네임 {}건 — UNAUDITED로 남긴다", unmatched);
         }
         return toPromote.size() + redundant.size();
     }
